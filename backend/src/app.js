@@ -8,6 +8,7 @@ const collegeRoutes = require('./routes/collegeRoutes');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const academicRoutes = require('./routes/academicRoutes');
+const resourceRoutes = require('./routes/resourceRoutes');
 
 const app = express();
 
@@ -41,6 +42,7 @@ app.use('/api/colleges', collegeRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/academic', academicRoutes);
+app.use('/api/resources', resourceRoutes);
 
 // Catch-all for undefined routes
 app.all('*', (req, res, next) => {
