@@ -3,6 +3,7 @@ const User = require('../models/User');
 const AppError = require('../utils/appError');
 const { generateToken } = require('../utils/token');
 const { validateCollegeDomain } = require('../utils/domainValidator');
+const { parseCollegeEmail } = require('../utils/studentIdParser');
 const { sendResponse } = require('../utils/apiResponse');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -45,21 +46,39 @@ const googleLogin = async (req, res, next) => {
     }
 
     const college = await validateCollegeDomain(email);
+    const parsed = parseCollegeEmail(email);
+
+    // Official college emails (e.g. mukul.24636@knit.ac.in) have immutable names derived directly from student ID
+    const studentName = (parsed.isValidCollegeEmail && parsed.name) ? parsed.name : (name || parsed.name || 'KNIT Student');
 
     let user = await User.findOne({ email }).populate('collegeId', 'name code');
 
     if (!user) {
       user = await User.create({
-        name,
+        name: studentName,
         email,
+        studentId: parsed.studentId,
+        rollNumber: parsed.rollNumber,
         avatar: picture || '',
         googleId,
         collegeId: college._id,
+        branch: 'Information Technology',
+        semester: 6,
         isVerified: true
       });
       user = await User.findById(user._id).populate('collegeId', 'name code');
     } else {
       let needsSave = false;
+      // Enforce the derived name if from college domain
+      if (parsed.isValidCollegeEmail && parsed.name && user.name !== parsed.name) {
+        user.name = parsed.name;
+        needsSave = true;
+      }
+      if (parsed.rollNumber && !user.rollNumber) {
+        user.rollNumber = parsed.rollNumber;
+        user.studentId = parsed.studentId;
+        needsSave = true;
+      }
       if (!user.googleId && googleId) {
         user.googleId = googleId;
         needsSave = true;
@@ -94,33 +113,47 @@ const devLogin = async (req, res, next) => {
       return next(new AppError('Development login is disabled in production.', 403));
     }
 
-    const { email, name = 'KNIT Student' } = req.body;
+    const { email } = req.body;
 
     if (!email) {
-      return next(new AppError('Email is required for dev login.', 400));
+      return next(new AppError('Email is required for login.', 400));
     }
 
     const college = await validateCollegeDomain(email);
+    const parsed = parseCollegeEmail(email);
+
+    // Derive name strictly from email (e.g. mukul.24636@knit.ac.in -> Mukul), student cannot modify
+    const studentName = parsed.name || 'KNIT Student';
 
     let user = await User.findOne({ email }).populate('collegeId', 'name code');
 
     if (!user) {
       user = await User.create({
-        name,
+        name: studentName,
         email,
+        studentId: parsed.studentId,
+        rollNumber: parsed.rollNumber,
         collegeId: college._id,
         branch: 'Information Technology',
         semester: 6,
         isVerified: true
       });
       user = await User.findById(user._id).populate('collegeId', 'name code');
+    } else {
+      // Sync official name and roll number if modified or missing
+      if (parsed.name && user.name !== parsed.name) {
+        user.name = parsed.name;
+        user.rollNumber = parsed.rollNumber;
+        user.studentId = parsed.studentId;
+        await user.save();
+      }
     }
 
     const token = generateToken({ id: user._id, role: user.role });
 
     return sendResponse(res, {
       statusCode: 200,
-      message: 'Development login successful',
+      message: 'Login successful',
       data: {
         token,
         user

@@ -126,6 +126,14 @@ export default function ProfilePage() {
               <p className="text-xs text-slate-500 flex items-center gap-1.5">
                 <Mail className="w-3.5 h-3.5 text-slate-400" />
                 <span>{user?.email}</span>
+                {user?.rollNumber && (
+                  <>
+                    <span>•</span>
+                    <span className="font-mono bg-blue-50 text-blue-800 px-1.5 py-0.5 rounded text-[11px] font-semibold">
+                      Roll: {user.rollNumber}
+                    </span>
+                  </>
+                )}
               </p>
               <p className="text-xs text-blue-700 font-medium flex items-center gap-1">
                 <GraduationCap className="w-3.5 h-3.5" />

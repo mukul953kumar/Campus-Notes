@@ -1,10 +1,23 @@
 const Resource = require('../models/Resource');
 const Subject = require('../models/Subject');
 const User = require('../models/User');
+const College = require('../models/College');
 const AppError = require('../utils/appError');
 const { sendResponse } = require('../utils/apiResponse');
 const { uploadFile } = require('../services/storageService');
 const { verifyPdfMagicBytes, computeFileHash } = require('../utils/fileValidator');
+
+const normalizeResourceType = (type) => {
+  if (!type) return '';
+  const lower = String(type).toLowerCase();
+  if (lower === 'notes') return 'Notes';
+  if (lower === 'pyq') return 'PYQ';
+  if (lower === 'assignment') return 'Assignment';
+  if (lower === 'practical' || lower === 'labfile' || lower === 'practicalfile') return 'PracticalFile';
+  if (lower === 'syllabus' || lower === 'studyguide') return 'StudyGuide';
+  if (lower === 'questionbank') return 'QuestionBank';
+  return type.charAt(0).toUpperCase() + type.slice(1);
+};
 
 const getResources = async (req, res, next) => {
   try {
@@ -34,7 +47,10 @@ const getResources = async (req, res, next) => {
 
     if (branch) filter.branch = branch;
     if (subjectId) filter.subjectId = subjectId;
-    if (resourceType) filter.resourceType = resourceType;
+    if (resourceType) {
+      const normalized = normalizeResourceType(resourceType);
+      filter.resourceType = { $in: [resourceType, normalized, resourceType.toLowerCase(), resourceType.toUpperCase()] };
+    }
 
     if (semester) {
       const semNum = Number(semester);
@@ -152,9 +168,15 @@ const uploadResource = async (req, res, next) => {
 
     const fileHash = computeFileHash(req.file.buffer);
 
+    let targetCollegeId = req.user.collegeId?._id || req.user.collegeId;
+    if (!targetCollegeId) {
+      const defaultCollege = await College.findOne({ code: 'KNIT', isActive: true });
+      targetCollegeId = defaultCollege?._id;
+    }
+
     const duplicate = await Resource.findOne({
       fileHash,
-      collegeId: req.user.collegeId,
+      collegeId: targetCollegeId,
       isActive: true
     });
 
@@ -195,15 +217,17 @@ const uploadResource = async (req, res, next) => {
       ? tags
       : (typeof tags === 'string' ? tags.split(',').map((t) => t.trim()).filter(Boolean) : []);
 
+    const normalizedType = normalizeResourceType(resourceType) || 'Notes';
+
     const resource = await Resource.create({
       title,
       description,
-      collegeId: req.user.collegeId,
+      collegeId: targetCollegeId,
       branch: branch || subject.branch,
       semester: Number(semester) || subject.semester,
       subjectId,
       unit: unit ? Number(unit) : null,
-      resourceType,
+      resourceType: normalizedType,
       fileUrl: storageResult.fileUrl,
       fileKey: storageResult.fileKey,
       fileSize: storageResult.fileSize,

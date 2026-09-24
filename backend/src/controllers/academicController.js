@@ -39,10 +39,17 @@ const getSubjects = async (req, res, next) => {
 
     const filter = { isActive: true };
 
-    if (collegeId) {
-      filter.collegeId = collegeId;
-    } else if (req.user && req.user.collegeId) {
-      filter.collegeId = req.user.collegeId;
+    let targetCollegeId = collegeId;
+    if (!targetCollegeId && req.user && req.user.collegeId) {
+      targetCollegeId = req.user.collegeId?._id || req.user.collegeId;
+    }
+    if (!targetCollegeId) {
+      const defaultCollege = await College.findOne({ code: 'KNIT', isActive: true });
+      if (defaultCollege) targetCollegeId = defaultCollege._id;
+    }
+
+    if (targetCollegeId) {
+      filter.collegeId = targetCollegeId;
     }
 
     if (branch) {
@@ -64,10 +71,20 @@ const getSubjects = async (req, res, next) => {
       ];
     }
 
-    const subjects = await Subject.find(filter)
+    let subjects = await Subject.find(filter)
       .sort({ semester: 1, name: 1 })
       .populate('collegeId', 'name code')
       .lean();
+
+    // Fallback: If no subjects found for specific branch, provide semester subjects
+    if (subjects.length === 0 && branch && filter.semester) {
+      const fallbackFilter = { ...filter };
+      delete fallbackFilter.branch;
+      subjects = await Subject.find(fallbackFilter)
+        .sort({ semester: 1, name: 1 })
+        .populate('collegeId', 'name code')
+        .lean();
+    }
 
     return sendResponse(res, {
       statusCode: 200,

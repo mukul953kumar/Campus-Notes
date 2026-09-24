@@ -1,21 +1,50 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/api';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
-import { GraduationCap, ShieldCheck, AlertCircle, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
+import { GraduationCap, ShieldCheck, AlertCircle, ArrowRight, Sparkles, CheckCircle2, Lock, UserCheck } from 'lucide-react';
+
+function extractStudentInfo(email) {
+  if (!email || typeof email !== 'string') return { name: '', roll: '' };
+  const clean = email.trim().toLowerCase();
+  const [localPart] = clean.split('@');
+  if (!localPart) return { name: '', roll: '' };
+
+  const matchWithRoll = localPart.match(/^(.*?)(?:[._-]*)?(\d{4,10})$/);
+  let rawName = '';
+  let roll = '';
+  if (matchWithRoll) {
+    rawName = matchWithRoll[1];
+    roll = matchWithRoll[2];
+  } else {
+    rawName = localPart;
+  }
+  rawName = rawName.replace(/^[._-]+|[._-]+$/g, '');
+  const words = rawName.split(/[._\-\s]+/).filter(Boolean);
+  let formattedName = words
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
+  if (!formattedName && roll) {
+    formattedName = `Student ${roll}`;
+  }
+  return { name: formattedName || 'KNIT Student', roll };
+}
 
 export default function LoginPage() {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [devEmail, setDevEmail] = useState('student@knit.ac.in');
-  const [devName, setDevName] = useState('KNIT Student');
-  const [devRole, setDevRole] = useState('student');
+  const [devEmail, setDevEmail] = useState('mukul.24636@knit.ac.in');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Dynamically extract name and roll number from email - student cannot edit name manually
+  const { name: detectedName, roll: detectedRoll } = useMemo(() => {
+    return extractStudentInfo(devEmail);
+  }, [devEmail]);
 
   const redirectPath = location.state?.from?.pathname || '/';
 
@@ -87,7 +116,7 @@ export default function LoginPage() {
         throw new Error('Access restricted: Only @knit.ac.in college emails are permitted.');
       }
 
-      const result = await authService.devLogin(trimmedEmail, devName.trim());
+      const result = await authService.devLogin(trimmedEmail);
       login(result.data.token, result.data.user);
       navigate(redirectPath, { replace: true });
     } catch (err) {
@@ -97,9 +126,8 @@ export default function LoginPage() {
     }
   };
 
-  const handleQuickPreset = (email, name) => {
+  const handleQuickPreset = (email) => {
     setDevEmail(email);
-    setDevName(name);
   };
 
   return (
@@ -165,35 +193,59 @@ export default function LoginPage() {
               type="email"
               value={devEmail}
               onChange={(e) => setDevEmail(e.target.value)}
-              placeholder="e.g. 21512@knit.ac.in"
-              helperText="Must end with @knit.ac.in"
+              placeholder="e.g. mukul.24636@knit.ac.in"
+              helperText="Format: name.rollno@knit.ac.in"
               required
             />
 
-            <Input
-              label="Student Name"
-              type="text"
-              value={devName}
-              onChange={(e) => setDevName(e.target.value)}
-              placeholder="Your full name"
-              required
-            />
+            {/* Auto-extracted Verified Student Card (Immutable) */}
+            <div className="bg-slate-50 border border-slate-200/90 rounded-xl p-3.5 space-y-1.5 transition-all">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+                  <UserCheck className="w-3.5 h-3.5 text-blue-700" />
+                  Auto-Detected Identity
+                </span>
+                <span className="text-[10px] bg-slate-200/80 text-slate-700 font-medium px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <Lock className="w-2.5 h-2.5 text-slate-500" /> Read-Only
+                </span>
+              </div>
+              <div className="flex items-center justify-between pt-1">
+                <div>
+                  <p className="text-[11px] text-slate-400 font-medium">Student Name</p>
+                  <p className="text-sm font-bold text-slate-900">{detectedName}</p>
+                </div>
+                {detectedRoll && (
+                  <div className="text-right">
+                    <p className="text-[11px] text-slate-400 font-medium">Student Roll No</p>
+                    <p className="text-sm font-mono font-bold text-blue-700">{detectedRoll}</p>
+                  </div>
+                )}
+              </div>
+            </div>
 
             {/* Quick presets for rapid evaluation */}
             <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
-              <span>Quick presets:</span>
+              <span>Presets:</span>
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => handleQuickPreset('21512@knit.ac.in', 'Aditya Singh')}
-                  className="text-blue-700 hover:underline cursor-pointer"
+                  onClick={() => handleQuickPreset('mukul.24636@knit.ac.in')}
+                  className="text-blue-700 hover:underline cursor-pointer font-medium"
                 >
-                  Student
+                  Mukul (24636)
                 </button>
                 <span>•</span>
                 <button
                   type="button"
-                  onClick={() => handleQuickPreset('admin@knit.ac.in', 'KNIT Admin')}
+                  onClick={() => handleQuickPreset('shreya.singh.22415@knit.ac.in')}
+                  className="text-blue-700 hover:underline cursor-pointer"
+                >
+                  Shreya (22415)
+                </button>
+                <span>•</span>
+                <button
+                  type="button"
+                  onClick={() => handleQuickPreset('admin@knit.ac.in')}
                   className="text-blue-700 hover:underline cursor-pointer"
                 >
                   Admin
@@ -208,7 +260,7 @@ export default function LoginPage() {
               className="w-full mt-2"
               isLoading={isLoading}
             >
-              Sign In with College Email
+              Sign In as {detectedName}
             </Button>
           </form>
 

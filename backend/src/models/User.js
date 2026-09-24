@@ -20,6 +20,16 @@ const userSchema = new mongoose.Schema(
       sparse: true,
       index: true
     },
+    studentId: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    rollNumber: {
+      type: String,
+      trim: true,
+      default: ''
+    },
     avatar: {
       type: String,
       default: ''

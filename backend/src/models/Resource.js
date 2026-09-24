@@ -47,6 +47,17 @@ const resourceSchema = new mongoose.Schema(
     resourceType: {
       type: String,
       required: [true, 'Resource type is required'],
+      set: (val) => {
+        if (!val) return 'Notes';
+        const lower = String(val).toLowerCase();
+        if (lower === 'notes') return 'Notes';
+        if (lower === 'pyq') return 'PYQ';
+        if (lower === 'assignment') return 'Assignment';
+        if (lower === 'practical' || lower === 'labfile' || lower === 'practicalfile') return 'PracticalFile';
+        if (lower === 'syllabus' || lower === 'studyguide') return 'StudyGuide';
+        if (lower === 'questionbank') return 'QuestionBank';
+        return val.charAt(0).toUpperCase() + val.slice(1);
+      },
       enum: {
         values: [
           'Notes',
@@ -56,7 +67,12 @@ const resourceSchema = new mongoose.Schema(
           'PracticalFile',
           'QuestionBank',
           'StudyGuide',
-          'Other'
+          'Other',
+          'notes',
+          'pyq',
+          'assignment',
+          'practical',
+          'syllabus'
         ],
         message: '{VALUE} is not a supported resource type'
       }
