@@ -5,21 +5,29 @@ const connectDB = require('../config/database');
 
 const defaultColleges = [
   {
+    name: 'Kamla Nehru Institute of Technology',
+    code: 'KNIT',
+    allowedDomains: ['knit.ac.in'],
+    branches: [
+      'Computer Science & Engineering',
+      'Information Technology',
+      'Electronics Engineering',
+      'Electrical Engineering',
+      'Mechanical Engineering',
+      'Civil Engineering',
+      'Master of Computer Applications'
+    ]
+  },
+  {
     name: 'Delhi Technological University',
     code: 'DTU',
     allowedDomains: ['dtu.ac.in'],
     branches: ['Computer Science', 'Information Technology', 'Software Engineering', 'Electronics & Comm', 'Mechanical']
   },
   {
-    name: 'Netaji Subhas University of Technology',
-    code: 'NSUT',
-    allowedDomains: ['nsut.ac.in'],
-    branches: ['Computer Engineering', 'Information Technology', 'Electronics', 'Mechanical']
-  },
-  {
     name: 'Demo University',
     code: 'DEMO',
-    allowedDomains: ['college.edu', 'student.edu', 'gmail.com'],
+    allowedDomains: ['college.edu', 'student.edu'],
     branches: ['Computer Science', 'Information Technology', 'Electronics', 'Mechanical', 'Civil']
   }
 ];
