@@ -5,6 +5,7 @@ const AppError = require('./utils/appError');
 const errorHandler = require('./middleware/errorHandler');
 const healthRoutes = require('./routes/healthRoutes');
 const collegeRoutes = require('./routes/collegeRoutes');
+const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Mount routes
 app.use('/api/health', healthRoutes);
 app.use('/api/colleges', collegeRoutes);
+app.use('/api/auth', authRoutes);
 
 // Catch-all for undefined routes
 app.all('*', (req, res, next) => {
