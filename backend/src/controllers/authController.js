@@ -57,6 +57,7 @@ const googleLogin = async (req, res, next) => {
 
     // Official college emails (e.g. mukul.24636@knit.ac.in) have immutable names derived directly from student ID
     const studentName = parsed.name || 'KNIT Student';
+    const userRole = cleanEmail.startsWith('admin') ? 'admin' : 'student';
 
     let user = await User.findOne({ email: cleanEmail }).populate('collegeId', 'name code');
 
@@ -71,11 +72,16 @@ const googleLogin = async (req, res, next) => {
         collegeId: college._id,
         branch: 'Information Technology',
         semester: 6,
+        role: userRole,
         isVerified: true
       });
       user = await User.findById(user._id).populate('collegeId', 'name code');
     } else {
       let needsSave = false;
+      if (cleanEmail.startsWith('admin') && user.role !== 'admin') {
+        user.role = 'admin';
+        needsSave = true;
+      }
       // Enforce the derived name if from college domain
       if (parsed.isValidCollegeEmail && parsed.name && user.name !== parsed.name) {
         user.name = parsed.name;
@@ -121,32 +127,39 @@ const devLogin = async (req, res, next) => {
     }
 
     const { email } = req.body;
+    const cleanEmail = String(email || '').trim().toLowerCase();
 
-    if (!email) {
+    if (!cleanEmail) {
       return next(new AppError('Email is required for login.', 400));
     }
 
-    const college = await validateCollegeDomain(email);
-    const parsed = parseCollegeEmail(email);
+    const college = await validateCollegeDomain(cleanEmail);
+    const parsed = parseCollegeEmail(cleanEmail);
 
     // Derive name strictly from email (e.g. mukul.24636@knit.ac.in -> Mukul), student cannot modify
     const studentName = parsed.name || 'KNIT Student';
+    const userRole = cleanEmail.startsWith('admin') ? 'admin' : 'student';
 
-    let user = await User.findOne({ email }).populate('collegeId', 'name code');
+    let user = await User.findOne({ email: cleanEmail }).populate('collegeId', 'name code');
 
     if (!user) {
       user = await User.create({
         name: studentName,
-        email,
+        email: cleanEmail,
         studentId: parsed.studentId,
         rollNumber: parsed.rollNumber,
         collegeId: college._id,
         branch: 'Information Technology',
         semester: 6,
+        role: userRole,
         isVerified: true
       });
       user = await User.findById(user._id).populate('collegeId', 'name code');
     } else {
+      if (cleanEmail.startsWith('admin') && user.role !== 'admin') {
+        user.role = 'admin';
+        await user.save();
+      }
       // Sync official name and roll number if modified or missing
       if (parsed.name && user.name !== parsed.name) {
         user.name = parsed.name;
