@@ -15,23 +15,16 @@ const validateCollegeDomain = async (email) => {
     throw new AppError('Please provide a valid college email address', 400);
   }
 
-  let college = await College.findOne({
+  const college = await College.findOne({
     allowedDomains: domain,
     isActive: true
   });
 
   if (!college) {
-    // In development mode, allow testers using Gmail to bind to KNIT Sultanpur
-    if (process.env.NODE_ENV !== 'production') {
-      college = await College.findOne({ code: 'KNIT', isActive: true });
-    }
-
-    if (!college) {
-      throw new AppError(
-        `Access restricted: Only verified college email addresses (e.g. @knit.ac.in) are permitted to sign in`,
-        403
-      );
-    }
+    throw new AppError(
+      'Access restricted: Only verified @knit.ac.in college email addresses are permitted to sign in',
+      403
+    );
   }
 
   return college;

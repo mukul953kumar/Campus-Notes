@@ -45,18 +45,25 @@ const googleLogin = async (req, res, next) => {
       return next(new AppError('Could not retrieve email from Google account.', 400));
     }
 
-    const college = await validateCollegeDomain(email);
-    const parsed = parseCollegeEmail(email);
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail.endsWith('@knit.ac.in')) {
+      return next(
+        new AppError('Access restricted: Only official @knit.ac.in college Google accounts are permitted to sign in.', 403)
+      );
+    }
+
+    const college = await validateCollegeDomain(cleanEmail);
+    const parsed = parseCollegeEmail(cleanEmail);
 
     // Official college emails (e.g. mukul.24636@knit.ac.in) have immutable names derived directly from student ID
-    const studentName = (parsed.isValidCollegeEmail && parsed.name) ? parsed.name : (name || parsed.name || 'KNIT Student');
+    const studentName = parsed.name || 'KNIT Student';
 
-    let user = await User.findOne({ email }).populate('collegeId', 'name code');
+    let user = await User.findOne({ email: cleanEmail }).populate('collegeId', 'name code');
 
     if (!user) {
       user = await User.create({
         name: studentName,
-        email,
+        email: cleanEmail,
         studentId: parsed.studentId,
         rollNumber: parsed.rollNumber,
         avatar: picture || '',
