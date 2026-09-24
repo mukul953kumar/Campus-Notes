@@ -5,6 +5,7 @@ import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
 import Loader from '../../components/common/Loader';
 import EmptyState from '../../components/common/EmptyState';
+import ReportModal from '../../components/resources/ReportModal';
 import {
   ArrowLeft,
   Download,
@@ -35,6 +36,7 @@ export default function ResourceDetailsPage() {
   const [isSaved, setIsSaved] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [isFullscreenPreview, setIsFullscreenPreview] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   useEffect(() => {
     async function loadResource() {
@@ -470,7 +472,7 @@ export default function ResourceDetailsPage() {
             </span>
             <button
               type="button"
-              onClick={() => alert('Reporting feature will be enabled in Phase 18.')}
+              onClick={() => setIsReportModalOpen(true)}
               className="text-slate-700 hover:text-red-600 font-semibold cursor-pointer"
             >
               Report
@@ -480,6 +482,14 @@ export default function ResourceDetailsPage() {
         </div>
 
       </div>
+
+      {/* Report Modal */}
+      <ReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        resourceId={resource._id}
+        resourceTitle={resource.title}
+      />
 
     </div>
   );

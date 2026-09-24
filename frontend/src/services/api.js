@@ -193,3 +193,26 @@ export const bookmarkService = {
   },
 };
 
+export const reportService = {
+  async createReport(data) {
+    return apiRequest('/reports', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async getReports(status) {
+    const queryString = status ? `?status=${status}` : '';
+    return apiRequest(`/reports${queryString}`, {
+      method: 'GET',
+    });
+  },
+
+  async updateReport(id, data) {
+    return apiRequest(`/reports/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  },
+};
+

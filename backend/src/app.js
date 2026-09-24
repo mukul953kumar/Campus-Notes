@@ -11,6 +11,7 @@ const userRoutes = require('./routes/userRoutes');
 const academicRoutes = require('./routes/academicRoutes');
 const resourceRoutes = require('./routes/resourceRoutes');
 const bookmarkRoutes = require('./routes/bookmarkRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 
 const app = express();
 
@@ -49,6 +50,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/academic', academicRoutes);
 app.use('/api/resources', resourceRoutes);
 app.use('/api/bookmarks', bookmarkRoutes);
+app.use('/api/reports', reportRoutes);
 
 // Catch-all for undefined routes
 app.all('*', (req, res, next) => {
