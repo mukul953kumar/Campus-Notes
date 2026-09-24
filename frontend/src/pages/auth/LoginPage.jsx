@@ -1,50 +1,23 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/api';
 import Button from '../../components/common/Button';
-import Input from '../../components/common/Input';
-import { GraduationCap, ShieldCheck, AlertCircle, ArrowRight, Sparkles, CheckCircle2, Lock, UserCheck } from 'lucide-react';
+import { GraduationCap, ShieldCheck, AlertCircle, Sparkles, CheckCircle2, ChevronDown, Lock } from 'lucide-react';
 
-function extractStudentInfo(email) {
-  if (!email || typeof email !== 'string') return { name: '', roll: '' };
-  const clean = email.trim().toLowerCase();
-  const [localPart] = clean.split('@');
-  if (!localPart) return { name: '', roll: '' };
-
-  const matchWithRoll = localPart.match(/^(.*?)(?:[._-]*)?(\d{4,10})$/);
-  let rawName = '';
-  let roll = '';
-  if (matchWithRoll) {
-    rawName = matchWithRoll[1];
-    roll = matchWithRoll[2];
-  } else {
-    rawName = localPart;
-  }
-  rawName = rawName.replace(/^[._-]+|[._-]+$/g, '');
-  const words = rawName.split(/[._\-\s]+/).filter(Boolean);
-  let formattedName = words
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-    .join(' ');
-  if (!formattedName && roll) {
-    formattedName = `Student ${roll}`;
-  }
-  return { name: formattedName || 'KNIT Student', roll };
-}
+const GOOGLE_CLIENT_ID =
+  import.meta.env.VITE_GOOGLE_CLIENT_ID ||
+  '175488387080-bvcmqddtvbocqmkamlfqk7brjrtgm0bg.apps.googleusercontent.com';
 
 export default function LoginPage() {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [devEmail, setDevEmail] = useState('mukul.24636@knit.ac.in');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-
-  // Dynamically extract name and roll number from email - student cannot edit name manually
-  const { name: detectedName, roll: detectedRoll } = useMemo(() => {
-    return extractStudentInfo(devEmail);
-  }, [devEmail]);
+  const [showDevFallback, setShowDevFallback] = useState(false);
+  const [devEmail, setDevEmail] = useState('mukul.24636@knit.ac.in');
 
   const redirectPath = location.state?.from?.pathname || '/';
 
@@ -55,221 +28,221 @@ export default function LoginPage() {
   }, [isAuthenticated, navigate, redirectPath]);
 
   // Google Identity Services setup
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-
   useEffect(() => {
-    if (!googleClientId) return;
+    if (!GOOGLE_CLIENT_ID) return;
 
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
-      if (window.google) {
-        window.google.accounts.id.initialize({
-          client_id: googleClientId,
-          callback: handleGoogleCredentialResponse,
-        });
-        const buttonDiv = document.getElementById('google-signin-btn');
-        if (buttonDiv) {
-          window.google.accounts.id.renderButton(buttonDiv, {
-            theme: 'outline',
-            size: 'large',
-            width: '100%',
-            text: 'continue_with',
-            shape: 'rectangular',
+    let isSubscribed = true;
+
+    const initGoogleGsi = () => {
+      if (window.google?.accounts?.id && isSubscribed) {
+        try {
+          window.google.accounts.id.initialize({
+            client_id: GOOGLE_CLIENT_ID,
+            callback: handleGoogleCredentialResponse,
+            auto_select: false,
+            cancel_on_tap_outside: true,
           });
+
+          const buttonDiv = document.getElementById('google-signin-btn');
+          if (buttonDiv) {
+            buttonDiv.innerHTML = '';
+            window.google.accounts.id.renderButton(buttonDiv, {
+              theme: 'filled_blue',
+              size: 'large',
+              width: 320,
+              text: 'continue_with',
+              shape: 'pill',
+              logo_alignment: 'left',
+            });
+          }
+
+          // Trigger One-Tap prompt
+          window.google.accounts.id.prompt();
+        } catch (err) {
+          console.error('[Google GSI Init Error]', err);
         }
       }
     };
-    document.body.appendChild(script);
+
+    if (window.google?.accounts?.id) {
+      initGoogleGsi();
+    } else {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.onload = initGoogleGsi;
+      document.body.appendChild(script);
+
+      return () => {
+        isSubscribed = false;
+        if (document.body.contains(script)) {
+          document.body.removeChild(script);
+        }
+      };
+    }
 
     return () => {
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
-      }
+      isSubscribed = false;
     };
-  }, [googleClientId]);
+  }, [GOOGLE_CLIENT_ID]);
 
   const handleGoogleCredentialResponse = async (response) => {
     setErrorMessage('');
     setIsLoading(true);
     try {
+      if (!response.credential) {
+        throw new Error('Google credential not received. Please try again.');
+      }
       const result = await authService.googleLogin(response.credential);
       login(result.data.token, result.data.user);
       navigate(redirectPath, { replace: true });
     } catch (err) {
-      setErrorMessage(err.message || 'Google authentication failed.');
+      setErrorMessage(
+        err.message || 'Access restricted: Please select your official @knit.ac.in college Google account.'
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDevLogin = async (e) => {
-    e.preventDefault();
+  const handleDevLogin = async (emailToLogin) => {
     setErrorMessage('');
     setIsLoading(true);
-
     try {
-      const trimmedEmail = devEmail.trim().toLowerCase();
-      if (!trimmedEmail.endsWith('@knit.ac.in')) {
-        throw new Error('Access restricted: Only @knit.ac.in college emails are permitted.');
+      const targetEmail = (emailToLogin || devEmail).trim().toLowerCase();
+      if (!targetEmail.endsWith('@knit.ac.in')) {
+        throw new Error('Only @knit.ac.in college emails are permitted.');
       }
-
-      const result = await authService.devLogin(trimmedEmail);
+      const result = await authService.devLogin(targetEmail);
       login(result.data.token, result.data.user);
       navigate(redirectPath, { replace: true });
     } catch (err) {
-      setErrorMessage(err.message || 'Failed to complete login.');
+      setErrorMessage(err.message || 'Login failed.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleQuickPreset = (email) => {
-    setDevEmail(email);
-  };
-
   return (
-    <div className="max-w-md mx-auto my-8 sm:my-12">
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs">
+    <div className="max-w-md mx-auto my-8 sm:my-14 px-4">
+      <div className="bg-white border border-slate-200 rounded-3xl p-7 sm:p-9 shadow-sm">
         
-        {/* College Header */}
+        {/* College Seal & Header */}
         <div className="text-center mb-6">
-          <div className="w-12 h-12 rounded-xl bg-blue-700 flex items-center justify-center text-white mx-auto shadow-xs mb-3">
-            <GraduationCap className="w-6 h-6" />
+          <div className="w-14 h-14 rounded-2xl bg-blue-700 flex items-center justify-center text-white mx-auto shadow-md mb-3 ring-4 ring-blue-50">
+            <GraduationCap className="w-7 h-7" />
+          </div>
+          <div className="inline-flex items-center gap-1.5 text-xs text-blue-700 bg-blue-50 border border-blue-200/80 px-2.5 py-0.5 rounded-full font-medium mb-2">
+            <Sparkles className="w-3 h-3" />
+            <span>Official College Portal</span>
           </div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-            Sign In to CampusNotes
+            Sign In with Google
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1 font-medium">
             Kamla Nehru Institute of Technology (KNIT), Sultanpur
           </p>
         </div>
 
-        {/* College Domain Requirement Notice */}
-        <div className="p-3.5 bg-blue-50/80 border border-blue-200/80 rounded-xl mb-6">
-          <div className="flex items-start gap-2.5">
-            <ShieldCheck className="w-4 h-4 text-blue-700 shrink-0 mt-0.5" />
-            <div className="text-xs text-blue-900 leading-relaxed">
-              <span className="font-semibold">Verified Student Network:</span> Login is strictly restricted to students and faculty possessing an official college ID ending in{' '}
-              <code className="font-mono bg-blue-100 text-blue-800 px-1 py-0.5 rounded font-semibold">
-                @knit.ac.in
-              </code>.
+        {/* Domain Requirement Badge */}
+        <div className="p-4 bg-blue-50/70 border border-blue-200/80 rounded-2xl mb-6">
+          <div className="flex items-start gap-3">
+            <ShieldCheck className="w-5 h-5 text-blue-700 shrink-0 mt-0.5" />
+            <div className="text-xs text-blue-950 leading-relaxed">
+              <span className="font-semibold block mb-0.5 text-blue-900">
+                Single Sign-On (@knit.ac.in)
+              </span>
+              Direct 1-click authentication using your official KNIT student Google account. No manual details required.
             </div>
           </div>
         </div>
 
         {/* Error Alert */}
         {errorMessage && (
-          <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg mb-5 flex items-start gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+          <div className="p-3.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl mb-6 flex items-start gap-2.5 leading-relaxed">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
             <span>{errorMessage}</span>
           </div>
         )}
 
-        {/* Google One-Click Login Button */}
-        <div className="space-y-4">
-          <div id="google-signin-btn" className="w-full flex justify-center"></div>
-
-          {!googleClientId && (
-            <div className="text-center text-xs text-slate-400 py-1">
-              Google OAuth ID can be linked in <code>.env</code>
-            </div>
-          )}
-
-          <div className="relative flex items-center justify-center">
-            <div className="border-t border-slate-200 w-full"></div>
-            <span className="bg-white px-3 text-xs text-slate-400 uppercase tracking-wider shrink-0 font-medium">
-              Student Login Portal
-            </span>
-            <div className="border-t border-slate-200 w-full"></div>
+        {/* Primary Direct Google Sign-In Container */}
+        <div className="space-y-4 py-2">
+          
+          <div className="flex flex-col items-center justify-center min-h-[50px]">
+            {isLoading ? (
+              <div className="flex items-center gap-2 text-xs text-blue-700 font-medium py-3">
+                <div className="w-4 h-4 border-2 border-blue-700 border-t-transparent rounded-full animate-spin"></div>
+                <span>Verifying KNIT Google credentials...</span>
+              </div>
+            ) : (
+              <div id="google-signin-btn" className="w-full flex justify-center"></div>
+            )}
           </div>
 
-          {/* Quick College Email Form */}
-          <form onSubmit={handleDevLogin} className="space-y-4">
-            <Input
-              label="College Email"
-              type="email"
-              value={devEmail}
-              onChange={(e) => setDevEmail(e.target.value)}
-              placeholder="e.g. mukul.24636@knit.ac.in"
-              helperText="Format: name.rollno@knit.ac.in"
-              required
-            />
-
-            {/* Auto-extracted Verified Student Card (Immutable) */}
-            <div className="bg-slate-50 border border-slate-200/90 rounded-xl p-3.5 space-y-1.5 transition-all">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
-                  <UserCheck className="w-3.5 h-3.5 text-blue-700" />
-                  Auto-Detected Identity
-                </span>
-                <span className="text-[10px] bg-slate-200/80 text-slate-700 font-medium px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <Lock className="w-2.5 h-2.5 text-slate-500" /> Read-Only
-                </span>
-              </div>
-              <div className="flex items-center justify-between pt-1">
-                <div>
-                  <p className="text-[11px] text-slate-400 font-medium">Student Name</p>
-                  <p className="text-sm font-bold text-slate-900">{detectedName}</p>
-                </div>
-                {detectedRoll && (
-                  <div className="text-right">
-                    <p className="text-[11px] text-slate-400 font-medium">Student Roll No</p>
-                    <p className="text-sm font-mono font-bold text-blue-700">{detectedRoll}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Quick presets for rapid evaluation */}
-            <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
-              <span>Presets:</span>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleQuickPreset('mukul.24636@knit.ac.in')}
-                  className="text-blue-700 hover:underline cursor-pointer font-medium"
-                >
-                  Mukul (24636)
-                </button>
-                <span>•</span>
-                <button
-                  type="button"
-                  onClick={() => handleQuickPreset('shreya.singh.22415@knit.ac.in')}
-                  className="text-blue-700 hover:underline cursor-pointer"
-                >
-                  Shreya (22415)
-                </button>
-                <span>•</span>
-                <button
-                  type="button"
-                  onClick={() => handleQuickPreset('admin@knit.ac.in')}
-                  className="text-blue-700 hover:underline cursor-pointer"
-                >
-                  Admin
-                </button>
-              </div>
-            </div>
-
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              className="w-full mt-2"
-              isLoading={isLoading}
-            >
-              Sign In as {detectedName}
-            </Button>
-          </form>
+          <div className="text-center text-[11px] text-slate-400 space-y-1 pt-2">
+            <p className="flex items-center justify-center gap-1">
+              <Lock className="w-3 h-3 text-slate-400" />
+              <span>Student Name & Roll Number are verified from your college ID</span>
+            </p>
+            <p className="text-slate-400">
+              Format: <code className="font-mono text-slate-600 bg-slate-100 px-1 py-0.5 rounded">name.rollno@knit.ac.in</code>
+            </p>
+          </div>
 
         </div>
 
-        {/* Privacy Note */}
-        <p className="text-[11px] text-slate-400 text-center mt-6">
-          By signing in, you agree to follow the KNIT Sultanpur academic sharing guidelines and respect intellectual property rights.
-        </p>
+        {/* Privacy & Syllabus Compliance */}
+        <div className="border-t border-slate-100 pt-5 mt-6 text-center">
+          <p className="text-[11px] text-slate-400 leading-relaxed">
+            By signing in, you agree to access KNIT academic notes and materials in accordance with institute policies.
+          </p>
+        </div>
+
+        {/* Collapsible Local Testing Fallback (Only in Development) */}
+        {import.meta.env.DEV && (
+          <div className="mt-6 pt-4 border-t border-dashed border-slate-200">
+            <button
+              type="button"
+              onClick={() => setShowDevFallback(!showDevFallback)}
+              className="text-[11px] text-slate-400 hover:text-blue-700 flex items-center justify-center gap-1 mx-auto cursor-pointer"
+            >
+              <span>Offline / Local Test Simulator</span>
+              <ChevronDown className={`w-3 h-3 transition-transform ${showDevFallback ? 'rotate-180' : ''}`} />
+            </button>
+
+            {showDevFallback && (
+              <div className="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs">
+                <p className="text-slate-500 text-[11px]">
+                  Simulate direct Google Sign-in for KNIT students without active internet:
+                </p>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => handleDevLogin('mukul.24636@knit.ac.in')}
+                    className="px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-slate-700 hover:border-blue-600 font-medium cursor-pointer"
+                  >
+                    Mukul (24636)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDevLogin('shreya.singh.22415@knit.ac.in')}
+                    className="px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-slate-700 hover:border-blue-600 font-medium cursor-pointer"
+                  >
+                    Shreya (22415)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDevLogin('admin@knit.ac.in')}
+                    className="px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-slate-700 hover:border-blue-600 font-medium cursor-pointer"
+                  >
+                    Admin
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
       </div>
     </div>
