@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -35,6 +36,9 @@ app.use(cors({
 // Body parsers with sensible payload limits
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Static file serving for local upload fallback
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Mount routes
 app.use('/api/health', healthRoutes);

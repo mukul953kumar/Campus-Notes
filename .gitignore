@@ -24,6 +24,8 @@ node_modules/
 dist/
 build/
 out/
+uploads/
+backend/uploads/
 
 # Logs
 logs
