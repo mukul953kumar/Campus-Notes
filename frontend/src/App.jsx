@@ -10,6 +10,8 @@ import ProfilePage from './pages/profile/ProfilePage';
 import UploadResourcePage from './pages/upload/UploadResourcePage';
 import ResourceLibraryPage from './pages/resources/ResourceLibraryPage';
 import ResourceDetailsPage from './pages/resources/ResourceDetailsPage';
+import SavedResourcesPage from './pages/student/SavedResourcesPage';
+import MyUploadsPage from './pages/student/MyUploadsPage';
 import Button from './components/common/Button';
 import Badge from './components/common/Badge';
 import EmptyState from './components/common/EmptyState';
@@ -304,10 +306,15 @@ export default function App() {
               path="saved"
               element={
                 <ProtectedRoute>
-                  <PlaceholderPage
-                    title="Saved Bookmarks"
-                    description="Your bookmarked academic notes and question papers will appear here."
-                  />
+                  <SavedResourcesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="my-uploads"
+              element={
+                <ProtectedRoute>
+                  <MyUploadsPage />
                 </ProtectedRoute>
               }
             />

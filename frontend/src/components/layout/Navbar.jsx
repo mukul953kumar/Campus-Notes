@@ -10,7 +10,8 @@ import {
   X,
   LogOut,
   Shield,
-  ChevronDown
+  ChevronDown,
+  UploadCloud
 } from 'lucide-react';
 import Button from '../common/Button';
 import { useAuth } from '../../context/AuthContext';
@@ -151,6 +152,14 @@ export default function Navbar() {
                         <Bookmark className="w-3.5 h-3.5 text-slate-400" />
                         <span>Saved Bookmarks</span>
                       </Link>
+                      <Link
+                        to="/my-uploads"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50"
+                      >
+                        <UploadCloud className="w-3.5 h-3.5 text-slate-400" />
+                        <span>My Uploads</span>
+                      </Link>
                       {isAdmin && (
                         <Link
                           to="/admin"
@@ -261,6 +270,14 @@ export default function Navbar() {
                 >
                   <User className="w-4 h-4 text-slate-500" />
                   My Profile ({user?.name})
+                </Link>
+                <Link
+                  to="/my-uploads"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-md"
+                >
+                  <UploadCloud className="w-4 h-4 text-slate-500" />
+                  My Uploads
                 </Link>
                 {isAdmin && (
                   <Link

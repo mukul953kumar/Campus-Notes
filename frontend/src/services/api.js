@@ -164,4 +164,32 @@ export const resourceService = {
       method: 'GET',
     });
   },
+
+  async getMyUploads(status) {
+    const queryString = status ? `?status=${status}` : '';
+    return apiRequest(`/resources/my-uploads${queryString}`, {
+      method: 'GET',
+    });
+  },
 };
+
+export const bookmarkService = {
+  async toggleBookmark(resourceId) {
+    return apiRequest(`/bookmarks/${resourceId}`, {
+      method: 'POST',
+    });
+  },
+
+  async getBookmarks() {
+    return apiRequest('/bookmarks', {
+      method: 'GET',
+    });
+  },
+
+  async getBookmarkIds() {
+    return apiRequest('/bookmarks/ids', {
+      method: 'GET',
+    });
+  },
+};
+

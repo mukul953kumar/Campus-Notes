@@ -274,9 +274,40 @@ const downloadResource = async (req, res, next) => {
   }
 };
 
+const getMyUploads = async (req, res, next) => {
+  try {
+    const { status } = req.query;
+
+    const filter = {
+      uploaderId: req.user._id,
+      isActive: true
+    };
+
+    if (status && ['pending', 'verified', 'rejected'].includes(status)) {
+      filter.verificationStatus = status;
+    }
+
+    const uploads = await Resource.find(filter)
+      .sort({ createdAt: -1 })
+      .populate('subjectId', 'name code shortName')
+      .populate('collegeId', 'name code')
+      .lean();
+
+    return sendResponse(res, {
+      statusCode: 200,
+      message: 'Student uploads retrieved successfully',
+      data: uploads
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getResources,
   getResourceById,
   uploadResource,
-  downloadResource
+  downloadResource,
+  getMyUploads
 };
+
