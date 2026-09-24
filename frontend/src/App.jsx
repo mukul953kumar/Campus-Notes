@@ -8,6 +8,7 @@ import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import ProfilePage from './pages/profile/ProfilePage';
 import UploadResourcePage from './pages/upload/UploadResourcePage';
+import ResourceLibraryPage from './pages/resources/ResourceLibraryPage';
 import Button from './components/common/Button';
 import Badge from './components/common/Badge';
 import EmptyState from './components/common/EmptyState';
@@ -265,15 +266,7 @@ export default function App() {
             <Route index element={<HomePage />} />
             
             {/* Public catalog routes */}
-            <Route
-              path="resources"
-              element={
-                <PlaceholderPage
-                  title="Academic Resource Library"
-                  description="Browse lecture notes, PYQs, and assignments across all branches and semesters."
-                />
-              }
-            />
+            <Route path="resources" element={<ResourceLibraryPage />} />
             <Route
               path="subjects"
               element={
