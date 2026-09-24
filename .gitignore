@@ -1,0 +1,41 @@
+# Workspace Documents & Customizations (Private)
+PRD.md
+Rules.md
+PHASES.md
+.agents/
+
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Environment Files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+
+# Keep example files tracked
+!.env.example
+
+# Production & Build Outputs
+dist/
+build/
+out/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Editor & OS Files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
