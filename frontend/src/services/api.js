@@ -9,7 +9,6 @@ export async function apiRequest(endpoint, options = {}) {
     ...options.headers,
   };
 
-  // If body is FormData, delete Content-Type to let browser set boundary
   if (options.body instanceof FormData) {
     delete headers['Content-Type'];
   }
@@ -30,6 +29,50 @@ export async function apiRequest(endpoint, options = {}) {
   }
 
   return data;
+}
+
+export function uploadWithProgress(endpoint, formData, onProgress) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    const token = localStorage.getItem('campus_notes_token');
+
+    xhr.open('POST', `${API_BASE_URL}${endpoint}`);
+
+    if (token) {
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    }
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable && onProgress) {
+        const percentCompleted = Math.round((event.loaded * 100) / event.total);
+        onProgress(percentCompleted);
+      }
+    };
+
+    xhr.onload = () => {
+      let data = {};
+      try {
+        data = JSON.parse(xhr.responseText);
+      } catch {
+        data = { message: xhr.statusText };
+      }
+
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(data);
+      } else {
+        const error = new Error(data.message || `Upload failed with status ${xhr.status}`);
+        error.status = xhr.status;
+        error.data = data;
+        reject(error);
+      }
+    };
+
+    xhr.onerror = () => {
+      reject(new Error('Network error during file upload. Please check your connection.'));
+    };
+
+    xhr.send(formData);
+  });
 }
 
 export const authService = {
@@ -64,5 +107,55 @@ export const authService = {
       method: 'PATCH',
       body: JSON.stringify(updates),
     });
+  },
+};
+
+export const academicService = {
+  async getBranches() {
+    return apiRequest('/academic/branches', {
+      method: 'GET',
+    });
+  },
+
+  async getSubjects(params = {}) {
+    const query = new URLSearchParams();
+    if (params.branch) query.append('branch', params.branch);
+    if (params.semester) query.append('semester', params.semester);
+    if (params.search) query.append('search', params.search);
+    const queryString = query.toString() ? `?${query.toString()}` : '';
+    return apiRequest(`/academic/subjects${queryString}`, {
+      method: 'GET',
+    });
+  },
+
+  async getSubjectById(id) {
+    return apiRequest(`/academic/subjects/${id}`, {
+      method: 'GET',
+    });
+  },
+};
+
+export const resourceService = {
+  async getResources(params = {}) {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([key, val]) => {
+      if (val !== undefined && val !== null && val !== '') {
+        query.append(key, val);
+      }
+    });
+    const queryString = query.toString() ? `?${query.toString()}` : '';
+    return apiRequest(`/resources${queryString}`, {
+      method: 'GET',
+    });
+  },
+
+  async getResourceById(id) {
+    return apiRequest(`/resources/${id}`, {
+      method: 'GET',
+    });
+  },
+
+  async uploadResource(formData, onProgress) {
+    return uploadWithProgress('/resources/upload', formData, onProgress);
   },
 };

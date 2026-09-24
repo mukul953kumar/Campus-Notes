@@ -7,6 +7,7 @@ import AdminRoute from './components/auth/AdminRoute';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import ProfilePage from './pages/profile/ProfilePage';
+import UploadResourcePage from './pages/upload/UploadResourcePage';
 import Button from './components/common/Button';
 import Badge from './components/common/Badge';
 import EmptyState from './components/common/EmptyState';
@@ -300,10 +301,7 @@ export default function App() {
               path="upload"
               element={
                 <ProtectedRoute>
-                  <PlaceholderPage
-                    title="Upload PDF Resource"
-                    description="Resource upload UI will be fully implemented in Phase 13."
-                  />
+                  <UploadResourcePage />
                 </ProtectedRoute>
               }
             />
