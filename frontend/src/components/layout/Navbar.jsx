@@ -24,7 +24,7 @@ export default function Navbar() {
 
   const navLinks = [
     { name: 'Browse Library', path: '/resources' },
-    { name: 'PYQ Papers', path: '/resources?type=pyq' },
+    { name: 'PYQ Papers', path: '/pyqs' },
     { name: 'Subjects', path: '/subjects' },
   ];
 

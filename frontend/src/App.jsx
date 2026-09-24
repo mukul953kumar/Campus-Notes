@@ -13,6 +13,9 @@ import ResourceDetailsPage from './pages/resources/ResourceDetailsPage';
 import SavedResourcesPage from './pages/student/SavedResourcesPage';
 import MyUploadsPage from './pages/student/MyUploadsPage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
+import PYQPage from './pages/pyq/PYQPage';
+import SubjectsPage from './pages/subjects/SubjectsPage';
+import SubjectDetailsPage from './pages/subjects/SubjectDetailsPage';
 import Button from './components/common/Button';
 import Badge from './components/common/Badge';
 import EmptyState from './components/common/EmptyState';
@@ -272,15 +275,9 @@ export default function App() {
             {/* Public catalog routes */}
             <Route path="resources" element={<ResourceLibraryPage />} />
             <Route path="resources/:id" element={<ResourceDetailsPage />} />
-            <Route
-              path="subjects"
-              element={
-                <PlaceholderPage
-                  title="Subject Catalog"
-                  description="List of all 22+ engineering subjects categorized by branch and semester."
-                />
-              }
-            />
+            <Route path="pyqs" element={<PYQPage />} />
+            <Route path="subjects" element={<SubjectsPage />} />
+            <Route path="subjects/:id" element={<SubjectDetailsPage />} />
 
             {/* Authentication routes */}
             <Route path="login" element={<LoginPage />} />
