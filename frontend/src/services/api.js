@@ -216,3 +216,36 @@ export const reportService = {
   },
 };
 
+export const adminService = {
+  async getMetrics() {
+    return apiRequest('/admin/metrics', {
+      method: 'GET',
+    });
+  },
+
+  async getQueue(params = {}) {
+    const query = new URLSearchParams();
+    if (params.branch) query.append('branch', params.branch);
+    if (params.semester) query.append('semester', params.semester);
+    if (params.resourceType) query.append('resourceType', params.resourceType);
+    const queryString = query.toString() ? `?${query.toString()}` : '';
+    return apiRequest(`/admin/queue${queryString}`, {
+      method: 'GET',
+    });
+  },
+
+  async verifyResource(id, action, rejectionReason = '') {
+    return apiRequest(`/admin/resources/${id}/verify`, {
+      method: 'PATCH',
+      body: JSON.stringify({ action, rejectionReason }),
+    });
+  },
+
+  async deleteResource(id) {
+    return apiRequest(`/admin/resources/${id}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+

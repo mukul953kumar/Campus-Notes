@@ -12,6 +12,7 @@ import ResourceLibraryPage from './pages/resources/ResourceLibraryPage';
 import ResourceDetailsPage from './pages/resources/ResourceDetailsPage';
 import SavedResourcesPage from './pages/student/SavedResourcesPage';
 import MyUploadsPage from './pages/student/MyUploadsPage';
+import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import Button from './components/common/Button';
 import Badge from './components/common/Badge';
 import EmptyState from './components/common/EmptyState';
@@ -324,10 +325,7 @@ export default function App() {
               path="admin"
               element={
                 <AdminRoute>
-                  <PlaceholderPage
-                    title="Admin Verification Portal"
-                    description="Review pending student uploads, verify syllabus matching, and manage flagged reports."
-                  />
+                  <AdminDashboardPage />
                 </AdminRoute>
               }
             />
