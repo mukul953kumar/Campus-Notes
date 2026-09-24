@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const AppError = require('./utils/appError');
 const errorHandler = require('./middleware/errorHandler');
 const healthRoutes = require('./routes/healthRoutes');
+const collegeRoutes = require('./routes/collegeRoutes');
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Mount routes
 app.use('/api/health', healthRoutes);
+app.use('/api/colleges', collegeRoutes);
 
 // Catch-all for undefined routes
 app.all('*', (req, res, next) => {
