@@ -234,8 +234,49 @@ const uploadResource = async (req, res, next) => {
   }
 };
 
+const downloadResource = async (req, res, next) => {
+  try {
+    const resource = await Resource.findById(req.params.id);
+
+    if (!resource || !resource.isActive) {
+      return next(new AppError('Resource not found or no longer available.', 404));
+    }
+
+    if (resource.verificationStatus !== 'verified') {
+      const isUploader = req.user && String(req.user._id) === String(resource.uploaderId);
+      const isAdmin = req.user && req.user.role === 'admin';
+      if (!isUploader && !isAdmin) {
+        return next(new AppError('This resource is currently pending administrative verification.', 403));
+      }
+    }
+
+    await Resource.findByIdAndUpdate(resource._id, {
+      $inc: { downloadsCount: 1 }
+    });
+
+    if (req.user && req.user._id) {
+      await User.findByIdAndUpdate(req.user._id, {
+        $inc: { 'stats.downloadsCount': 1 }
+      });
+    }
+
+    return sendResponse(res, {
+      statusCode: 200,
+      message: 'Download URL retrieved successfully',
+      data: {
+        fileUrl: resource.fileUrl,
+        fileName: `${resource.title.replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`,
+        downloadsCount: (resource.downloadsCount || 0) + 1
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getResources,
   getResourceById,
-  uploadResource
+  uploadResource,
+  downloadResource
 };

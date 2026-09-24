@@ -158,4 +158,10 @@ export const resourceService = {
   async uploadResource(formData, onProgress) {
     return uploadWithProgress('/resources/upload', formData, onProgress);
   },
+
+  async downloadResource(id) {
+    return apiRequest(`/resources/${id}/download`, {
+      method: 'GET',
+    });
+  },
 };

@@ -9,6 +9,7 @@ import RegisterPage from './pages/auth/RegisterPage';
 import ProfilePage from './pages/profile/ProfilePage';
 import UploadResourcePage from './pages/upload/UploadResourcePage';
 import ResourceLibraryPage from './pages/resources/ResourceLibraryPage';
+import ResourceDetailsPage from './pages/resources/ResourceDetailsPage';
 import Button from './components/common/Button';
 import Badge from './components/common/Badge';
 import EmptyState from './components/common/EmptyState';
@@ -267,6 +268,7 @@ export default function App() {
             
             {/* Public catalog routes */}
             <Route path="resources" element={<ResourceLibraryPage />} />
+            <Route path="resources/:id" element={<ResourceDetailsPage />} />
             <Route
               path="subjects"
               element={
