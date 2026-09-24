@@ -1,19 +1,21 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
 import MainLayout from './components/layout/MainLayout';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import AdminRoute from './components/auth/AdminRoute';
+import LoginPage from './pages/auth/LoginPage';
+import RegisterPage from './pages/auth/RegisterPage';
+import ProfilePage from './pages/profile/ProfilePage';
 import Button from './components/common/Button';
 import Badge from './components/common/Badge';
-import Input from './components/common/Input';
 import EmptyState from './components/common/EmptyState';
 import {
   Search,
   BookOpen,
   FileText,
   Upload,
-  CheckCircle2,
-  TrendingUp,
   Download,
-  GraduationCap,
   Sparkles,
   ArrowRight
 } from 'lucide-react';
@@ -255,66 +257,94 @@ function PlaceholderPage({ title, description }) {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<MainLayout />}>
-          <Route index element={<HomePage />} />
-          <Route
-            path="resources"
-            element={
-              <PlaceholderPage
-                title="Academic Resource Library"
-                description="Browse lecture notes, PYQs, and assignments across all branches and semesters."
-              />
-            }
-          />
-          <Route
-            path="subjects"
-            element={
-              <PlaceholderPage
-                title="Subject Catalog"
-                description="List of all 22+ engineering subjects categorized by branch and semester."
-              />
-            }
-          />
-          <Route
-            path="upload"
-            element={
-              <PlaceholderPage
-                title="Upload PDF Resource"
-                description="Resource upload workflow will be configured in Phase 13."
-              />
-            }
-          />
-          <Route
-            path="saved"
-            element={
-              <PlaceholderPage
-                title="Saved Bookmarks"
-                description="Your bookmarked academic notes and question papers will appear here."
-              />
-            }
-          />
-          <Route
-            path="login"
-            element={
-              <PlaceholderPage
-                title="College Domain Authentication"
-                description="Sign in with your @knit.ac.in student email account. Full auth flow begins in Phase 12."
-              />
-            }
-          />
-          <Route
-            path="*"
-            element={
-              <PlaceholderPage
-                title="Page Not Found"
-                description="The academic page you are looking for does not exist."
-              />
-            }
-          />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<MainLayout />}>
+            <Route index element={<HomePage />} />
+            
+            {/* Public catalog routes */}
+            <Route
+              path="resources"
+              element={
+                <PlaceholderPage
+                  title="Academic Resource Library"
+                  description="Browse lecture notes, PYQs, and assignments across all branches and semesters."
+                />
+              }
+            />
+            <Route
+              path="subjects"
+              element={
+                <PlaceholderPage
+                  title="Subject Catalog"
+                  description="List of all 22+ engineering subjects categorized by branch and semester."
+                />
+              }
+            />
+
+            {/* Authentication routes */}
+            <Route path="login" element={<LoginPage />} />
+            <Route path="register" element={<RegisterPage />} />
+
+            {/* Protected Student routes */}
+            <Route
+              path="profile"
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="upload"
+              element={
+                <ProtectedRoute>
+                  <PlaceholderPage
+                    title="Upload PDF Resource"
+                    description="Resource upload UI will be fully implemented in Phase 13."
+                  />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="saved"
+              element={
+                <ProtectedRoute>
+                  <PlaceholderPage
+                    title="Saved Bookmarks"
+                    description="Your bookmarked academic notes and question papers will appear here."
+                  />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Admin Moderation route */}
+            <Route
+              path="admin"
+              element={
+                <AdminRoute>
+                  <PlaceholderPage
+                    title="Admin Verification Portal"
+                    description="Review pending student uploads, verify syllabus matching, and manage flagged reports."
+                  />
+                </AdminRoute>
+              }
+            />
+
+            {/* 404 Route */}
+            <Route
+              path="*"
+              element={
+                <PlaceholderPage
+                  title="Page Not Found"
+                  description="The academic page you are looking for does not exist."
+                />
+              }
+            />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }

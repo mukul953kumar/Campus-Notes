@@ -1,19 +1,24 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  BookOpen,
+  GraduationCap,
   Search,
   Upload,
   Bookmark,
   User,
   Menu,
   X,
-  GraduationCap
+  LogOut,
+  Shield,
+  ChevronDown
 } from 'lucide-react';
 import Button from '../common/Button';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Navbar() {
+  const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const location = useLocation();
 
   const navLinks = [
@@ -70,7 +75,7 @@ export default function Navbar() {
           <div className="hidden sm:flex items-center gap-3">
             <Link
               to="/resources"
-              className="flex items-center gap-2 text-xs text-slate-400 bg-slate-100 hover:bg-slate-200/80 border border-slate-200/80 px-3 py-1.5 rounded-lg transition-colors cursor-pointer w-44 lg:w-56"
+              className="flex items-center gap-2 text-xs text-slate-400 bg-slate-100 hover:bg-slate-200/80 border border-slate-200/80 px-3 py-1.5 rounded-lg transition-colors cursor-pointer w-40 lg:w-52"
             >
               <Search className="w-3.5 h-3.5 text-slate-400" />
               <span className="truncate">Search notes, codes...</span>
@@ -79,7 +84,11 @@ export default function Navbar() {
               </kbd>
             </Link>
 
-            <Link to="/saved" title="Saved Resources" className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
+            <Link
+              to="/saved"
+              title="Saved Resources"
+              className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+            >
               <Bookmark className="w-4 h-4" />
             </Link>
 
@@ -89,11 +98,94 @@ export default function Navbar() {
               </Button>
             </Link>
 
-            <Link to="/login">
-              <Button size="sm" icon={User} variant="primary">
-                Sign In
-              </Button>
-            </Link>
+            {/* User Session Area */}
+            {isAuthenticated ? (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                  className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-100 transition-colors focus:outline-none cursor-pointer"
+                >
+                  <div className="w-8 h-8 rounded-full bg-blue-700 text-white flex items-center justify-center text-xs font-semibold">
+                    {user?.avatar ? (
+                      <img
+                        src={user.avatar}
+                        alt={user.name}
+                        className="w-full h-full rounded-full object-cover"
+                      />
+                    ) : (
+                      user?.name?.slice(0, 2).toUpperCase() || 'ST'
+                    )}
+                  </div>
+                  <span className="text-xs font-medium text-slate-800 max-w-[100px] truncate hidden md:inline">
+                    {user?.name?.split(' ')[0]}
+                  </span>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                </button>
+
+                {/* Dropdown Menu */}
+                {userDropdownOpen && (
+                  <div
+                    onMouseLeave={() => setUserDropdownOpen(false)}
+                    className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-slate-200 py-1.5 z-50 divide-y divide-slate-100"
+                  >
+                    <div className="px-4 py-2">
+                      <p className="text-xs font-semibold text-slate-900 truncate">{user?.name}</p>
+                      <p className="text-[11px] text-slate-500 truncate">{user?.email}</p>
+                    </div>
+
+                    <div className="py-1">
+                      <Link
+                        to="/profile"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50"
+                      >
+                        <User className="w-3.5 h-3.5 text-slate-400" />
+                        <span>Academic Profile</span>
+                      </Link>
+                      <Link
+                        to="/saved"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50"
+                      >
+                        <Bookmark className="w-3.5 h-3.5 text-slate-400" />
+                        <span>Saved Bookmarks</span>
+                      </Link>
+                      {isAdmin && (
+                        <Link
+                          to="/admin"
+                          onClick={() => setUserDropdownOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-xs text-indigo-700 hover:bg-indigo-50 font-medium"
+                        >
+                          <Shield className="w-3.5 h-3.5 text-indigo-600" />
+                          <span>Admin Portal</span>
+                        </Link>
+                      )}
+                    </div>
+
+                    <div className="py-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          logout();
+                        }}
+                        className="flex items-center gap-2 w-full px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 cursor-pointer"
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link to="/login">
+                <Button size="sm" icon={User} variant="primary">
+                  Sign In
+                </Button>
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -159,15 +251,50 @@ export default function Navbar() {
               <Upload className="w-4 h-4 text-slate-500" />
               Upload PDF Resource
             </Link>
-            <Link
-              to="/login"
-              onClick={() => setMobileMenuOpen(false)}
-              className="mt-1"
-            >
-              <Button size="md" variant="primary" className="w-full">
-                Sign In with College Email
-              </Button>
-            </Link>
+
+            {isAuthenticated ? (
+              <>
+                <Link
+                  to="/profile"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-md"
+                >
+                  <User className="w-4 h-4 text-slate-500" />
+                  My Profile ({user?.name})
+                </Link>
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-50 rounded-md"
+                  >
+                    <Shield className="w-4 h-4 text-indigo-600" />
+                    Admin Portal
+                  </Link>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    logout();
+                  }}
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 rounded-md text-left"
+                >
+                  <LogOut className="w-4 h-4 text-rose-500" />
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="mt-1"
+              >
+                <Button size="md" variant="primary" className="w-full">
+                  Sign In with College Email
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       )}
