@@ -1,6 +1,10 @@
 const Resource = require('../models/Resource');
+const Subject = require('../models/Subject');
+const User = require('../models/User');
 const AppError = require('../utils/appError');
 const { sendResponse } = require('../utils/apiResponse');
+const { uploadFile } = require('../services/storageService');
+const { verifyPdfMagicBytes, computeFileHash } = require('../utils/fileValidator');
 
 const getResources = async (req, res, next) => {
   try {
@@ -103,7 +107,100 @@ const getResourceById = async (req, res, next) => {
   }
 };
 
+const uploadResource = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return next(new AppError('Please select a PDF document to upload.', 400));
+    }
+
+    verifyPdfMagicBytes(req.file.buffer);
+
+    const fileHash = computeFileHash(req.file.buffer);
+
+    const duplicate = await Resource.findOne({
+      fileHash,
+      collegeId: req.user.collegeId,
+      isActive: true
+    });
+
+    if (duplicate) {
+      return next(new AppError('Duplicate document: This study material has already been uploaded for your college.', 409));
+    }
+
+    const {
+      title,
+      description = '',
+      branch,
+      semester,
+      subjectId,
+      unit,
+      resourceType,
+      examYear,
+      examType = '',
+      tags
+    } = req.body;
+
+    if (!title || !subjectId || !resourceType) {
+      return next(new AppError('Title, subjectId, and resourceType are required.', 400));
+    }
+
+    const subject = await Subject.findById(subjectId);
+    if (!subject || !subject.isActive) {
+      return next(new AppError('Selected academic subject is invalid or not available.', 404));
+    }
+
+    const storageResult = await uploadFile({
+      buffer: req.file.buffer,
+      originalName: req.file.originalname,
+      mimeType: 'application/pdf',
+      folder: 'academic-resources'
+    });
+
+    const parsedTags = Array.isArray(tags)
+      ? tags
+      : (typeof tags === 'string' ? tags.split(',').map((t) => t.trim()).filter(Boolean) : []);
+
+    const resource = await Resource.create({
+      title,
+      description,
+      collegeId: req.user.collegeId,
+      branch: branch || subject.branch,
+      semester: Number(semester) || subject.semester,
+      subjectId,
+      unit: unit ? Number(unit) : null,
+      resourceType,
+      fileUrl: storageResult.fileUrl,
+      fileKey: storageResult.fileKey,
+      fileSize: storageResult.fileSize,
+      fileHash,
+      uploaderId: req.user._id,
+      verificationStatus: 'pending',
+      examYear: examYear ? Number(examYear) : null,
+      examType,
+      tags: parsedTags
+    });
+
+    await User.findByIdAndUpdate(req.user._id, {
+      $inc: { 'stats.uploadsCount': 1 }
+    });
+
+    const populatedResource = await Resource.findById(resource._id)
+      .populate('subjectId', 'name code shortName')
+      .populate('uploaderId', 'name avatar role')
+      .populate('collegeId', 'name code');
+
+    return sendResponse(res, {
+      statusCode: 201,
+      message: 'Study material uploaded successfully. It will be verified by moderators shortly.',
+      data: populatedResource
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getResources,
-  getResourceById
+  getResourceById,
+  uploadResource
 };
