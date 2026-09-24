@@ -3,10 +3,11 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { resourceService } from '../../services/api';
 import ResourceRow from '../../components/resources/ResourceRow';
 import Pagination from '../../components/common/Pagination';
+import SearchInput from '../../components/common/SearchInput';
+import FilterToolbar from '../../components/resources/FilterToolbar';
 import Loader from '../../components/common/Loader';
 import EmptyState from '../../components/common/EmptyState';
 import Button from '../../components/common/Button';
-import Badge from '../../components/common/Badge';
 import {
   BookOpen,
   Filter,
@@ -16,7 +17,9 @@ import {
   HelpCircle,
   FileCheck,
   Code,
-  FileText
+  FileText,
+  SearchX,
+  X
 } from 'lucide-react';
 
 const TYPE_TABS = [
@@ -31,9 +34,12 @@ const TYPE_TABS = [
 export default function ResourceLibraryPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
+  const searchQuery = searchParams.get('q') || searchParams.get('search') || '';
   const currentType = searchParams.get('type') || '';
   const currentBranch = searchParams.get('branch') || '';
   const currentSemester = searchParams.get('semester') || '';
+  const currentUnit = searchParams.get('unit') || '';
+  const currentSortBy = searchParams.get('sortBy') || 'recent';
   const currentPage = Number(searchParams.get('page')) || 1;
 
   const [resources, setResources] = useState([]);
@@ -55,9 +61,12 @@ export default function ResourceLibraryPage() {
     setErrorMessage('');
     try {
       const response = await resourceService.getResources({
+        search: searchQuery,
         resourceType: currentType,
         branch: currentBranch,
         semester: currentSemester,
+        unit: currentUnit,
+        sortBy: currentSortBy,
         page: currentPage,
         limit: 20,
       });
@@ -73,11 +82,23 @@ export default function ResourceLibraryPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [currentType, currentBranch, currentSemester, currentPage]);
+  }, [searchQuery, currentType, currentBranch, currentSemester, currentUnit, currentSortBy, currentPage]);
 
   useEffect(() => {
     fetchResources();
   }, [fetchResources]);
+
+  const handleSearchChange = (term) => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (term.trim()) {
+      nextParams.set('q', term.trim());
+    } else {
+      nextParams.delete('q');
+      nextParams.delete('search');
+    }
+    nextParams.set('page', '1');
+    setSearchParams(nextParams);
+  };
 
   const handleTabChange = (typeId) => {
     const nextParams = new URLSearchParams(searchParams);
@@ -88,6 +109,28 @@ export default function ResourceLibraryPage() {
     }
     nextParams.set('page', '1');
     setSearchParams(nextParams);
+  };
+
+  const handleFilterChange = (key, value) => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (value) {
+      nextParams.set(key, value);
+    } else {
+      nextParams.delete(key);
+    }
+    nextParams.set('page', '1');
+    setSearchParams(nextParams);
+  };
+
+  const handleResetFilters = () => {
+    const nextParams = new URLSearchParams();
+    if (searchQuery) nextParams.set('q', searchQuery);
+    if (currentType) nextParams.set('type', currentType);
+    setSearchParams(nextParams);
+  };
+
+  const handleClearAll = () => {
+    setSearchParams({});
   };
 
   const handlePageChange = (newPage) => {
@@ -106,11 +149,9 @@ export default function ResourceLibraryPage() {
     });
   };
 
-  const clearFilters = () => {
-    setSearchParams({});
-  };
-
-  const hasActiveFilters = Boolean(currentType || currentBranch || currentSemester);
+  const hasActiveFilters = Boolean(
+    searchQuery || currentType || currentBranch || currentSemester || currentUnit || (currentSortBy && currentSortBy !== 'recent')
+  );
 
   return (
     <div className="space-y-6 py-2">
@@ -122,7 +163,7 @@ export default function ResourceLibraryPage() {
             Academic Resource Library
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Peer-reviewed syllabus notes, previous year exam papers, and practical files for KNIT Sultanpur.
+            Search and filter notes, previous year question papers, and lab files across all semesters.
           </p>
         </div>
 
@@ -133,8 +174,17 @@ export default function ResourceLibraryPage() {
         </Link>
       </div>
 
+      {/* Search Input Bar */}
+      <div className="w-full">
+        <SearchInput
+          value={searchQuery}
+          onChange={handleSearchChange}
+          placeholder="Search by title, subject code (e.g. DBMS, BCS-501, OS), or unit topic..."
+        />
+      </div>
+
       {/* Resource Type Tabs */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-slate-200 scrollbar-none">
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-slate-200 scrollbar-none">
         {TYPE_TABS.map((tab) => {
           const isActive = currentType === tab.id;
           const TabIcon = tab.icon;
@@ -157,12 +207,34 @@ export default function ResourceLibraryPage() {
         })}
       </div>
 
-      {/* Active Filter Indicators */}
+      {/* Filter Toolbar (Branch, Semester, Unit, SortBy) */}
+      <FilterToolbar
+        branch={currentBranch}
+        semester={currentSemester}
+        unit={currentUnit}
+        sortBy={currentSortBy}
+        onFilterChange={handleFilterChange}
+        onResetFilters={handleResetFilters}
+      />
+
+      {/* Active Filter Badges */}
       {hasActiveFilters && (
-        <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
-          <span className="text-slate-400 font-medium">Active filters:</span>
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span className="text-slate-400 font-medium">Applied:</span>
+          {searchQuery && (
+            <span className="bg-blue-50 text-blue-800 px-2 py-0.5 rounded-full border border-blue-200 flex items-center gap-1 font-medium">
+              Search: "{searchQuery}"
+              <button
+                type="button"
+                onClick={() => handleSearchChange('')}
+                className="hover:text-blue-950 cursor-pointer"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          )}
           {currentType && (
-            <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200 font-medium flex items-center gap-1">
+            <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full border border-slate-200 font-medium">
               Type: {currentType.toUpperCase()}
             </span>
           )}
@@ -173,13 +245,23 @@ export default function ResourceLibraryPage() {
           )}
           {currentSemester && (
             <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full border border-slate-200 font-medium">
-              Semester {currentSemester}
+              Sem {currentSemester}
+            </span>
+          )}
+          {currentUnit && (
+            <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full border border-slate-200 font-medium">
+              Unit {currentUnit}
+            </span>
+          )}
+          {currentSortBy && currentSortBy !== 'recent' && (
+            <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full border border-slate-200 font-medium">
+              Sort: {currentSortBy === 'popular' ? 'Downloads' : 'Title'}
             </span>
           )}
           <button
             type="button"
-            onClick={clearFilters}
-            className="text-xs text-rose-600 hover:text-rose-700 hover:underline cursor-pointer ml-1"
+            onClick={handleClearAll}
+            className="text-xs text-rose-600 hover:text-rose-700 hover:underline cursor-pointer ml-1 font-medium"
           >
             Clear all
           </button>
@@ -196,13 +278,15 @@ export default function ResourceLibraryPage() {
         </div>
       )}
 
-      {/* Resource Dense List Container */}
+      {/* Dense Row List Container */}
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
         
         {/* List Header Bar */}
         <div className="px-4 sm:px-6 py-3 bg-slate-50/70 border-b border-slate-200 flex items-center justify-between text-xs text-slate-500">
           <span className="font-semibold text-slate-700">
-            {isLoading ? 'Fetching resources...' : `${meta.total || 0} Materials Available`}
+            {isLoading
+              ? 'Searching resources...'
+              : `${meta.total || 0} ${meta.total === 1 ? 'Material' : 'Materials'} Found`}
           </span>
           <button
             type="button"
@@ -218,20 +302,22 @@ export default function ResourceLibraryPage() {
         {/* Content Body */}
         {isLoading ? (
           <div className="py-16">
-            <Loader message="Loading academic repository..." size="md" />
+            <Loader message="Searching academic repository..." size="md" />
           </div>
         ) : resources.length === 0 ? (
           <div className="p-8">
             <EmptyState
-              icon={FolderOpen}
-              title="No study materials found"
+              icon={searchQuery ? SearchX : FolderOpen}
+              title={searchQuery ? `No matches for "${searchQuery}"` : 'No study materials found'}
               description={
-                hasActiveFilters
-                  ? 'No documents match the selected filters. Try broadening your criteria or reset filters.'
+                searchQuery
+                  ? 'Try searching with subject acronyms (e.g. DBMS, OS, DAA), course codes (e.g. BCS-501), or check for spelling errors.'
+                  : hasActiveFilters
+                  ? 'No materials match the selected filters. Try broadening your criteria or reset the filters.'
                   : 'Be the first to upload lecture notes or PYQs for this category.'
               }
-              actionLabel={hasActiveFilters ? 'Clear Filters' : 'Upload First Note'}
-              onAction={hasActiveFilters ? clearFilters : () => (window.location.href = '/upload')}
+              actionLabel={hasActiveFilters ? 'Reset Filters' : 'Upload Study Material'}
+              onAction={hasActiveFilters ? handleClearAll : () => (window.location.href = '/upload')}
             />
           </div>
         ) : (

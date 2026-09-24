@@ -9,16 +9,20 @@ const { verifyPdfMagicBytes, computeFileHash } = require('../utils/fileValidator
 const getResources = async (req, res, next) => {
   try {
     const {
+      search,
+      q,
       branch,
       semester,
       subjectId,
       unit,
       resourceType,
       examYear,
+      sortBy = 'recent',
       page = 1,
       limit = 20
     } = req.query;
 
+    const searchTerm = (search || q || '').trim();
     const pageNum = Math.max(1, parseInt(page, 10) || 1);
     const limitNum = Math.min(50, Math.max(1, parseInt(limit, 10) || 20));
     const skip = (pageNum - 1) * limitNum;
@@ -47,9 +51,40 @@ const getResources = async (req, res, next) => {
       if (!isNaN(yearNum)) filter.examYear = yearNum;
     }
 
+    if (searchTerm) {
+      const matchedSubjects = await Subject.find({
+        $or: [
+          { name: { $regex: searchTerm, $options: 'i' } },
+          { code: { $regex: searchTerm, $options: 'i' } },
+          { shortName: { $regex: searchTerm, $options: 'i' } }
+        ]
+      }).select('_id');
+
+      const matchedSubjectIds = matchedSubjects.map((s) => s._id);
+
+      const searchConditions = [
+        { title: { $regex: searchTerm, $options: 'i' } },
+        { description: { $regex: searchTerm, $options: 'i' } },
+        { tags: { $regex: searchTerm, $options: 'i' } }
+      ];
+
+      if (matchedSubjectIds.length > 0) {
+        searchConditions.push({ subjectId: { $in: matchedSubjectIds } });
+      }
+
+      filter.$or = searchConditions;
+    }
+
+    let sort = { createdAt: -1 };
+    if (sortBy === 'popular' || sortBy === 'downloads') {
+      sort = { downloadsCount: -1, createdAt: -1 };
+    } else if (sortBy === 'title') {
+      sort = { title: 1 };
+    }
+
     const [resources, total] = await Promise.all([
       Resource.find(filter)
-        .sort({ createdAt: -1 })
+        .sort(sort)
         .skip(skip)
         .limit(limitNum)
         .populate('subjectId', 'name code shortName')
