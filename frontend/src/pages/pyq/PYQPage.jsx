@@ -179,34 +179,26 @@ export default function PYQPage() {
   return (
     <div className="space-y-8 py-4">
       
-      {/* Hero Header Banner */}
-      <div className="bg-gradient-to-r from-purple-900 via-indigo-950 to-slate-900 text-white rounded-2xl p-6 sm:p-8 shadow-sm space-y-4">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-purple-200 text-xs font-semibold backdrop-blur-xs">
-          <GraduationCap className="w-4 h-4 text-purple-300" />
-          <span>Official Examination Papers Archive</span>
-        </div>
-
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-              Previous Year Question Papers (PYQ)
-            </h1>
-            <p className="text-xs sm:text-sm text-purple-200 mt-1.5 max-w-2xl leading-relaxed">
-              Solve real End-Semester and Sessional examination papers from past academic years of KNIT Sultanpur.
-            </p>
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="inline-flex items-center gap-1.5 text-xs text-purple-800 bg-purple-50/90 px-3 py-1 rounded-full font-semibold mb-2 border border-purple-200">
+            <GraduationCap className="w-3.5 h-3.5 text-purple-700" />
+            <span>Official Examination Papers Archive</span>
           </div>
-
-          <Link to="/upload" className="shrink-0 self-start sm:self-auto">
-            <Button
-              variant="outline"
-              size="md"
-              icon={Upload}
-              className="bg-white text-purple-900 hover:bg-purple-50 border-white font-bold cursor-pointer"
-            >
-              Upload PYQ Paper
-            </Button>
-          </Link>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            Previous Year Question Papers (PYQ)
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl leading-relaxed">
+            Solve real End-Semester and Sessional examination papers from past academic years of KNIT Sultanpur.
+          </p>
         </div>
+
+        <Link to="/upload" className="shrink-0 self-start sm:self-auto">
+          <Button variant="primary" size="md" icon={Upload}>
+            Upload PYQ Paper
+          </Button>
+        </Link>
       </div>
 
       {/* Unified PYQ Search & Discovery Console */}
