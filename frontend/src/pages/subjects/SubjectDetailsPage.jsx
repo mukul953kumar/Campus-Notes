@@ -5,17 +5,14 @@ import ResourceRow from '../../components/resources/ResourceRow';
 import Loader from '../../components/common/Loader';
 import EmptyState from '../../components/common/EmptyState';
 import Button from '../../components/common/Button';
-import Badge from '../../components/common/Badge';
 import { useAuth } from '../../context/AuthContext';
 import {
   ArrowLeft,
   BookOpen,
   Layers,
   Upload,
-  Calendar,
   HelpCircle,
-  FileText,
-  GraduationCap
+  FolderOpen
 } from 'lucide-react';
 
 export default function SubjectDetailsPage() {
@@ -114,31 +111,33 @@ export default function SubjectDetailsPage() {
   ];
 
   return (
-    <div className="space-y-6 py-2">
+    <div className="space-y-8 py-4">
       
       {/* Top Navigation */}
-      <Link
-        to="/subjects"
-        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-blue-700 transition-colors"
-      >
-        <ArrowLeft className="w-3.5 h-3.5" />
-        <span>Back to Subject Catalog</span>
-      </Link>
+      <div>
+        <Link
+          to="/subjects"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-blue-700 transition-colors"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Back to Subject Catalog</span>
+        </Link>
+      </div>
 
-      {/* Subject Header Banner */}
+      {/* Subject Header Banner Card */}
       <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
-          <div className="space-y-2 max-w-2xl">
+          <div className="space-y-3 max-w-2xl">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="font-mono text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+              <span className="font-mono text-xs font-bold text-blue-900 bg-blue-50 px-2.5 py-0.5 rounded-lg border border-blue-200">
                 {subject.code}
               </span>
               {subject.shortName && (
-                <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
+                <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-lg border border-slate-200">
                   {subject.shortName}
                 </span>
               )}
-              <span className="text-xs text-slate-500">
+              <span className="text-xs font-medium text-slate-500">
                 Semester {subject.semester} • {subject.branch}
               </span>
             </div>
@@ -148,7 +147,7 @@ export default function SubjectDetailsPage() {
             </h1>
 
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-              {subject.description || 'Access unit-by-unit lecture notes, previous year question papers, and solved problems for KNIT curriculum.'}
+              {subject.description || 'Access unit-by-unit lecture notes, previous year question papers, and solved problems curated for the KNIT curriculum.'}
             </p>
           </div>
 
@@ -160,76 +159,78 @@ export default function SubjectDetailsPage() {
         </div>
       </div>
 
-      {/* Unit Selection Tabs */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-slate-200 scrollbar-none">
-        <button
-          type="button"
-          onClick={() => setActiveUnit('')}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap cursor-pointer ${
-            activeUnit === ''
-              ? 'bg-blue-700 text-white font-bold shadow-xs'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 bg-white border border-slate-200'
-          }`}
-        >
-          <Layers className="w-3.5 h-3.5" />
-          <span>All Units</span>
-        </button>
+      {/* Unit Selection Navigation Segment */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+          <button
+            type="button"
+            onClick={() => setActiveUnit('')}
+            className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs rounded-xl transition-all whitespace-nowrap cursor-pointer ${
+              activeUnit === ''
+                ? 'bg-blue-700 text-white font-bold shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 bg-slate-50 border border-slate-200 font-medium'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>All Units</span>
+          </button>
 
-        {unitsList.map((u) => {
-          const isActive = activeUnit === String(u.unitNumber);
-          return (
-            <button
-              key={u.unitNumber}
-              type="button"
-              onClick={() => setActiveUnit(String(u.unitNumber))}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap cursor-pointer ${
-                isActive
-                  ? 'bg-blue-700 text-white font-bold shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 bg-white border border-slate-200'
-              }`}
-            >
-              <span>Unit {u.unitNumber}</span>
-            </button>
-          );
-        })}
+          {unitsList.map((u) => {
+            const isActive = activeUnit === String(u.unitNumber);
+            return (
+              <button
+                key={u.unitNumber}
+                type="button"
+                onClick={() => setActiveUnit(String(u.unitNumber))}
+                className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs rounded-xl transition-all whitespace-nowrap cursor-pointer ${
+                  isActive
+                    ? 'bg-blue-700 text-white font-bold shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 bg-slate-50 border border-slate-200 font-medium'
+                }`}
+              >
+                <span>Unit {u.unitNumber}</span>
+              </button>
+            );
+          })}
 
-        <button
-          type="button"
-          onClick={() => setActiveUnit('pyq')}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap cursor-pointer ${
-            activeUnit === 'pyq'
-              ? 'bg-purple-700 text-white font-bold shadow-xs'
-              : 'text-purple-700 hover:bg-purple-50 bg-white border border-purple-200'
-          }`}
-        >
-          <HelpCircle className="w-3.5 h-3.5" />
-          <span>PYQs Archive</span>
-        </button>
+          <button
+            type="button"
+            onClick={() => setActiveUnit('pyq')}
+            className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs rounded-xl transition-all whitespace-nowrap cursor-pointer ${
+              activeUnit === 'pyq'
+                ? 'bg-purple-700 text-white font-bold shadow-xs'
+                : 'text-purple-700 hover:bg-purple-50 bg-purple-50/50 border border-purple-200 font-medium'
+            }`}
+          >
+            <HelpCircle className="w-3.5 h-3.5" />
+            <span>PYQs Archive</span>
+          </button>
+        </div>
       </div>
 
-      {/* Materials List */}
+      {/* Materials List Card */}
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
-        <div className="px-4 sm:px-6 py-3 bg-slate-50/70 border-b border-slate-200 flex items-center justify-between text-xs text-slate-600 font-medium">
-          <span>
+        <div className="px-5 sm:px-6 py-3.5 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between text-xs text-slate-600">
+          <span className="font-bold text-slate-900 text-sm">
             {isLoadingResources
-              ? 'Loading resources...'
+              ? 'Loading course materials...'
               : `${resources.length} ${resources.length === 1 ? 'Material' : 'Materials'} Found`}
           </span>
-          <span className="text-[11px] text-slate-400">
-            {activeUnit === 'pyq' ? 'Previous Year Exam Papers' : activeUnit ? `Unit ${activeUnit} Notes` : 'Complete Course Notes'}
+          <span className="text-[11px] text-slate-500 font-medium">
+            {activeUnit === 'pyq' ? 'Previous Year Exam Papers' : activeUnit ? `Unit ${activeUnit} Notes` : 'Complete Course Repository'}
           </span>
         </div>
 
         {isLoadingResources ? (
-          <div className="py-16">
+          <div className="py-20">
             <Loader message="Loading study materials..." size="md" />
           </div>
         ) : resources.length === 0 ? (
-          <div className="p-8">
+          <div className="p-8 sm:p-12">
             <EmptyState
               icon={BookOpen}
               title={`No materials uploaded for ${activeUnit === 'pyq' ? 'PYQ' : activeUnit ? `Unit ${activeUnit}` : 'this subject'} yet`}
-              description="Be the first student to upload handwritten notes or previous year papers for this syllabus section."
+              description="Be the first student to upload handwritten lecture notes or previous year papers for this syllabus section."
               actionLabel="Upload Notes"
               onAction={() => (window.location.href = '/upload')}
             />

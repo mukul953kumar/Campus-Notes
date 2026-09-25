@@ -8,18 +8,17 @@ import SearchInput from '../../components/common/SearchInput';
 import Loader from '../../components/common/Loader';
 import EmptyState from '../../components/common/EmptyState';
 import Button from '../../components/common/Button';
-import Badge from '../../components/common/Badge';
 import Select from '../../components/common/Select';
 import {
   HelpCircle,
   Calendar,
-  Filter,
   Upload,
   RefreshCw,
-  FolderOpen,
   SearchX,
-  FileText,
-  GraduationCap
+  GraduationCap,
+  SlidersHorizontal,
+  ChevronDown,
+  X
 } from 'lucide-react';
 
 const YEAR_OPTIONS = ['', '2024', '2023', '2022', '2021', '2020', '2019'];
@@ -69,6 +68,7 @@ export default function PYQPage() {
   const [meta, setMeta] = useState({ page: 1, limit: 20, total: 0, totalPages: 1 });
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isFilterExpandedMobile, setIsFilterExpandedMobile] = useState(false);
 
   const fetchPYQs = useCallback(async () => {
     setIsLoading(true);
@@ -173,10 +173,10 @@ export default function PYQPage() {
   );
 
   return (
-    <div className="space-y-6 py-2">
+    <div className="space-y-8 py-4">
       
-      {/* Hero Banner for PYQ Hub */}
-      <div className="bg-gradient-to-r from-purple-900 to-indigo-950 text-white rounded-2xl p-6 sm:p-8 shadow-sm space-y-4">
+      {/* Hero Header Banner */}
+      <div className="bg-gradient-to-r from-purple-900 via-indigo-950 to-slate-900 text-white rounded-2xl p-6 sm:p-8 shadow-sm space-y-4">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-purple-200 text-xs font-semibold backdrop-blur-xs">
           <GraduationCap className="w-4 h-4 text-purple-300" />
           <span>Official Examination Papers Archive</span>
@@ -197,7 +197,7 @@ export default function PYQPage() {
               variant="outline"
               size="md"
               icon={Upload}
-              className="bg-white text-purple-900 hover:bg-purple-50 border-white font-bold"
+              className="bg-white text-purple-900 hover:bg-purple-50 border-white font-bold cursor-pointer"
             >
               Upload PYQ Paper
             </Button>
@@ -205,92 +205,154 @@ export default function PYQPage() {
         </div>
       </div>
 
-      {/* Search Bar */}
-      <SearchInput
-        value={searchQuery}
-        onChange={handleSearchChange}
-        placeholder="Search PYQ by subject (e.g. DBMS, DAA, OS, BCS-501)..."
-      />
-
-      {/* Exam Type Tabs & Year Pills */}
-      <div className="space-y-3">
-        {/* Exam Type Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-slate-200 scrollbar-none">
-          {EXAM_TYPE_TABS.map((tab) => {
-            const isActive = currentExamType === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => handleExamTypeChange(tab.id)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap cursor-pointer ${
-                  isActive
-                    ? 'bg-purple-700 text-white font-bold shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 bg-white border border-slate-200'
-                }`}
-              >
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
+      {/* Unified PYQ Search & Discovery Console */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-5">
+        
+        {/* Search Input */}
+        <div>
+          <SearchInput
+            value={searchQuery}
+            onChange={handleSearchChange}
+            placeholder="Search PYQ by subject (e.g. DBMS, DAA, OS, BCS-501)..."
+          />
         </div>
 
-        {/* Filter Strip: Year Selector + Branch + Semester */}
-        <div className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-xs flex flex-wrap items-center gap-3">
+        {/* Exam Type Segmented Tabs */}
+        <div>
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            {EXAM_TYPE_TABS.map((tab) => {
+              const isActive = currentExamType === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => handleExamTypeChange(tab.id)}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-2 text-xs rounded-xl transition-all whitespace-nowrap cursor-pointer ${
+                    isActive
+                      ? 'bg-purple-700 text-white font-bold shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 bg-slate-50 border border-slate-200/80 font-medium'
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Detailed Academic Filters & Year Pills */}
+        <div className="pt-2 border-t border-slate-100">
           
-          {/* Exam Year Pills */}
-          <div className="flex items-center gap-1 overflow-x-auto">
-            <span className="text-xs font-semibold text-slate-500 mr-1 flex items-center gap-1">
-              <Calendar className="w-3.5 h-3.5 text-slate-400" />
-              <span>Year:</span>
-            </span>
-            {YEAR_OPTIONS.map((yr) => (
+          {/* Mobile Filter Toggle */}
+          <div className="flex sm:hidden items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setIsFilterExpandedMobile(!isFilterExpandedMobile)}
+              className="flex items-center gap-2 text-xs font-semibold text-slate-700 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5 text-purple-700" />
+              <span>Filter by Year & Branch</span>
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isFilterExpandedMobile ? 'rotate-180' : ''}`} />
+            </button>
+
+            {hasActiveFilters && (
               <button
-                key={yr || 'all'}
                 type="button"
-                onClick={() => handleYearChange(yr)}
-                className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer ${
-                  currentExamYear === yr
-                    ? 'bg-purple-100 text-purple-800 font-bold border border-purple-200'
-                    : 'text-slate-600 hover:bg-slate-100 border border-transparent'
-                }`}
+                onClick={handleClearFilters}
+                className="text-xs text-rose-600 font-semibold hover:underline"
               >
-                {yr || 'All Years'}
+                Reset
               </button>
-            ))}
+            )}
           </div>
 
-          <div className="h-4 w-px bg-slate-200 hidden sm:block"></div>
+          <div className={`${isFilterExpandedMobile ? 'block' : 'hidden'} sm:flex sm:flex-wrap sm:items-center sm:justify-between gap-4 pt-3 sm:pt-0`}>
+            
+            {/* Exam Year Selector */}
+            <div className="flex items-center gap-1.5 overflow-x-auto py-1">
+              <span className="text-xs font-semibold text-slate-500 mr-1 flex items-center gap-1 shrink-0">
+                <Calendar className="w-3.5 h-3.5 text-purple-700" />
+                <span>Year:</span>
+              </span>
+              {YEAR_OPTIONS.map((yr) => (
+                <button
+                  key={yr || 'all'}
+                  type="button"
+                  onClick={() => handleYearChange(yr)}
+                  className={`px-3 py-1.5 text-xs rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
+                    currentExamYear === yr
+                      ? 'bg-purple-100 text-purple-900 font-bold border border-purple-300'
+                      : 'text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-200/80 font-medium'
+                  }`}
+                >
+                  {yr || 'All Years'}
+                </button>
+              ))}
+            </div>
 
-          {/* Branch & Semester Dropdowns */}
-          <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-            <Select
-              placeholder=""
-              value={currentBranch}
-              onChange={(e) => handleParamChange('branch', e.target.value)}
-              options={BRANCH_OPTIONS}
-              className="text-xs py-1"
-            />
-            <Select
-              placeholder=""
-              value={currentSemester}
-              onChange={(e) => handleParamChange('semester', e.target.value)}
-              options={SEMESTER_OPTIONS}
-              className="text-xs py-1"
-            />
+            {/* Branch & Semester Dropdowns */}
+            <div className="flex items-center gap-2 min-w-[260px] sm:min-w-[340px] pt-2 sm:pt-0">
+              <Select
+                placeholder=""
+                value={currentBranch}
+                onChange={(e) => handleParamChange('branch', e.target.value)}
+                options={BRANCH_OPTIONS}
+                className="text-xs py-2"
+              />
+              <Select
+                placeholder=""
+                value={currentSemester}
+                onChange={(e) => handleParamChange('semester', e.target.value)}
+                options={SEMESTER_OPTIONS}
+                className="text-xs py-2"
+              />
+            </div>
+
           </div>
+        </div>
 
-          {hasActiveFilters && (
+        {/* Active Filters Bar */}
+        {hasActiveFilters && (
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 text-xs">
+            <span className="text-slate-400 font-semibold">Active Criteria:</span>
+            {searchQuery && (
+              <span className="bg-purple-50 text-purple-800 px-2.5 py-1 rounded-lg border border-purple-200 flex items-center gap-1.5 font-medium">
+                <span>Search: "{searchQuery}"</span>
+                <button type="button" onClick={() => handleSearchChange('')} className="hover:text-purple-950 cursor-pointer">
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+            {currentExamType && (
+              <span className="bg-slate-100 text-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 font-medium">
+                Type: {currentExamType}
+              </span>
+            )}
+            {currentExamYear && (
+              <span className="bg-purple-50 text-purple-800 px-2.5 py-1 rounded-lg border border-purple-200 font-medium">
+                Year: {currentExamYear}
+              </span>
+            )}
+            {currentBranch && (
+              <span className="bg-slate-100 text-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 font-medium">
+                Branch: {currentBranch}
+              </span>
+            )}
+            {currentSemester && (
+              <span className="bg-slate-100 text-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 font-medium">
+                Sem {currentSemester}
+              </span>
+            )}
             <button
               type="button"
               onClick={handleClearFilters}
-              className="text-xs text-rose-600 font-medium hover:underline cursor-pointer ml-auto"
+              className="text-xs text-rose-600 hover:text-rose-700 font-semibold hover:underline cursor-pointer ml-1"
             >
-              Reset Filters
+              Clear all
             </button>
-          )}
+          </div>
+        )}
 
-        </div>
       </div>
 
       {/* Error Message */}
@@ -303,18 +365,21 @@ export default function PYQPage() {
         </div>
       )}
 
-      {/* PYQ Papers Dense List */}
+      {/* PYQ Papers Dense List Card */}
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
-        <div className="px-4 sm:px-6 py-3 bg-slate-50/70 border-b border-slate-200 flex items-center justify-between text-xs text-slate-600 font-medium">
-          <span>
-            {isLoading
-              ? 'Loading PYQ papers...'
-              : `${pyqs.length} Question ${pyqs.length === 1 ? 'Paper' : 'Papers'} Available`}
-          </span>
+        <div className="px-5 sm:px-6 py-3.5 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between text-xs text-slate-600">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-slate-900 text-sm">
+              {isLoading
+                ? 'Loading PYQ papers...'
+                : `${pyqs.length} Question ${pyqs.length === 1 ? 'Paper' : 'Papers'} Available`}
+            </span>
+          </div>
+
           <button
             type="button"
             onClick={fetchPYQs}
-            className="flex items-center gap-1 hover:text-purple-700 transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 hover:text-purple-700 transition-colors cursor-pointer font-medium"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
             <span className="hidden sm:inline">Refresh</span>
@@ -322,11 +387,11 @@ export default function PYQPage() {
         </div>
 
         {isLoading ? (
-          <div className="py-16">
+          <div className="py-20">
             <Loader message="Loading examination archives..." size="md" />
           </div>
         ) : pyqs.length === 0 ? (
-          <div className="p-8">
+          <div className="p-8 sm:p-12">
             <EmptyState
               icon={searchQuery ? SearchX : HelpCircle}
               title={searchQuery ? `No PYQs matching "${searchQuery}"` : 'No Question Papers Found'}

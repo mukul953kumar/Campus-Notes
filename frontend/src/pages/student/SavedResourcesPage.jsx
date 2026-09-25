@@ -11,7 +11,6 @@ import {
   HelpCircle,
   FileCheck,
   Code,
-  FileText,
   Search
 } from 'lucide-react';
 
@@ -85,21 +84,21 @@ export default function SavedResourcesPage() {
   };
 
   return (
-    <div className="space-y-6 py-2">
+    <div className="space-y-8 py-4">
       
-      {/* Header */}
+      {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center border border-blue-200">
               <Bookmark className="w-4 h-4 fill-blue-700" />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
               Saved Bookmarks
             </h1>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Access your bookmarked study materials, PYQ sets, and assignments anytime.
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
+            Access your bookmarked study materials, PYQ sets, and assignments anytime for fast revision.
           </p>
         </div>
 
@@ -110,10 +109,11 @@ export default function SavedResourcesPage() {
         </Link>
       </div>
 
-      {/* Search & Tabs Strip */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+      {/* Filter & Search Console Card */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+        
         {/* Category Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
           {TYPE_TABS.map((tab) => {
             const isActive = activeTab === tab.id;
             const TabIcon = tab.icon;
@@ -123,10 +123,10 @@ export default function SavedResourcesPage() {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap cursor-pointer ${
+                className={`inline-flex items-center gap-1.5 px-3.5 py-2 text-xs rounded-xl transition-all whitespace-nowrap cursor-pointer ${
                   isActive
-                    ? 'bg-blue-700 text-white font-semibold shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 bg-white border border-slate-200'
+                    ? 'bg-blue-700 text-white font-bold shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 bg-slate-50 border border-slate-200/80 font-medium'
                 }`}
               >
                 {TabIcon && <TabIcon className="w-3.5 h-3.5" />}
@@ -137,14 +137,14 @@ export default function SavedResourcesPage() {
         </div>
 
         {/* Quick Search within saved */}
-        <div className="relative w-full sm:w-64">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+        <div className="relative w-full sm:w-72">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search saved..."
-            className="w-full pl-8.5 pr-3 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-100"
+            placeholder="Search in saved bookmarks..."
+            className="w-full pl-9 pr-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
           />
         </div>
       </div>
@@ -159,20 +159,23 @@ export default function SavedResourcesPage() {
         </div>
       )}
 
-      {/* Bookmarks List Container */}
+      {/* Bookmarks List Container Card */}
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
-        <div className="px-4 sm:px-6 py-3 bg-slate-50/70 border-b border-slate-200 text-xs font-semibold text-slate-700">
-          {isLoading
-            ? 'Loading saved bookmarks...'
-            : `${filteredBookmarks.length} ${filteredBookmarks.length === 1 ? 'Bookmark' : 'Bookmarks'}`}
+        <div className="px-5 sm:px-6 py-3.5 bg-slate-50/80 border-b border-slate-200 text-xs font-bold text-slate-900 flex items-center justify-between">
+          <span>
+            {isLoading
+              ? 'Loading saved bookmarks...'
+              : `${filteredBookmarks.length} ${filteredBookmarks.length === 1 ? 'Bookmark' : 'Bookmarks'}`}
+          </span>
+          <span className="text-[11px] text-slate-400 font-normal">Personal Revision Library</span>
         </div>
 
         {isLoading ? (
-          <div className="py-16">
+          <div className="py-20">
             <Loader message="Loading saved materials..." size="md" />
           </div>
         ) : filteredBookmarks.length === 0 ? (
-          <div className="p-8">
+          <div className="p-8 sm:p-12">
             <EmptyState
               icon={Bookmark}
               title={
