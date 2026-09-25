@@ -388,7 +388,7 @@ export default function ResourceDetailsPage() {
             }`}>
               {resource.fileUrl ? (
                 <iframe
-                  src={`${resource.fileUrl}#toolbar=1&navpanes=0`}
+                  src={`${resource.fileUrl}#toolbar=0&navpanes=0&scrollbar=1`}
                   title={resource.title}
                   className="w-full h-full border-0"
                 />

@@ -1085,7 +1085,7 @@ export default function AdminDashboardPage() {
 
             <div className="flex-1 bg-slate-900">
               <iframe
-                src={`${previewResource.fileUrl}#toolbar=1`}
+                src={`${previewResource.fileUrl}#toolbar=0&navpanes=0&scrollbar=1`}
                 title="Preview"
                 className="w-full h-full border-0"
               />
