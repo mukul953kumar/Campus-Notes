@@ -271,6 +271,22 @@ export const adminService = {
     });
   },
 
+  async getAllResources(params = {}) {
+    const query = new URLSearchParams();
+    if (params.search) query.append('search', params.search);
+    if (params.status) query.append('status', params.status);
+    if (params.branch) query.append('branch', params.branch);
+    if (params.semester) query.append('semester', params.semester);
+    if (params.resourceType) query.append('resourceType', params.resourceType);
+    if (params.sortBy) query.append('sortBy', params.sortBy);
+    if (params.page) query.append('page', params.page);
+    if (params.limit) query.append('limit', params.limit);
+    const queryString = query.toString() ? `?${query.toString()}` : '';
+    return apiRequest(`/admin/resources${queryString}`, {
+      method: 'GET',
+    });
+  },
+
   async verifyResource(id, action, rejectionReason = '') {
     return apiRequest(`/admin/resources/${id}/verify`, {
       method: 'PATCH',
@@ -281,6 +297,27 @@ export const adminService = {
   async deleteResource(id) {
     return apiRequest(`/admin/resources/${id}`, {
       method: 'DELETE',
+    });
+  },
+
+  async getUsers(params = {}) {
+    const query = new URLSearchParams();
+    if (params.search) query.append('search', params.search);
+    if (params.role) query.append('role', params.role);
+    if (params.branch) query.append('branch', params.branch);
+    if (params.semester) query.append('semester', params.semester);
+    if (params.page) query.append('page', params.page);
+    if (params.limit) query.append('limit', params.limit);
+    const queryString = query.toString() ? `?${query.toString()}` : '';
+    return apiRequest(`/admin/users${queryString}`, {
+      method: 'GET',
+    });
+  },
+
+  async updateUser(id, data = {}) {
+    return apiRequest(`/admin/users/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
     });
   },
 };

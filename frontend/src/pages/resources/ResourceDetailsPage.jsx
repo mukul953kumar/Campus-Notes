@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { resourceService } from '../../services/api';
+import { resourceService, adminService } from '../../services/api';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
 import Loader from '../../components/common/Loader';
@@ -26,13 +26,16 @@ import {
   Maximize2,
   Minimize2,
   Sparkles,
-  Star
+  Star,
+  Trash2,
+  AlertTriangle,
+  Check
 } from 'lucide-react';
 
 export default function ResourceDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { savedIds, toggleBookmark } = useAuth();
+  const { user, savedIds, toggleBookmark } = useAuth();
 
   const [resource, setResource] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -41,6 +44,8 @@ export default function ResourceDetailsPage() {
   const [copiedLink, setCopiedLink] = useState(false);
   const [isFullscreenPreview, setIsFullscreenPreview] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const isSaved = savedIds.includes(id);
 
@@ -135,6 +140,30 @@ export default function ResourceDetailsPage() {
     );
   }
 
+  const handleAdminDeleteResource = async () => {
+    setIsDeleting(true);
+    try {
+      await adminService.deleteResource(resource._id);
+      setShowDeleteModal(false);
+      navigate('/resources', { replace: true });
+    } catch (err) {
+      alert(err.message || 'Failed to delete resource.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleAdminApproveResource = async () => {
+    try {
+      const res = await adminService.verifyResource(resource._id, 'approve');
+      if (res?.data) {
+        setResource(res.data);
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to approve resource.');
+    }
+  };
+
   const uploadDate = resource.createdAt
     ? new Date(resource.createdAt).toLocaleDateString('en-US', {
         month: 'long',
@@ -146,6 +175,51 @@ export default function ResourceDetailsPage() {
   return (
     <div className="space-y-6 py-2">
       
+      {/* Admin Moderation Toolbar (Visible to Admins Only) */}
+      {user?.role === 'admin' && (
+        <div className="bg-purple-50/90 border border-purple-200/90 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-purple-700 text-white flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-purple-950">Administrative Moderation Mode</p>
+              <p className="text-[11px] text-purple-700">
+                You have elevated privileges to moderate or remove this material from the entire campus catalog.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+            {resource.verificationStatus !== 'verified' && (
+              <Button
+                variant="success"
+                size="sm"
+                icon={Check}
+                onClick={handleAdminApproveResource}
+              >
+                Approve Live
+              </Button>
+            )}
+
+            <Button
+              variant="danger"
+              size="sm"
+              icon={Trash2}
+              onClick={() => setShowDeleteModal(true)}
+            >
+              Delete Material
+            </Button>
+
+            <Link to="/admin">
+              <Button variant="secondary" size="sm">
+                Admin Portal
+              </Button>
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Top Navigation Breadcrumb */}
       <div className="flex items-center justify-between">
         <Link
@@ -518,6 +592,54 @@ export default function ResourceDetailsPage() {
         resourceId={resource._id}
         resourceTitle={resource.title}
       />
+
+      {/* Admin Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-6 overflow-hidden shadow-2xl space-y-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 text-base">Delete Study Material</h3>
+                <p className="text-xs text-slate-500">Permanent administrative action</p>
+              </div>
+            </div>
+
+            <div className="p-3 bg-rose-50/70 border border-rose-200 rounded-xl text-xs text-rose-950 space-y-1">
+              <p className="font-semibold text-rose-900">
+                Are you sure you want to delete this resource?
+              </p>
+              <p className="text-rose-800 font-medium line-clamp-2">
+                "{resource.title}"
+              </p>
+              <p className="text-[11px] text-rose-600 pt-1">
+                This will deactivate the document, remove it from all student search results, and delete associated bookmarks.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowDeleteModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                icon={Trash2}
+                onClick={handleAdminDeleteResource}
+                isLoading={isDeleting}
+              >
+                Delete Resource
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

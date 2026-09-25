@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { adminService, reportService } from '../../services/api';
+import { adminService, reportService, academicService } from '../../services/api';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
 import Loader from '../../components/common/Loader';
@@ -20,15 +20,25 @@ import {
   Trash2,
   RefreshCw,
   Layers,
-  MessageSquare
+  Search,
+  Filter,
+  UserCheck,
+  UserX,
+  Shield,
+  BookOpen,
+  ChevronLeft,
+  ChevronRight,
+  AlertTriangle
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {
-  const [activeTab, setActiveTab] = useState('queue'); // 'queue' | 'reports'
+  const [activeTab, setActiveTab] = useState('queue'); // 'queue' | 'resources' | 'reports' | 'users'
 
-  // Metrics
+  // Platform Metrics
   const [metrics, setMetrics] = useState({
     totalStudents: 0,
+    totalAdmins: 0,
+    totalResources: 0,
     pendingCount: 0,
     verifiedCount: 0,
     rejectedCount: 0,
@@ -40,19 +50,42 @@ export default function AdminDashboardPage() {
   const [queue, setQueue] = useState([]);
   const [isLoadingQueue, setIsLoadingQueue] = useState(true);
 
+  // All Resources Catalog
+  const [resources, setResources] = useState([]);
+  const [isLoadingResources, setIsLoadingResources] = useState(false);
+  const [resourceSearch, setResourceSearch] = useState('');
+  const [resourceStatusFilter, setResourceStatusFilter] = useState('all');
+  const [resourceBranchFilter, setResourceBranchFilter] = useState('');
+  const [resourceSemesterFilter, setResourceSemesterFilter] = useState('');
+  const [resourcePage, setResourcePage] = useState(1);
+  const [resourceTotalPages, setResourceTotalPages] = useState(1);
+  const [resourceTotalCount, setResourceTotalCount] = useState(0);
+
   // Reports
   const [reports, setReports] = useState([]);
   const [isLoadingReports, setIsLoadingReports] = useState(false);
 
-  // PDF Preview Modal
-  const [previewResource, setPreviewResource] = useState(null);
+  // Users Directory
+  const [users, setUsers] = useState([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [userSearch, setUserSearch] = useState('');
+  const [userRoleFilter, setUserRoleFilter] = useState('all');
+  const [userPage, setUserPage] = useState(1);
+  const [userTotalPages, setUserTotalPages] = useState(1);
+  const [userTotalCount, setUserTotalCount] = useState(0);
 
-  // Reject Modal
+  // Branches list for filters
+  const [branches, setBranches] = useState([]);
+
+  // Modals & Actions
+  const [previewResource, setPreviewResource] = useState(null);
   const [rejectingItem, setRejectingItem] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
+  const [deletingResource, setDeletingResource] = useState(null);
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [actionFeedback, setActionFeedback] = useState({ type: '', message: '' });
 
+  // Load Metrics
   const loadMetrics = useCallback(async () => {
     try {
       const res = await adminService.getMetrics();
@@ -64,6 +97,7 @@ export default function AdminDashboardPage() {
     }
   }, []);
 
+  // Load Queue
   const loadQueue = useCallback(async () => {
     setIsLoadingQueue(true);
     try {
@@ -78,6 +112,33 @@ export default function AdminDashboardPage() {
     }
   }, []);
 
+  // Load All Resources Catalog
+  const loadAllResources = useCallback(async () => {
+    setIsLoadingResources(true);
+    try {
+      const res = await adminService.getAllResources({
+        search: resourceSearch,
+        status: resourceStatusFilter,
+        branch: resourceBranchFilter,
+        semester: resourceSemesterFilter,
+        page: resourcePage,
+        limit: 15,
+      });
+      if (res?.data) {
+        setResources(res.data);
+        if (res.meta) {
+          setResourceTotalPages(res.meta.totalPages || 1);
+          setResourceTotalCount(res.meta.total || 0);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load resources:', err);
+    } finally {
+      setIsLoadingResources(false);
+    }
+  }, [resourceSearch, resourceStatusFilter, resourceBranchFilter, resourceSemesterFilter, resourcePage]);
+
+  // Load Reports
   const loadReports = useCallback(async () => {
     setIsLoadingReports(true);
     try {
@@ -92,25 +153,74 @@ export default function AdminDashboardPage() {
     }
   }, []);
 
+  // Load Users Directory
+  const loadUsers = useCallback(async () => {
+    setIsLoadingUsers(true);
+    try {
+      const res = await adminService.getUsers({
+        search: userSearch,
+        role: userRoleFilter,
+        page: userPage,
+        limit: 15,
+      });
+      if (res?.data) {
+        setUsers(res.data);
+        if (res.meta) {
+          setUserTotalPages(res.meta.totalPages || 1);
+          setUserTotalCount(res.meta.total || 0);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load users:', err);
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  }, [userSearch, userRoleFilter, userPage]);
+
+  // Load Academic branches
+  useEffect(() => {
+    async function fetchBranches() {
+      try {
+        const res = await academicService.getBranches();
+        if (res?.data?.branches) setBranches(res.data.branches);
+      } catch {
+        setBranches([
+          'Computer Science & Engineering',
+          'Information Technology',
+          'Electronics Engineering',
+          'Electrical Engineering',
+          'Mechanical Engineering',
+          'Civil Engineering',
+          'Master of Computer Applications',
+        ]);
+      }
+    }
+    fetchBranches();
+  }, []);
+
+  // Initial Load
   useEffect(() => {
     loadMetrics();
     loadQueue();
   }, [loadMetrics, loadQueue]);
 
+  // Tab Change Triggers
   useEffect(() => {
-    if (activeTab === 'reports') {
-      loadReports();
-    }
-  }, [activeTab, loadReports]);
+    if (activeTab === 'resources') loadAllResources();
+    if (activeTab === 'reports') loadReports();
+    if (activeTab === 'users') loadUsers();
+  }, [activeTab, loadAllResources, loadReports, loadUsers]);
 
+  // Approve Resource Handler
   const handleApprove = async (resourceId) => {
     setIsActionLoading(true);
     setActionFeedback({ type: '', message: '' });
     try {
       await adminService.verifyResource(resourceId, 'approve');
       setQueue((prev) => prev.filter((item) => item._id !== resourceId));
+      if (activeTab === 'resources') loadAllResources();
       loadMetrics();
-      setActionFeedback({ type: 'success', message: 'Document approved and published live!' });
+      setActionFeedback({ type: 'success', message: 'Document approved and published live in library!' });
       setTimeout(() => setActionFeedback({ type: '', message: '' }), 3000);
     } catch (err) {
       setActionFeedback({ type: 'error', message: err.message || 'Failed to approve resource.' });
@@ -119,6 +229,7 @@ export default function AdminDashboardPage() {
     }
   };
 
+  // Confirm Reject Handler
   const handleConfirmReject = async () => {
     if (!rejectingItem) return;
     setIsActionLoading(true);
@@ -126,10 +237,11 @@ export default function AdminDashboardPage() {
     try {
       await adminService.verifyResource(rejectingItem._id, 'reject', rejectionReason);
       setQueue((prev) => prev.filter((item) => item._id !== rejectingItem._id));
+      if (activeTab === 'resources') loadAllResources();
       setRejectingItem(null);
       setRejectionReason('');
       loadMetrics();
-      setActionFeedback({ type: 'success', message: 'Document rejected and feedback saved.' });
+      setActionFeedback({ type: 'success', message: 'Document rejected with feedback saved.' });
       setTimeout(() => setActionFeedback({ type: '', message: '' }), 3000);
     } catch (err) {
       setActionFeedback({ type: 'error', message: err.message || 'Failed to reject resource.' });
@@ -138,34 +250,54 @@ export default function AdminDashboardPage() {
     }
   };
 
+  // Universal Delete Resource Handler
+  const handleConfirmDelete = async () => {
+    if (!deletingResource) return;
+    setIsActionLoading(true);
+    setActionFeedback({ type: '', message: '' });
+    try {
+      await adminService.deleteResource(deletingResource._id);
+      // Update local lists
+      setQueue((prev) => prev.filter((item) => item._id !== deletingResource._id));
+      setResources((prev) => prev.filter((item) => item._id !== deletingResource._id));
+      setDeletingResource(null);
+      loadMetrics();
+      if (activeTab === 'reports') loadReports();
+      setActionFeedback({ type: 'success', message: 'Resource permanently deleted and removed from platform.' });
+      setTimeout(() => setActionFeedback({ type: '', message: '' }), 3000);
+    } catch (err) {
+      setActionFeedback({ type: 'error', message: err.message || 'Failed to delete resource.' });
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  // Report Resolution
   const handleResolveReport = async (reportId, status, resolutionNote = '') => {
     try {
       await reportService.updateReport(reportId, { status, resolutionNote });
       loadReports();
       loadMetrics();
+      setActionFeedback({ type: 'success', message: `Report marked as ${status}.` });
+      setTimeout(() => setActionFeedback({ type: '', message: '' }), 3000);
     } catch (err) {
-      console.error('Failed to update report:', err);
+      setActionFeedback({ type: 'error', message: err.message || 'Failed to update report.' });
     }
   };
 
-  const handleDeleteResource = async (resourceId, reportId) => {
-    if (!window.confirm('Are you sure you want to deactivate and remove this study material from the platform?')) {
-      return;
-    }
+  // User Status / Role Update
+  const handleUpdateUser = async (userId, data) => {
+    setIsActionLoading(true);
     try {
-      await adminService.deleteResource(resourceId);
-      if (reportId) {
-        await reportService.updateReport(reportId, {
-          status: 'resolved',
-          resolutionNote: 'Resource deactivated and removed by administrator.',
-        });
-      }
-      loadReports();
+      await adminService.updateUser(userId, data);
+      loadUsers();
       loadMetrics();
-      setActionFeedback({ type: 'success', message: 'Resource deactivated and removed.' });
+      setActionFeedback({ type: 'success', message: 'User account updated successfully.' });
       setTimeout(() => setActionFeedback({ type: '', message: '' }), 3000);
     } catch (err) {
-      setActionFeedback({ type: 'error', message: err.message || 'Failed to delete resource.' });
+      setActionFeedback({ type: 'error', message: err.message || 'Failed to update user.' });
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
@@ -177,7 +309,7 @@ export default function AdminDashboardPage() {
   };
 
   return (
-    <div className="space-y-8 py-4">
+    <div className="space-y-6 py-4">
       
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -191,7 +323,7 @@ export default function AdminDashboardPage() {
             </h1>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Review pending student uploads, enforce syllabus quality, and resolve peer reports.
+            Complete management suite: Review submissions, delete/moderate materials, monitor student accounts, and resolve peer reports.
           </p>
         </div>
 
@@ -200,7 +332,9 @@ export default function AdminDashboardPage() {
           onClick={() => {
             loadMetrics();
             if (activeTab === 'queue') loadQueue();
-            else loadReports();
+            else if (activeTab === 'resources') loadAllResources();
+            else if (activeTab === 'reports') loadReports();
+            else if (activeTab === 'users') loadUsers();
           }}
           className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition-colors cursor-pointer shrink-0 self-start sm:self-auto shadow-xs"
         >
@@ -210,9 +344,9 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* KPI Metric Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3.5">
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
-          <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1.5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-xs">
+          <div className="flex items-center gap-1.5 text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
             <Users className="w-3.5 h-3.5 text-blue-700" />
             <span>Students</span>
           </div>
@@ -220,40 +354,49 @@ export default function AdminDashboardPage() {
           <p className="text-[11px] text-slate-400 mt-0.5">Active accounts</p>
         </div>
 
-        <div className="bg-white border border-amber-200/80 bg-amber-50/20 rounded-xl p-4 shadow-xs">
-          <div className="flex items-center gap-2 text-amber-700 text-xs font-semibold uppercase tracking-wider mb-1.5">
+        <div className="bg-white border border-amber-200/80 bg-amber-50/20 rounded-xl p-3.5 shadow-xs">
+          <div className="flex items-center gap-1.5 text-amber-700 text-xs font-semibold uppercase tracking-wider mb-1">
             <Clock className="w-3.5 h-3.5 text-amber-600" />
-            <span>Pending Review</span>
+            <span>Pending</span>
           </div>
           <div className="text-2xl font-bold text-amber-900">{metrics.pendingCount}</div>
-          <p className="text-[11px] text-amber-600/80 mt-0.5">Documents in queue</p>
+          <p className="text-[11px] text-amber-600/80 mt-0.5">Needs review</p>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
-          <div className="flex items-center gap-2 text-emerald-700 text-xs font-semibold uppercase tracking-wider mb-1.5">
+        <div className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-xs">
+          <div className="flex items-center gap-1.5 text-emerald-700 text-xs font-semibold uppercase tracking-wider mb-1">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Verified Live</span>
+            <span>Live Notes</span>
           </div>
           <div className="text-2xl font-bold text-slate-900">{metrics.verifiedCount}</div>
-          <p className="text-[11px] text-slate-400 mt-0.5">Approved in library</p>
+          <p className="text-[11px] text-slate-400 mt-0.5">Verified catalog</p>
         </div>
 
-        <div className="bg-white border border-rose-200/80 bg-rose-50/20 rounded-xl p-4 shadow-xs">
-          <div className="flex items-center gap-2 text-rose-700 text-xs font-semibold uppercase tracking-wider mb-1.5">
+        <div className="bg-white border border-rose-200/80 bg-rose-50/20 rounded-xl p-3.5 shadow-xs">
+          <div className="flex items-center gap-1.5 text-rose-700 text-xs font-semibold uppercase tracking-wider mb-1">
             <Flag className="w-3.5 h-3.5 text-rose-600" />
-            <span>Open Reports</span>
+            <span>Reports</span>
           </div>
           <div className="text-2xl font-bold text-rose-900">{metrics.pendingReportsCount}</div>
-          <p className="text-[11px] text-rose-600/80 mt-0.5">Flagged by students</p>
+          <p className="text-[11px] text-rose-600/80 mt-0.5">Pending review</p>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs col-span-2 sm:col-span-4 lg:col-span-1">
-          <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1.5">
+        <div className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-xs">
+          <div className="flex items-center gap-1.5 text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">
+            <BookOpen className="w-3.5 h-3.5 text-slate-600" />
+            <span>Total Uploads</span>
+          </div>
+          <div className="text-2xl font-bold text-slate-900">{metrics.totalResources}</div>
+          <p className="text-[11px] text-slate-400 mt-0.5">All time files</p>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-xs">
+          <div className="flex items-center gap-1.5 text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">
             <Download className="w-3.5 h-3.5 text-slate-600" />
-            <span>Total Downloads</span>
+            <span>Downloads</span>
           </div>
           <div className="text-2xl font-bold text-slate-900">{metrics.totalDownloads}</div>
-          <p className="text-[11px] text-slate-400 mt-0.5">Across all branches</p>
+          <p className="text-[11px] text-slate-400 mt-0.5">Student downloads</p>
         </div>
       </div>
 
@@ -276,11 +419,11 @@ export default function AdminDashboardPage() {
       )}
 
       {/* Section Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200">
+      <div className="flex items-center gap-1 sm:gap-2 border-b border-slate-200 overflow-x-auto">
         <button
           type="button"
           onClick={() => setActiveTab('queue')}
-          className={`inline-flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-colors cursor-pointer ${
+          className={`inline-flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-xs font-bold border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
             activeTab === 'queue'
               ? 'border-blue-700 text-blue-700'
               : 'border-transparent text-slate-600 hover:text-slate-900'
@@ -289,7 +432,7 @@ export default function AdminDashboardPage() {
           <Clock className="w-4 h-4" />
           <span>Verification Queue</span>
           {metrics.pendingCount > 0 && (
-            <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-100 text-amber-800 font-semibold">
+            <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-100 text-amber-800 font-bold">
               {metrics.pendingCount}
             </span>
           )}
@@ -297,8 +440,24 @@ export default function AdminDashboardPage() {
 
         <button
           type="button"
+          onClick={() => setActiveTab('resources')}
+          className={`inline-flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-xs font-bold border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
+            activeTab === 'resources'
+              ? 'border-blue-700 text-blue-700'
+              : 'border-transparent text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <BookOpen className="w-4 h-4" />
+          <span>All Notes & Materials</span>
+          <span className="px-2 py-0.5 rounded-full text-[10px] bg-slate-100 text-slate-700 font-bold">
+            {metrics.totalResources}
+          </span>
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveTab('reports')}
-          className={`inline-flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-colors cursor-pointer ${
+          className={`inline-flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-xs font-bold border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
             activeTab === 'reports'
               ? 'border-blue-700 text-blue-700'
               : 'border-transparent text-slate-600 hover:text-slate-900'
@@ -307,10 +466,26 @@ export default function AdminDashboardPage() {
           <Flag className="w-4 h-4" />
           <span>Student Reports</span>
           {metrics.pendingReportsCount > 0 && (
-            <span className="px-2 py-0.5 rounded-full text-[10px] bg-rose-100 text-rose-800 font-semibold">
+            <span className="px-2 py-0.5 rounded-full text-[10px] bg-rose-100 text-rose-800 font-bold">
               {metrics.pendingReportsCount}
             </span>
           )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('users')}
+          className={`inline-flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-xs font-bold border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
+            activeTab === 'users'
+              ? 'border-blue-700 text-blue-700'
+              : 'border-transparent text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          <span>Students & Accounts</span>
+          <span className="px-2 py-0.5 rounded-full text-[10px] bg-slate-100 text-slate-700 font-bold">
+            {metrics.totalStudents}
+          </span>
         </button>
       </div>
 
@@ -323,7 +498,7 @@ export default function AdminDashboardPage() {
                 ? 'Loading queue...'
                 : `${queue.length} ${queue.length === 1 ? 'Document' : 'Documents'} Waiting for Verification`}
             </span>
-            <span className="text-[11px] text-slate-400">Oldest first</span>
+            <span className="text-[11px] text-slate-400">Oldest submissions first</span>
           </div>
 
           {isLoadingQueue ? (
@@ -434,7 +609,202 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* TAB 2: Student Reports Manager */}
+      {/* TAB 2: All Notes & Materials Management */}
+      {activeTab === 'resources' && (
+        <div className="space-y-4">
+          
+          {/* Search and Filters Console */}
+          <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs flex flex-col md:flex-row items-center gap-3">
+            <div className="relative flex-1 w-full">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={resourceSearch}
+                onChange={(e) => {
+                  setResourceSearch(e.target.value);
+                  setResourcePage(1);
+                }}
+                placeholder="Search notes by title, subject, tags, or keyword..."
+                className="w-full text-xs pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-600 focus:bg-white"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+              <select
+                value={resourceStatusFilter}
+                onChange={(e) => {
+                  setResourceStatusFilter(e.target.value);
+                  setResourcePage(1);
+                }}
+                className="text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-600 cursor-pointer"
+              >
+                <option value="all">All Verification Statuses</option>
+                <option value="verified">Verified Only</option>
+                <option value="pending">Pending Only</option>
+                <option value="rejected">Rejected Only</option>
+              </select>
+
+              <select
+                value={resourceBranchFilter}
+                onChange={(e) => {
+                  setResourceBranchFilter(e.target.value);
+                  setResourcePage(1);
+                }}
+                className="text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-600 cursor-pointer max-w-[150px]"
+              >
+                <option value="">All Branches</option>
+                {branches.map((b) => (
+                  <option key={b} value={b}>{b}</option>
+                ))}
+              </select>
+
+              <select
+                value={resourceSemesterFilter}
+                onChange={(e) => {
+                  setResourceSemesterFilter(e.target.value);
+                  setResourcePage(1);
+                }}
+                className="text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-600 cursor-pointer"
+              >
+                <option value="">All Semesters</option>
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
+                  <option key={s} value={s}>Semester {s}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Resources Table / List */}
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+            <div className="px-4 sm:px-6 py-3 bg-slate-50/70 border-b border-slate-200 flex items-center justify-between text-xs text-slate-600 font-medium">
+              <span>{resourceTotalCount} Total Study Materials</span>
+              <span>Page {resourcePage} of {resourceTotalPages}</span>
+            </div>
+
+            {isLoadingResources ? (
+              <div className="py-16">
+                <Loader message="Loading materials catalog..." size="md" />
+              </div>
+            ) : resources.length === 0 ? (
+              <div className="p-8">
+                <EmptyState
+                  icon={BookOpen}
+                  title="No Resources Found"
+                  description="No study materials match your search filters."
+                />
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {resources.map((item) => (
+                  <div
+                    key={item._id}
+                    className="p-4 sm:p-5 hover:bg-slate-50/60 transition-colors flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+                  >
+                    <div className="space-y-1.5 flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-semibold text-sm text-slate-900 line-clamp-1">
+                          {item.title}
+                        </span>
+                        <Badge variant={item.verificationStatus} size="sm">
+                          {item.verificationStatus?.toUpperCase()}
+                        </Badge>
+                        {!item.isActive && (
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 bg-rose-100 text-rose-800 rounded">
+                            DEACTIVATED
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs text-slate-500">
+                        <span className="font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                          {item.subjectId?.shortName || item.subjectId?.code || 'KNIT'}
+                        </span>
+                        <Badge variant={item.resourceType} size="sm">
+                          {item.resourceType?.toUpperCase()}
+                        </Badge>
+                        <span>•</span>
+                        <span>{item.branch}</span>
+                        <span>•</span>
+                        <span>Sem {item.semester}</span>
+                        <span>•</span>
+                        <span>{formatFileSize(item.fileSize)}</span>
+                        <span>•</span>
+                        <span>{item.downloadsCount || item.downloadCount || 0} Downloads</span>
+                      </div>
+
+                      <div className="text-[11px] text-slate-400">
+                        Uploaded by <strong className="text-slate-700">{item.uploaderId?.name || 'Student'}</strong> ({item.uploaderId?.email}) on {new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </div>
+                    </div>
+
+                    {/* Admin Action Buttons */}
+                    <div className="flex items-center gap-2 shrink-0 self-end lg:self-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        icon={Eye}
+                        onClick={() => setPreviewResource(item)}
+                      >
+                        Preview
+                      </Button>
+
+                      {item.verificationStatus !== 'verified' && (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          icon={Check}
+                          onClick={() => handleApprove(item._id)}
+                          disabled={isActionLoading}
+                        >
+                          Approve
+                        </Button>
+                      )}
+
+                      {/* Universal Admin Delete */}
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        icon={Trash2}
+                        onClick={() => setDeletingResource(item)}
+                        disabled={isActionLoading}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Pagination Controls */}
+            {resourceTotalPages > 1 && (
+              <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs">
+                <button
+                  type="button"
+                  disabled={resourcePage <= 1}
+                  onClick={() => setResourcePage((p) => Math.max(1, p - 1))}
+                  className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-700 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors flex items-center gap-1 cursor-pointer"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" /> Previous
+                </button>
+                <span className="text-slate-500">
+                  Page {resourcePage} of {resourceTotalPages}
+                </span>
+                <button
+                  type="button"
+                  disabled={resourcePage >= resourceTotalPages}
+                  onClick={() => setResourcePage((p) => Math.min(resourceTotalPages, p + 1))}
+                  className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-700 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors flex items-center gap-1 cursor-pointer"
+                >
+                  Next <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 3: Student Reports Manager */}
       {activeTab === 'reports' && (
         <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
           <div className="px-4 sm:px-6 py-3 bg-slate-50/70 border-b border-slate-200 flex items-center justify-between text-xs text-slate-600 font-medium">
@@ -535,9 +905,9 @@ export default function AdminDashboardPage() {
                               variant="danger"
                               size="sm"
                               icon={Trash2}
-                              onClick={() => handleDeleteResource(report.resourceId._id, report._id)}
+                              onClick={() => setDeletingResource(report.resourceId)}
                             >
-                              Remove Material
+                              Delete Material
                             </Button>
                           )}
                         </>
@@ -549,6 +919,131 @@ export default function AdminDashboardPage() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* TAB 4: Students & Accounts Directory */}
+      {activeTab === 'users' && (
+        <div className="space-y-4">
+          
+          {/* User Search Bar */}
+          <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs flex flex-col sm:flex-row items-center gap-3">
+            <div className="relative flex-1 w-full">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={userSearch}
+                onChange={(e) => {
+                  setUserSearch(e.target.value);
+                  setUserPage(1);
+                }}
+                placeholder="Search students by name, email, roll..."
+                className="w-full text-xs pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-600 focus:bg-white"
+              />
+            </div>
+
+            <select
+              value={userRoleFilter}
+              onChange={(e) => {
+                setUserRoleFilter(e.target.value);
+                setUserPage(1);
+              }}
+              className="text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-600 cursor-pointer w-full sm:w-auto"
+            >
+              <option value="all">All Roles</option>
+              <option value="student">Students</option>
+              <option value="contributor">Top Contributors</option>
+              <option value="admin">Administrators</option>
+            </select>
+          </div>
+
+          {/* Users List */}
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+            <div className="px-4 sm:px-6 py-3 bg-slate-50/70 border-b border-slate-200 flex items-center justify-between text-xs text-slate-600 font-medium">
+              <span>{userTotalCount} Registered Users</span>
+              <span>Page {userPage} of {userTotalPages}</span>
+            </div>
+
+            {isLoadingUsers ? (
+              <div className="py-16">
+                <Loader message="Loading user directory..." size="md" />
+              </div>
+            ) : users.length === 0 ? (
+              <div className="p-8">
+                <EmptyState
+                  icon={Users}
+                  title="No Users Found"
+                  description="No student accounts match your filter criteria."
+                />
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {users.map((u) => (
+                  <div
+                    key={u._id}
+                    className="p-4 sm:p-5 hover:bg-slate-50/60 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-sm text-slate-900">{u.name}</span>
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            u.role === 'admin'
+                              ? 'bg-purple-100 text-purple-800'
+                              : u.role === 'contributor'
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-blue-100 text-blue-800'
+                          }`}
+                        >
+                          {u.role?.toUpperCase()}
+                        </span>
+                        {!u.isActive && (
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 bg-rose-100 text-rose-800 rounded">
+                            SUSPENDED
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="text-xs text-slate-500">
+                        {u.email} • {u.branch || 'KNIT'} • Sem {u.semester || '-'}
+                      </div>
+
+                      <div className="flex items-center gap-3 text-[11px] text-slate-400 pt-1">
+                        <span>Uploads: {u.stats?.uploadsCount || 0}</span>
+                        <span>•</span>
+                        <span>Approved: {u.stats?.approvedCount || 0}</span>
+                        <span>•</span>
+                        <span>Joined: {new Date(u.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+                      </div>
+                    </div>
+
+                    {/* Role & Status Controls */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <select
+                        value={u.role}
+                        onChange={(e) => handleUpdateUser(u._id, { role: e.target.value })}
+                        disabled={isActionLoading}
+                        className="text-xs px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-600 font-semibold cursor-pointer"
+                      >
+                        <option value="student">Student</option>
+                        <option value="contributor">Contributor</option>
+                        <option value="admin">Admin</option>
+                      </select>
+
+                      <Button
+                        variant={u.isActive ? 'outline' : 'success'}
+                        size="sm"
+                        onClick={() => handleUpdateUser(u._id, { isActive: !u.isActive })}
+                        disabled={isActionLoading}
+                      >
+                        {u.isActive ? 'Suspend' : 'Activate'}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -640,6 +1135,54 @@ export default function AdminDashboardPage() {
                 isLoading={isActionLoading}
               >
                 Confirm Rejection
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Universal Delete Confirmation Modal */}
+      {deletingResource && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-6 overflow-hidden shadow-2xl space-y-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 text-base">Delete Study Material</h3>
+                <p className="text-xs text-slate-500">Permanent administrative action</p>
+              </div>
+            </div>
+
+            <div className="p-3 bg-rose-50/70 border border-rose-200 rounded-xl text-xs text-rose-950 space-y-1">
+              <p className="font-semibold text-rose-900">
+                Are you sure you want to delete this resource?
+              </p>
+              <p className="text-rose-800 font-medium line-clamp-2">
+                "{deletingResource.title}"
+              </p>
+              <p className="text-[11px] text-rose-600 pt-1">
+                This will deactivate the document, remove it from all student search results, and delete associated bookmarks.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setDeletingResource(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                icon={Trash2}
+                onClick={handleConfirmDelete}
+                isLoading={isActionLoading}
+              >
+                Delete Resource
               </Button>
             </div>
           </div>
