@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/api';
-import Button from '../../components/common/Button';
 import BrandLogo from '../../components/common/BrandLogo';
-import { GraduationCap, ShieldCheck, AlertCircle, Sparkles, CheckCircle2, ChevronDown, Lock } from 'lucide-react';
+import { ShieldCheck, AlertCircle, Sparkles, Lock } from 'lucide-react';
 
 const GOOGLE_CLIENT_ID =
   import.meta.env.VITE_GOOGLE_CLIENT_ID ||
@@ -17,8 +16,6 @@ export default function LoginPage() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [showDevFallback, setShowDevFallback] = useState(false);
-  const [devEmail, setDevEmail] = useState('mukul.24636@knit.ac.in');
 
   const redirectPath = location.state?.from?.pathname || '/';
 
@@ -115,24 +112,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleDevLogin = async (emailToLogin) => {
-    setErrorMessage('');
-    setIsLoading(true);
-    try {
-      const targetEmail = (emailToLogin || devEmail).trim().toLowerCase();
-      if (!targetEmail.endsWith('@knit.ac.in')) {
-        throw new Error('Only authorized institute emails are permitted.');
-      }
-      const result = await authService.devLogin(targetEmail);
-      login(result.data.token, result.data.user);
-      handlePostLoginRedirect(result.data.user);
-    } catch (err) {
-      setErrorMessage(err.message || 'Login failed.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="max-w-md mx-auto my-8 sm:my-14 px-4">
       <div className="bg-white border border-slate-200 rounded-3xl p-7 sm:p-9 shadow-sm">
@@ -205,50 +184,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Collapsible Local Testing Fallback (Only in Development) */}
-        {import.meta.env.DEV && (
-          <div className="mt-6 pt-4 border-t border-dashed border-slate-200">
-            <button
-              type="button"
-              onClick={() => setShowDevFallback(!showDevFallback)}
-              className="text-[11px] text-slate-400 hover:text-blue-700 flex items-center justify-center gap-1 mx-auto cursor-pointer"
-            >
-              <span>Offline / Local Test Simulator</span>
-              <ChevronDown className={`w-3 h-3 transition-transform ${showDevFallback ? 'rotate-180' : ''}`} />
-            </button>
 
-            {showDevFallback && (
-              <div className="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs">
-                <p className="text-slate-500 text-[11px]">
-                  Simulate direct Google Sign-in for authorized student accounts:
-                </p>
-                <div className="flex flex-wrap gap-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => handleDevLogin('mukul.24636@knit.ac.in')}
-                    className="px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-slate-700 hover:border-blue-600 font-medium cursor-pointer"
-                  >
-                    Demo Student 1
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDevLogin('shreya.singh.22415@knit.ac.in')}
-                    className="px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-slate-700 hover:border-blue-600 font-medium cursor-pointer"
-                  >
-                    Demo Student 2
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDevLogin('admin@knit.ac.in')}
-                    className="px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-slate-700 hover:border-blue-600 font-medium cursor-pointer"
-                  >
-                    Demo Admin
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
 
       </div>
     </div>

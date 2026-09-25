@@ -56,8 +56,13 @@ const googleLogin = async (req, res, next) => {
     const parsed = parseCollegeEmail(cleanEmail);
 
     // Official college emails (e.g. mukul.24636@knit.ac.in) have immutable names derived directly from student ID
-    const studentName = parsed.name || 'KNIT Student';
-    const userRole = cleanEmail.startsWith('admin') ? 'admin' : 'student';
+    const adminEmails = (process.env.ADMIN_EMAILS || 'mukul.24636@knit.ac.in,admin@knit.ac.in')
+      .split(',')
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
+
+    const isUserAdmin = cleanEmail.startsWith('admin') || adminEmails.includes(cleanEmail);
+    const userRole = isUserAdmin ? 'admin' : 'student';
 
     let user = await User.findOne({ email: cleanEmail }).populate('collegeId', 'name code');
 
@@ -79,8 +84,11 @@ const googleLogin = async (req, res, next) => {
       user = await User.findById(user._id).populate('collegeId', 'name code');
     } else {
       let needsSave = false;
-      if (cleanEmail.startsWith('admin') && user.role !== 'admin') {
+      if (isUserAdmin && user.role !== 'admin') {
         user.role = 'admin';
+        needsSave = true;
+      } else if (!isUserAdmin && user.role === 'admin' && !cleanEmail.startsWith('admin')) {
+        user.role = 'student';
         needsSave = true;
       }
       // Enforce the derived name if from college domain
