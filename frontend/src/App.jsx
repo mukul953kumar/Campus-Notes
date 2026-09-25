@@ -17,6 +17,7 @@ import PYQPage from './pages/pyq/PYQPage';
 import SubjectsPage from './pages/subjects/SubjectsPage';
 import SubjectDetailsPage from './pages/subjects/SubjectDetailsPage';
 import LeaderboardPage from './pages/leaderboard/LeaderboardPage';
+import AcademicSetupPage from './pages/auth/AcademicSetupPage';
 import Button from './components/common/Button';
 import Badge from './components/common/Badge';
 import EmptyState from './components/common/EmptyState';
@@ -27,7 +28,9 @@ import {
   Upload,
   Download,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  Layers,
+  CheckCircle2
 } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 import { resourceService } from './services/api';
@@ -35,10 +38,12 @@ import ResourceRow from './components/resources/ResourceRow';
 
 function HomePage() {
   const navigate = useNavigate();
-  const { savedIds, toggleBookmark } = useAuth();
+  const { user, savedIds, toggleBookmark } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [recentUploads, setRecentUploads] = useState([]);
+  const [recommendedUploads, setRecommendedUploads] = useState([]);
   const [isLoadingRecent, setIsLoadingRecent] = useState(true);
+  const [isLoadingRecommended, setIsLoadingRecommended] = useState(false);
 
   const branches = [
     { code: 'CSE', name: 'Computer Science & Engineering', count: '1st - 8th Sem' },
@@ -50,6 +55,7 @@ function HomePage() {
     { code: 'MCA', name: 'Master of Computer Applications', count: '1st - 4th Sem' },
   ];
 
+  // Load live campus recent uploads
   useEffect(() => {
     async function loadRecent() {
       setIsLoadingRecent(true);
@@ -66,6 +72,33 @@ function HomePage() {
     }
     loadRecent();
   }, []);
+
+  // Load personalized semester recommendations dynamically based on student branch & sem
+  useEffect(() => {
+    if (user?.branch && user?.semester) {
+      async function loadRecommended() {
+        setIsLoadingRecommended(true);
+        try {
+          const res = await resourceService.getResources({
+            branch: user.branch,
+            semester: user.semester,
+            limit: 6,
+            sortBy: 'popular'
+          });
+          if (res?.data) {
+            setRecommendedUploads(res.data);
+          }
+        } catch (err) {
+          console.error('Failed to load personalized recommendations:', err);
+        } finally {
+          setIsLoadingRecommended(false);
+        }
+      }
+      loadRecommended();
+    } else {
+      setRecommendedUploads([]);
+    }
+  }, [user?.branch, user?.semester]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -158,6 +191,63 @@ function HomePage() {
           </div>
         </form>
       </section>
+
+      {/* Personalized Semester Recommendations (if student has branch & semester set) */}
+      {user?.branch && user?.semester && (
+        <section className="bg-blue-50/60 border border-blue-200/80 rounded-2xl p-5 sm:p-7 space-y-4 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-blue-700 bg-blue-100 px-2.5 py-0.5 rounded-full border border-blue-200/80">
+                  Sem {user.semester} • {user.branch}
+                </span>
+                <Link
+                  to="/profile"
+                  className="text-xs text-slate-500 hover:text-blue-700 font-medium underline"
+                >
+                  Change
+                </Link>
+              </div>
+              <h2 className="text-xl font-bold text-slate-900">
+                Recommended for Your Semester Exams
+              </h2>
+            </div>
+
+            <Link
+              to={`/resources?branch=${encodeURIComponent(user.branch)}&semester=${user.semester}`}
+              className="text-xs font-semibold text-blue-700 hover:text-blue-800 inline-flex items-center gap-1 shrink-0"
+            >
+              Explore all Sem {user.semester} notes <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100 overflow-hidden shadow-xs">
+            {isLoadingRecommended ? (
+              <div className="p-8 text-center text-xs text-slate-500">
+                Curating your semester study materials...
+              </div>
+            ) : recommendedUploads.length === 0 ? (
+              <div className="p-8 text-center text-xs text-slate-500 space-y-2">
+                <p>No verified notes uploaded for {user.branch} Semester {user.semester} yet.</p>
+                <Link to="/upload">
+                  <Button size="sm" variant="primary" icon={Upload}>
+                    Be the First to Upload for Your Class
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              recommendedUploads.map((item) => (
+                <ResourceRow
+                  key={item._id}
+                  resource={item}
+                  isSaved={savedIds.includes(item._id)}
+                  onToggleSave={handleToggleSave}
+                />
+              ))
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Engineering Branches Catalog */}
       <section>
@@ -298,6 +388,14 @@ export default function App() {
             <Route path="register" element={<RegisterPage />} />
 
             {/* Protected Student routes */}
+            <Route
+              path="onboarding"
+              element={
+                <ProtectedRoute>
+                  <AcademicSetupPage />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="profile"
               element={

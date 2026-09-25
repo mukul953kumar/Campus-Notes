@@ -70,8 +70,9 @@ const googleLogin = async (req, res, next) => {
         avatar: picture || '',
         googleId,
         collegeId: college._id,
-        branch: 'Information Technology',
-        semester: 6,
+        branch: '',
+        semester: null,
+        hasCompletedOnboarding: false,
         role: userRole,
         isVerified: true
       });
@@ -149,8 +150,9 @@ const devLogin = async (req, res, next) => {
         studentId: parsed.studentId,
         rollNumber: parsed.rollNumber,
         collegeId: college._id,
-        branch: 'Information Technology',
-        semester: 6,
+        branch: '',
+        semester: null,
+        hasCompletedOnboarding: false,
         role: userRole,
         isVerified: true
       });

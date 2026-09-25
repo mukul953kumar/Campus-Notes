@@ -20,7 +20,8 @@ import {
   Code,
   FileText,
   SearchX,
-  X
+  X,
+  Sparkles
 } from 'lucide-react';
 
 const TYPE_TABS = [
@@ -174,6 +175,30 @@ export default function ResourceLibraryPage() {
           placeholder="Search by title, subject code (e.g. DBMS, BCS-501, OS), or unit topic..."
         />
       </div>
+
+      {/* Quick 1-click filter for student's personalized semester */}
+      {user?.branch && user?.semester && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs bg-blue-50/70 border border-blue-200/80 rounded-xl px-3.5 py-2.5 shadow-2xs">
+          <span className="flex items-center gap-1.5 text-blue-900 font-medium">
+            <Sparkles className="w-3.5 h-3.5 text-blue-700 shrink-0" />
+            <span>Curated for your class: <strong>{user.branch} • Sem {user.semester}</strong></span>
+          </span>
+
+          <button
+            type="button"
+            onClick={() => {
+              const nextParams = new URLSearchParams(searchParams);
+              nextParams.set('branch', user.branch);
+              nextParams.set('semester', String(user.semester));
+              nextParams.set('page', '1');
+              setSearchParams(nextParams);
+            }}
+            className="text-xs font-semibold text-blue-700 hover:text-blue-900 bg-white hover:bg-blue-100/70 border border-blue-200 px-2.5 py-1 rounded-lg transition-colors cursor-pointer self-start sm:self-auto"
+          >
+            Apply My Semester Filter
+          </button>
+        </div>
+      )}
 
       {/* Resource Type Tabs */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-slate-200 scrollbar-none">

@@ -64,6 +64,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true
     },
+    hasCompletedOnboarding: {
+      type: Boolean,
+      default: false
+    },
     stats: {
       uploadsCount: {
         type: Number,

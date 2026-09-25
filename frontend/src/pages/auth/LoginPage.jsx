@@ -21,11 +21,19 @@ export default function LoginPage() {
 
   const redirectPath = location.state?.from?.pathname || '/';
 
-  useEffect(() => {
-    if (isAuthenticated) {
+  const handlePostLoginRedirect = (userObj) => {
+    if (!userObj?.branch || !userObj?.semester || userObj?.hasCompletedOnboarding === false) {
+      navigate('/onboarding', { state: { from: { pathname: redirectPath } }, replace: true });
+    } else {
       navigate(redirectPath, { replace: true });
     }
-  }, [isAuthenticated, navigate, redirectPath]);
+  };
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      handlePostLoginRedirect(user);
+    }
+  }, [isAuthenticated, user]);
 
   // Google Identity Services setup
   useEffect(() => {
@@ -96,7 +104,7 @@ export default function LoginPage() {
       }
       const result = await authService.googleLogin(response.credential);
       login(result.data.token, result.data.user);
-      navigate(redirectPath, { replace: true });
+      handlePostLoginRedirect(result.data.user);
     } catch (err) {
       setErrorMessage(
         err.message || 'Access restricted: Please select your official @knit.ac.in college Google account.'
@@ -116,7 +124,7 @@ export default function LoginPage() {
       }
       const result = await authService.devLogin(targetEmail);
       login(result.data.token, result.data.user);
-      navigate(redirectPath, { replace: true });
+      handlePostLoginRedirect(result.data.user);
     } catch (err) {
       setErrorMessage(err.message || 'Login failed.');
     } finally {

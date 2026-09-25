@@ -55,6 +55,10 @@ const updateProfile = async (req, res, next) => {
       updates.avatar = String(avatar).trim();
     }
 
+    if (updates.branch && updates.semester) {
+      updates.hasCompletedOnboarding = true;
+    }
+
     const updatedUser = await User.findByIdAndUpdate(
       req.user._id,
       { $set: updates },
