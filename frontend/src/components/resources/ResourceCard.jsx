@@ -261,6 +261,28 @@ export default function ResourceCard({
         </div>
       </div>
 
+      {/* Middle Section: Smart Preview & Notes Summary Box */}
+      <Link
+        to={`/resources/${resource._id}`}
+        onClick={handleDetailsClick}
+        className="my-auto block bg-slate-50/80 hover:bg-blue-50/50 rounded-xl p-2.5 border border-slate-100 hover:border-blue-200 transition-all text-left group/box"
+      >
+        <div className="flex items-center justify-between gap-1.5 mb-1">
+          <span
+            className="text-[11px] font-bold text-slate-700 group-hover/box:text-blue-900 truncate"
+            title={resource.subjectId?.name || (resource.branch ? `${resource.branch} Syllabus` : 'Course Syllabus')}
+          >
+            {resource.subjectId?.name || (resource.branch ? `${resource.branch} Syllabus` : 'Course Syllabus')}
+          </span>
+          <span className="text-[10px] font-mono text-slate-400 bg-white px-1.5 py-0.5 rounded border border-slate-200/80 shrink-0">
+            {formatFileSize(resource.fileSize)}
+          </span>
+        </div>
+        <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
+          {resource.description?.trim() || 'Verified semester study notes prepared for comprehensive syllabus revision and exams.'}
+        </p>
+      </Link>
+
       {/* Bottom Section */}
       <div className="space-y-2 pt-2 border-t border-slate-100">
         {/* Micro-Stats: Rating, Views, Downloads, Author */}
