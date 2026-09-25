@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { bookmarkService } from '../../services/api';
 import ResourceRow from '../../components/resources/ResourceRow';
+import ResourceCard from '../../components/resources/ResourceCard';
 import Loader from '../../components/common/Loader';
 import EmptyState from '../../components/common/EmptyState';
 import Button from '../../components/common/Button';
@@ -11,7 +12,9 @@ import {
   HelpCircle,
   FileCheck,
   Code,
-  Search
+  Search,
+  LayoutGrid,
+  List
 } from 'lucide-react';
 
 const TYPE_TABS = [
@@ -29,6 +32,7 @@ export default function SavedResourcesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
 
   const loadBookmarks = async () => {
     setIsLoading(true);
@@ -167,7 +171,36 @@ export default function SavedResourcesPage() {
               ? 'Loading saved bookmarks...'
               : `${filteredBookmarks.length} ${filteredBookmarks.length === 1 ? 'Bookmark' : 'Bookmarks'} Saved`}
           </span>
-          <span className="text-[11px] text-slate-400 font-normal">Personal Revision Library</span>
+
+          <div className="flex items-center gap-2">
+            {/* View Mode Switcher */}
+            <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                className={`p-1.5 rounded-md transition-all cursor-pointer ${
+                  viewMode === 'grid'
+                    ? 'bg-white text-blue-700 shadow-2xs'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+                title="Grid / Square Cards View"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('list')}
+                className={`p-1.5 rounded-md transition-all cursor-pointer ${
+                  viewMode === 'list'
+                    ? 'bg-white text-blue-700 shadow-2xs'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+                title="Dense List View"
+              >
+                <List className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
         </div>
 
         {isLoading ? (
@@ -198,6 +231,17 @@ export default function SavedResourcesPage() {
                   : () => (window.location.href = '/resources')
               }
             />
+          </div>
+        ) : viewMode === 'grid' ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredBookmarks.map((item) => (
+              <ResourceCard
+                key={item._id}
+                resource={item}
+                isSaved={true}
+                onToggleSave={() => handleRemoveBookmark(item._id)}
+              />
+            ))}
           </div>
         ) : (
           <div className="space-y-3.5">

@@ -3,6 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { resourceService } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import ResourceRow from '../../components/resources/ResourceRow';
+import ResourceCard from '../../components/resources/ResourceCard';
 import Pagination from '../../components/common/Pagination';
 import SearchInput from '../../components/common/SearchInput';
 import Loader from '../../components/common/Loader';
@@ -18,7 +19,9 @@ import {
   GraduationCap,
   SlidersHorizontal,
   ChevronDown,
-  X
+  X,
+  LayoutGrid,
+  List
 } from 'lucide-react';
 
 const YEAR_OPTIONS = ['', '2024', '2023', '2022', '2021', '2020', '2019'];
@@ -69,6 +72,7 @@ export default function PYQPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [isFilterExpandedMobile, setIsFilterExpandedMobile] = useState(false);
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list' (Square cards by default)
 
   const fetchPYQs = useCallback(async () => {
     setIsLoading(true);
@@ -376,14 +380,44 @@ export default function PYQPage() {
             </span>
           </div>
 
-          <button
-            type="button"
-            onClick={fetchPYQs}
-            className="flex items-center gap-1.5 text-slate-600 hover:text-purple-700 transition-colors cursor-pointer font-medium bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline">Refresh</span>
-          </button>
+          <div className="flex items-center gap-2">
+            {/* View Mode Toggle Switcher */}
+            <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                className={`p-1.5 rounded-md transition-all cursor-pointer ${
+                  viewMode === 'grid'
+                    ? 'bg-white text-purple-700 shadow-2xs'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+                title="Grid / Square Cards View"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('list')}
+                className={`p-1.5 rounded-md transition-all cursor-pointer ${
+                  viewMode === 'list'
+                    ? 'bg-white text-purple-700 shadow-2xs'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+                title="Dense List View"
+              >
+                <List className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={fetchPYQs}
+              className="flex items-center gap-1.5 text-slate-600 hover:text-purple-700 transition-colors cursor-pointer font-medium bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Refresh</span>
+            </button>
+          </div>
         </div>
 
         {isLoading ? (
@@ -403,6 +437,17 @@ export default function PYQPage() {
               actionLabel={hasActiveFilters ? 'Clear Filters' : 'Upload Question Paper'}
               onAction={hasActiveFilters ? handleClearFilters : () => (window.location.href = '/upload')}
             />
+          </div>
+        ) : viewMode === 'grid' ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {pyqs.map((item) => (
+              <ResourceCard
+                key={item._id}
+                resource={item}
+                isSaved={savedIds.includes(item._id)}
+                onToggleSave={handleToggleSave}
+              />
+            ))}
           </div>
         ) : (
           <div className="space-y-3.5">

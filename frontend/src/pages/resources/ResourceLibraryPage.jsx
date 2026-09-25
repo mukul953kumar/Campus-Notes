@@ -3,6 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { resourceService } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import ResourceRow from '../../components/resources/ResourceRow';
+import ResourceCard from '../../components/resources/ResourceCard';
 import Pagination from '../../components/common/Pagination';
 import SearchInput from '../../components/common/SearchInput';
 import Select from '../../components/common/Select';
@@ -23,7 +24,9 @@ import {
   X,
   Sparkles,
   SlidersHorizontal,
-  ChevronDown
+  ChevronDown,
+  LayoutGrid,
+  List
 } from 'lucide-react';
 
 const TYPE_TABS = [
@@ -91,6 +94,7 @@ export default function ResourceLibraryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [isFilterExpandedMobile, setIsFilterExpandedMobile] = useState(false);
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list' (Square cards by default)
 
   const fetchResources = useCallback(async () => {
     setIsLoading(true);
@@ -443,15 +447,45 @@ export default function ResourceLibraryPage() {
             )}
           </div>
 
-          <button
-            type="button"
-            onClick={fetchResources}
-            className="flex items-center gap-1.5 text-slate-600 hover:text-blue-700 transition-colors cursor-pointer font-medium bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs"
-            title="Refresh list"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline">Refresh</span>
-          </button>
+          <div className="flex items-center gap-2">
+            {/* View Mode Toggle Switcher (Square Grid vs Row List) */}
+            <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                className={`p-1.5 rounded-md transition-all cursor-pointer ${
+                  viewMode === 'grid'
+                    ? 'bg-white text-blue-700 shadow-2xs'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+                title="Grid / Square Cards View"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('list')}
+                className={`p-1.5 rounded-md transition-all cursor-pointer ${
+                  viewMode === 'list'
+                    ? 'bg-white text-blue-700 shadow-2xs'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+                title="Dense List View"
+              >
+                <List className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={fetchResources}
+              className="flex items-center gap-1.5 text-slate-600 hover:text-blue-700 transition-colors cursor-pointer font-medium bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs"
+              title="Refresh list"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Refresh</span>
+            </button>
+          </div>
         </div>
 
         {/* Content Body */}
@@ -475,7 +509,20 @@ export default function ResourceLibraryPage() {
               onAction={hasActiveFilters ? handleClearAll : () => (window.location.href = '/upload')}
             />
           </div>
+        ) : viewMode === 'grid' ? (
+          /* Square Card Grid Layout */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {resources.map((item) => (
+              <ResourceCard
+                key={item._id}
+                resource={item}
+                isSaved={savedIds.includes(item._id)}
+                onToggleSave={handleToggleSave}
+              />
+            ))}
+          </div>
         ) : (
+          /* Row List Layout */
           <div className="space-y-3.5">
             {resources.map((item) => (
               <ResourceRow
