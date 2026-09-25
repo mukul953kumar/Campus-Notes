@@ -30,10 +30,14 @@ import {
   Sparkles,
   ArrowRight,
   Layers,
-  CheckCircle2
+  CheckCircle2,
+  Trophy,
+  Award,
+  Star,
+  Eye
 } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
-import { resourceService } from './services/api';
+import { resourceService, userService } from './services/api';
 import ResourceRow from './components/resources/ResourceRow';
 import ResourceCard from './components/resources/ResourceCard';
 
@@ -43,8 +47,10 @@ function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [recentUploads, setRecentUploads] = useState([]);
   const [recommendedUploads, setRecommendedUploads] = useState([]);
+  const [topContributors, setTopContributors] = useState([]);
   const [isLoadingRecent, setIsLoadingRecent] = useState(true);
   const [isLoadingRecommended, setIsLoadingRecommended] = useState(false);
+  const [isLoadingContributors, setIsLoadingContributors] = useState(true);
 
   const branches = [
     { code: 'CSE', name: 'Computer Science & Engineering', count: '1st - 8th Sem' },
@@ -100,6 +106,24 @@ function HomePage() {
       setRecommendedUploads([]);
     }
   }, [user?.branch, user?.semester]);
+
+  // Load top contributors leaderboard highlight (Top 4)
+  useEffect(() => {
+    async function loadContributors() {
+      setIsLoadingContributors(true);
+      try {
+        const res = await userService.getLeaderboard({ limit: 4 });
+        if (res?.data) {
+          setTopContributors(res.data);
+        }
+      } catch (err) {
+        console.error('Failed to load top contributors:', err);
+      } finally {
+        setIsLoadingContributors(false);
+      }
+    }
+    loadContributors();
+  }, []);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -345,6 +369,93 @@ function HomePage() {
                 <ArrowRight className="w-3.5 h-3.5 text-blue-700" />
               </Link>
             </div>
+          </div>
+        )}
+      </section>
+
+      {/* Top Academic Contributors Showcase (Priority 2) */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-bold text-slate-900">Campus Champions</h2>
+            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold">
+              <Trophy className="w-3.5 h-3.5 text-amber-500" />
+              <span>Honor Roll</span>
+            </div>
+          </div>
+          <Link
+            to="/leaderboard"
+            className="text-xs font-semibold text-blue-700 hover:text-blue-800 inline-flex items-center gap-1"
+          >
+            Full Leaderboard <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        {isLoadingContributors ? (
+          <div className="py-6 text-center text-xs text-slate-400">Loading top contributors...</div>
+        ) : topContributors.length === 0 ? (
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center text-xs text-slate-500 shadow-xs">
+            No contributors ranked yet. Upload notes to become the first campus champion!
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            {topContributors.map((c) => {
+              const isFirst = c.rank === 1;
+              const isSecond = c.rank === 2;
+              const isThird = c.rank === 3;
+
+              const rankBadgeColor = isFirst
+                ? 'bg-amber-100 text-amber-950 border-amber-300'
+                : isSecond
+                ? 'bg-slate-100 text-slate-800 border-slate-300'
+                : isThird
+                ? 'bg-amber-50 text-amber-900 border-amber-200'
+                : 'bg-blue-50 text-blue-800 border-blue-200';
+
+              const medal = isFirst ? '🥇 #1' : isSecond ? '🥈 #2' : isThird ? '🥉 #3' : `#${c.rank}`;
+
+              return (
+                <div
+                  key={c._id}
+                  className={`bg-white rounded-2xl p-4.5 border transition-all shadow-2xs hover:shadow-xs space-y-3 ${
+                    isFirst ? 'border-amber-300 ring-1 ring-amber-200/70' : 'border-slate-200'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-10 h-10 rounded-xl bg-blue-700 text-white flex items-center justify-center font-bold text-sm shrink-0 overflow-hidden shadow-2xs">
+                        {c.user?.avatar ? (
+                          <img src={c.user.avatar} alt={c.user.name} className="w-full h-full object-cover" />
+                        ) : (
+                          c.user?.name ? c.user.name.slice(0, 2).toUpperCase() : 'ST'
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="text-sm font-bold text-slate-900 truncate">
+                          {c.user?.name || 'Contributor'}
+                        </h4>
+                        <p className="text-[11px] text-slate-400 truncate">
+                          {c.user?.branch || 'KNIT'} {c.user?.semester ? `• Sem ${c.user.semester}` : ''}
+                        </p>
+                      </div>
+                    </div>
+
+                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-lg border shrink-0 ${rankBadgeColor}`}>
+                      {medal}
+                    </span>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
+                      {c.badge}
+                    </span>
+                    <span className="text-slate-500 text-[11px]">
+                      <strong>{c.verifiedUploads}</strong> notes • <strong>{c.totalDownloads}</strong> dl
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </section>

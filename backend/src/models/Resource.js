@@ -118,6 +118,11 @@ const resourceSchema = new mongoose.Schema(
       min: 0,
       alias: 'downloadCount'
     },
+    viewsCount: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
     averageRating: {
       type: Number,
       default: 0,

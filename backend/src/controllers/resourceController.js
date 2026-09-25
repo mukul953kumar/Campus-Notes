@@ -162,6 +162,10 @@ const getResourceById = async (req, res, next) => {
       }
     }
 
+    // Increment views count asynchronously
+    Resource.findByIdAndUpdate(req.params.id, { $inc: { viewsCount: 1 } }).exec();
+    resource.viewsCount = (resource.viewsCount || 0) + 1;
+
     resource.fileUrl = getSignedDownloadUrl(resource.fileKey, resource.fileUrl);
 
     return sendResponse(res, {

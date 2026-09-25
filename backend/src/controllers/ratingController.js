@@ -71,7 +71,7 @@ const submitRating = async (req, res, next) => {
         runValidators: true,
         setDefaultsOnInsert: true
       }
-    ).populate('userId', 'name avatar role');
+    ).populate('userId', 'name avatar role branch semester');
 
     const summary = await updateResourceRatingSummary(resourceId);
 
@@ -114,7 +114,7 @@ const getResourceRatings = async (req, res, next) => {
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limitNum)
-        .populate('userId', 'name avatar role')
+        .populate('userId', 'name avatar role branch semester')
         .lean(),
       Rating.countDocuments({ resourceId }),
       Rating.aggregate([

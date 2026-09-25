@@ -26,6 +26,14 @@ const RATING_LABELS = {
   5: 'Excellent — Top tier notes'
 };
 
+const QUICK_TAGS = [
+  'Clear handwritten formulas & diagrams',
+  'Follows university syllabus closely',
+  'Very helpful for upcoming CT exams',
+  'All units covered with examples',
+  'Great summary notes for revision'
+];
+
 export default function ResourceReviewsSection({
   resourceId,
   resourceTitle,
@@ -87,25 +95,23 @@ export default function ResourceReviewsSection({
 
   const handleSubmitRating = async (e) => {
     e.preventDefault();
-    if (selectedRating < 1 || selectedRating > 5) {
-      setFeedbackMessage({ type: 'error', text: 'Please select a star rating between 1 and 5.' });
-      return;
-    }
+    const effectiveRating = selectedRating > 0 ? selectedRating : 5;
 
     setIsSubmitting(true);
     setFeedbackMessage(null);
 
     try {
       const result = await ratingService.submitRating(resourceId, {
-        rating: selectedRating,
+        rating: effectiveRating,
         review: reviewText.trim()
       });
 
       if (result && result.data) {
         setUserRating(result.data.userRating);
+        setSelectedRating(effectiveRating);
         setFeedbackMessage({
           type: 'success',
-          text: userRating ? 'Your rating and review have been updated!' : 'Thank you! Your rating has been recorded.'
+          text: userRating ? 'Your feedback and review have been updated!' : 'Thank you! Your feedback has been posted.'
         });
 
         if (onRatingUpdated) {
@@ -229,7 +235,7 @@ export default function ResourceReviewsSection({
       <div className="border border-slate-200 rounded-xl p-5 sm:p-6 bg-white space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-bold text-slate-900">
-            {userRating ? 'Update Your Rating & Review' : 'Rate this Study Material'}
+            {userRating ? 'Update Your Rating & Feedback' : 'Leave a Comment, Review or Rating'}
           </h3>
 
           {userRating && (
@@ -249,11 +255,11 @@ export default function ResourceReviewsSection({
           <div className="p-4 bg-blue-50/60 border border-blue-100 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2 text-slate-700">
               <LogIn className="w-4 h-4 text-blue-700 shrink-0" />
-              <span>Please sign in with your college account to submit a rating or review.</span>
+              <span>Please sign in with your college account to submit a rating or comment.</span>
             </div>
             <Link to="/login">
               <Button variant="primary" size="sm">
-                Sign In to Rate
+                Sign In to Comment
               </Button>
             </Link>
           </div>
@@ -263,7 +269,7 @@ export default function ResourceReviewsSection({
             {/* Interactive Stars & Label */}
             <div className="space-y-1.5">
               <label className="block text-xs font-semibold text-slate-700">
-                Your Rating (Required)
+                Your Rating (Click to select stars)
               </label>
               <div className="flex flex-wrap items-center gap-3">
                 <RatingStars
@@ -273,9 +279,13 @@ export default function ResourceReviewsSection({
                   onChange={(star) => setSelectedRating(star)}
                   disabled={isSubmitting}
                 />
-                {selectedRating > 0 && (
+                {selectedRating > 0 ? (
                   <span className="text-xs font-medium text-slate-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">
                     {RATING_LABELS[selectedRating]}
+                  </span>
+                ) : (
+                  <span className="text-xs text-slate-400">
+                    (Defaults to 5 stars if only leaving a comment)
                   </span>
                 )}
               </div>
@@ -285,7 +295,7 @@ export default function ResourceReviewsSection({
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs">
                 <label htmlFor="reviewInput" className="font-semibold text-slate-700">
-                  Feedback / Helpful Details <span className="text-slate-400 font-normal">(Optional)</span>
+                  Comment, Doubt or Review <span className="text-slate-400 font-normal">(Optional)</span>
                 </label>
                 <span className="text-slate-400 text-[11px]">
                   {reviewText.length}/500
@@ -297,10 +307,25 @@ export default function ResourceReviewsSection({
                 value={reviewText}
                 maxLength={500}
                 onChange={(e) => setReviewText(e.target.value)}
-                placeholder="Share how clear or complete these notes were, specific topics covered, or tips for classmates..."
+                placeholder="Share how clear or complete these notes are, specific topics/units covered, or ask a question..."
                 disabled={isSubmitting}
                 className="w-full text-xs sm:text-sm p-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all resize-none"
               />
+
+              {/* Quick Tags Suggestions */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="text-[11px] text-slate-400 font-medium">Quick suggestions:</span>
+                {QUICK_TAGS.map((tag, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setReviewText((prev) => (prev ? `${prev}. ${tag}` : tag))}
+                    className="text-[11px] bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-600 px-2 py-0.5 rounded-full border border-slate-200 transition-colors cursor-pointer"
+                  >
+                    + {tag}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Feedback alert */}
@@ -328,9 +353,9 @@ export default function ResourceReviewsSection({
                 variant="primary"
                 size="md"
                 isLoading={isSubmitting}
-                disabled={selectedRating === 0}
+                disabled={isSubmitting}
               >
-                {userRating ? 'Update Rating' : 'Submit Rating'}
+                {userRating ? 'Update Feedback' : 'Post Comment & Rating'}
               </Button>
             </div>
 
@@ -342,7 +367,7 @@ export default function ResourceReviewsSection({
       <div className="space-y-4 pt-2">
         <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
           <MessageSquare className="w-4 h-4 text-blue-700" />
-          <span>Student Reviews ({ratings.length})</span>
+          <span>Student Comments & Reviews ({ratings.length})</span>
         </h3>
 
         {isLoading ? (
@@ -353,10 +378,10 @@ export default function ResourceReviewsSection({
           <div className="p-8 text-center bg-slate-50 rounded-xl border border-slate-200/80 space-y-2">
             <Star className="w-8 h-8 text-slate-300 mx-auto" />
             <p className="text-xs sm:text-sm font-semibold text-slate-700">
-              No written reviews yet
+              No comments or reviews yet
             </p>
             <p className="text-xs text-slate-500 max-w-sm mx-auto">
-              Be the first student to rate and review this document to help classmates across campus!
+              Be the first student to leave a comment, doubt, or review on this document!
             </p>
           </div>
         ) : (
@@ -389,10 +414,15 @@ export default function ResourceReviewsSection({
                       </div>
 
                       <div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <p className="text-xs font-semibold text-slate-900">
                             {userName}
                           </p>
+                          {item.userId?.branch && (
+                            <span className="text-[10px] text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200">
+                              {item.userId.branch} {item.userId.semester ? `• Sem ${item.userId.semester}` : ''}
+                            </span>
+                          )}
                           {isCurrentUser && (
                             <span className="text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.2 rounded">
                               You

@@ -29,8 +29,17 @@ import {
   Star,
   Trash2,
   AlertTriangle,
-  Check
+  Check,
+  Eye
 } from 'lucide-react';
+
+function WhatsAppIcon({ className = 'w-4 h-4' }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.746.953 3.71 1.456 5.711 1.457h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+    </svg>
+  );
+}
 
 export default function ResourceDetailsPage() {
   const { id } = useParams();
@@ -120,6 +129,14 @@ export default function ResourceDetailsPage() {
     navigator.clipboard.writeText(window.location.href);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
+  };
+
+  const handleWhatsAppShare = () => {
+    if (!resource) return;
+    const pageUrl = window.location.href;
+    const ratingText = resource.averageRating ? `${resource.averageRating.toFixed(1)} ★` : 'Verified';
+    const shareText = `📚 *${resource.title}*\n🎓 Branch: ${resource.branch} | Semester ${resource.semester}\n⭐ Rating: ${ratingText}\n📄 Verified Study Material on Campus Notes\n👉 View & Download: ${pageUrl}`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, '_blank', 'noopener,noreferrer');
   };
 
   const formatFileSize = (bytes) => {
@@ -291,15 +308,27 @@ export default function ResourceDetailsPage() {
               <span>Semester {resource.semester}</span>
             </p>
 
-            {/* Average Rating Bar in Header */}
-            <div className="flex items-center gap-2 pt-1 text-xs">
-              <RatingStars rating={resource.averageRating || 0} size="sm" />
-              <span className="font-bold text-slate-800">
-                {resource.averageRating ? resource.averageRating.toFixed(1) : 'Not rated yet'}
+            {/* Stats Ribbon: Views, Downloads, Ratings */}
+            <div className="flex flex-wrap items-center gap-2 pt-2 text-xs">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-medium border border-slate-200">
+                <Eye className="w-3.5 h-3.5 text-slate-500" />
+                <span><strong>{resource.viewsCount || 0}</strong> Views</span>
               </span>
-              {resource.ratingsCount > 0 && (
-                <span className="text-slate-500">
-                  ({resource.ratingsCount} {resource.ratingsCount === 1 ? 'rating' : 'ratings'})
+
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 font-medium border border-blue-200">
+                <Download className="w-3.5 h-3.5 text-blue-600" />
+                <span><strong>{resource.downloadsCount || 0}</strong> Downloads</span>
+              </span>
+
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-900 font-medium border border-amber-200">
+                <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
+                <span><strong>{resource.averageRating ? resource.averageRating.toFixed(1) : 'New'}</strong> {resource.ratingsCount > 0 ? `(${resource.ratingsCount})` : ''}</span>
+              </span>
+
+              {resource.verificationStatus === 'verified' && (
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 font-medium border border-emerald-200">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Verified Live</span>
                 </span>
               )}
             </div>
@@ -307,6 +336,16 @@ export default function ResourceDetailsPage() {
 
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <button
+              type="button"
+              onClick={handleWhatsAppShare}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold text-xs sm:text-sm shadow-2xs hover:shadow-xs transition-all cursor-pointer"
+              title="Share this note directly to WhatsApp student groups"
+            >
+              <WhatsAppIcon className="w-4 h-4 fill-white shrink-0" />
+              <span>Share on WhatsApp</span>
+            </button>
+
             <Button
               variant="primary"
               size="lg"
@@ -330,8 +369,8 @@ export default function ResourceDetailsPage() {
             <button
               type="button"
               onClick={handleShare}
-              title="Share Link"
-              className="p-2.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
+              title="Copy Link to Clipboard"
+              className="p-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
             >
               <Share2 className="w-5 h-5" />
             </button>
@@ -571,6 +610,22 @@ export default function ResourceDetailsPage() {
                   <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
                   <span>{resource.averageRating ? resource.averageRating.toFixed(1) : '—'}</span>
                   <span className="text-slate-400 font-normal">({resource.ratingsCount || 0})</span>
+                </dd>
+              </div>
+
+              <div className="pt-2.5 flex items-center justify-between">
+                <dt className="text-slate-500">Total Views</dt>
+                <dd className="font-semibold text-slate-800 flex items-center gap-1">
+                  <Eye className="w-3.5 h-3.5 text-slate-400" />
+                  <span>{resource.viewsCount || 0}</span>
+                </dd>
+              </div>
+
+              <div className="pt-2.5 flex items-center justify-between">
+                <dt className="text-slate-500">Total Downloads</dt>
+                <dd className="font-semibold text-slate-800 flex items-center gap-1">
+                  <Download className="w-3.5 h-3.5 text-blue-500" />
+                  <span>{resource.downloadsCount || 0}</span>
                 </dd>
               </div>
 
