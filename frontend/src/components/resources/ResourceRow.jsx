@@ -43,7 +43,9 @@ export default function ResourceRow({
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [isDownloading, setIsDownloading] = useState(false);
-  const [downloadCount, setDownloadCount] = useState(resource.downloadsCount || 0);
+  const [downloadCount, setDownloadCount] = useState(
+    resource.downloadsCount ?? resource.downloadCount ?? 0
+  );
   const Icon = getResourceIcon(resource.resourceType);
 
   const formatFileSize = (bytes) => {
@@ -87,7 +89,10 @@ export default function ResourceRow({
       const res = await resourceService.downloadResource(resource._id);
       if (res?.data?.fileUrl) {
         window.open(res.data.fileUrl, '_blank', 'noopener,noreferrer');
-        setDownloadCount((prev) => prev + 1);
+        const nextCount = res.data.downloadsCount !== undefined
+          ? res.data.downloadsCount
+          : ((prev) => prev + 1);
+        setDownloadCount(nextCount);
       } else if (resource.fileUrl) {
         window.open(resource.fileUrl, '_blank', 'noopener,noreferrer');
       }

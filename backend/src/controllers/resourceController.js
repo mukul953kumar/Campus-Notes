@@ -341,6 +341,22 @@ const streamResourceFile = async (req, res, next) => {
     const dispositionType = isDownload ? 'attachment' : 'inline';
     const safeFilename = `${resource.title.replace(/[^a-zA-Z0-9_.-]/g, '_')}.pdf`;
 
+    if (isDownload) {
+      await Resource.findByIdAndUpdate(resource._id, {
+        $inc: { downloadsCount: 1 }
+      });
+      if (resource.uploaderId) {
+        await User.findByIdAndUpdate(resource.uploaderId, {
+          $inc: { 'stats.downloadsReceived': 1 }
+        });
+      }
+      if (req.user && req.user._id) {
+        await User.findByIdAndUpdate(req.user._id, {
+          $inc: { 'stats.downloadsCount': 1 }
+        });
+      }
+    }
+
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `${dispositionType}; filename="${safeFilename}"`);
     res.setHeader('Cache-Control', 'public, max-age=86400');

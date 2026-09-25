@@ -81,10 +81,14 @@ export default function ResourceDetailsPage() {
       if (result?.data?.fileUrl) {
         // Open download link in new tab or trigger download
         window.open(result.data.fileUrl, '_blank', 'noopener,noreferrer');
-        // Update local download counter
+        // Update download counter with authoritative server response
+        const nextCount = result.data.downloadsCount !== undefined
+          ? result.data.downloadsCount
+          : ((prev.downloadsCount || prev.downloadCount || 0) + 1);
         setResource((prev) => ({
           ...prev,
-          downloadsCount: (prev.downloadsCount || 0) + 1,
+          downloadsCount: nextCount,
+          downloadCount: nextCount
         }));
       }
     } catch (err) {
@@ -396,7 +400,7 @@ export default function ResourceDetailsPage() {
               <p className="flex items-center justify-between">
                 <span>Total Downloads:</span>
                 <span className="font-semibold text-slate-900">
-                  {resource.downloadsCount || 0}
+                  {resource.downloadsCount ?? resource.downloadCount ?? 0}
                 </span>
               </p>
             </div>

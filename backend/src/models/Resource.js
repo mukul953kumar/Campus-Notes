@@ -112,10 +112,11 @@ const resourceSchema = new mongoose.Schema(
       default: '',
       trim: true
     },
-    downloadCount: {
+    downloadsCount: {
       type: Number,
       default: 0,
-      min: 0
+      min: 0,
+      alias: 'downloadCount'
     },
     averageRating: {
       type: Number,
