@@ -18,13 +18,10 @@ const { generalApiLimiter } = require('./middleware/rateLimiter');
 
 const app = express();
 
-// Security HTTP headers
-app.use(helmet());
+// Trust reverse proxy (required for Render / Vercel rate-limiting and headers)
+app.set('trust proxy', 1);
 
-// Apply global rate limiting across /api endpoints
-app.use('/api', generalApiLimiter);
-
-// CORS configuration
+// CORS configuration (MUST be the very first middleware)
 const configuredClientUrls = (process.env.CLIENT_URL || '')
   .split(',')
   .map((url) => url.trim().replace(/\/$/, ''))
@@ -33,11 +30,12 @@ const configuredClientUrls = (process.env.CLIENT_URL || '')
 const allowedOrigins = [
   ...configuredClientUrls,
   'https://campusnotesknit.vercel.app',
+  'https://campus-notes-knit.vercel.app',
   'http://localhost:5173',
   'http://localhost:3000'
 ];
 
-app.use(cors({
+const corsOptions = {
   origin: (origin, callback) => {
     // Allow requests with no origin (e.g. mobile apps, curl, Postman) or matching allowedOrigins
     const normalizedOrigin = origin ? origin.replace(/\/$/, '') : '';
@@ -50,8 +48,22 @@ app.use(cors({
     }
     return callback(new AppError('Blocked by CORS policy', 403));
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
+// Security HTTP headers
+app.use(helmet({
+  crossOriginResourcePolicy: false
 }));
+
+// Apply global rate limiting across /api endpoints
+app.use('/api', generalApiLimiter);
 
 // Body parsers with sensible payload limits
 app.use(express.json({ limit: '10mb' }));
