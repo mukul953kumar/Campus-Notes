@@ -55,6 +55,16 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Static file serving for local upload fallback
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
+// Root landing route for health & verification
+app.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'CampusNotes API Server is live and running 🚀',
+    environment: process.env.NODE_ENV || 'development',
+    healthCheck: '/api/health'
+  });
+});
+
 // Mount routes
 app.use('/api/health', healthRoutes);
 app.use('/api/colleges', collegeRoutes);
