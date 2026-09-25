@@ -35,6 +35,7 @@ import {
 import { useAuth } from './context/AuthContext';
 import { resourceService } from './services/api';
 import ResourceRow from './components/resources/ResourceRow';
+import ResourceCard from './components/resources/ResourceCard';
 
 function HomePage() {
   const navigate = useNavigate();
@@ -55,12 +56,12 @@ function HomePage() {
     { code: 'MCA', name: 'Master of Computer Applications', count: '1st - 4th Sem' },
   ];
 
-  // Load live campus recent uploads
+  // Load live campus recent uploads (Top 5)
   useEffect(() => {
     async function loadRecent() {
       setIsLoadingRecent(true);
       try {
-        const res = await resourceService.getResources({ limit: 4, sortBy: 'recent' });
+        const res = await resourceService.getResources({ limit: 5, sortBy: 'recent' });
         if (res?.data) {
           setRecentUploads(res.data);
         }
@@ -73,7 +74,7 @@ function HomePage() {
     loadRecent();
   }, []);
 
-  // Load personalized semester recommendations dynamically based on student branch & sem
+  // Load personalized semester recommendations dynamically based on student branch & sem (Top 5)
   useEffect(() => {
     if (user?.branch && user?.semester) {
       async function loadRecommended() {
@@ -82,7 +83,7 @@ function HomePage() {
           const res = await resourceService.getResources({
             branch: user.branch,
             semester: user.semester,
-            limit: 6,
+            limit: 5,
             sortBy: 'popular'
           });
           if (res?.data) {
@@ -235,15 +236,27 @@ function HomePage() {
               </Link>
             </div>
           ) : (
-            <div className="space-y-3.5">
-              {recommendedUploads.map((item) => (
-                <ResourceRow
-                  key={item._id}
-                  resource={item}
-                  isSaved={savedIds.includes(item._id)}
-                  onToggleSave={handleToggleSave}
-                />
-              ))}
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3.5">
+                {recommendedUploads.slice(0, 5).map((item) => (
+                  <ResourceCard
+                    key={item._id}
+                    resource={item}
+                    isSaved={savedIds.includes(item._id)}
+                    onToggleSave={handleToggleSave}
+                  />
+                ))}
+              </div>
+
+              <div className="pt-2 text-center">
+                <Link
+                  to={`/resources?branch=${encodeURIComponent(user.branch)}&semester=${user.semester}`}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-blue-50 text-blue-700 font-bold text-xs rounded-xl border border-blue-200 transition-colors shadow-2xs"
+                >
+                  <span>View All Semester {user.semester} Notes ({user.branch})</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
             </div>
           )}
         </section>
@@ -285,20 +298,20 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Recently Verified Resources List */}
-      <section>
-        <div className="flex items-center justify-between mb-4">
+      {/* Recently Verified Resources List (Top 5) */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-bold text-slate-900">Recent Materials</h2>
             <Badge variant="verified" size="sm" showIcon>
-              Verified Live
+              Latest 5 Live
             </Badge>
           </div>
           <Link
             to="/resources"
             className="text-xs font-semibold text-blue-700 hover:text-blue-800 inline-flex items-center gap-1"
           >
-            View all <ArrowRight className="w-3.5 h-3.5" />
+            View Full Library <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
@@ -311,15 +324,27 @@ function HomePage() {
             No verified materials available yet. Be the first to upload!
           </div>
         ) : (
-          <div className="space-y-3.5">
-            {recentUploads.map((item) => (
-              <ResourceRow
-                key={item._id}
-                resource={item}
-                isSaved={savedIds.includes(item._id)}
-                onToggleSave={handleToggleSave}
-              />
-            ))}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3.5">
+              {recentUploads.slice(0, 5).map((item) => (
+                <ResourceCard
+                  key={item._id}
+                  resource={item}
+                  isSaved={savedIds.includes(item._id)}
+                  onToggleSave={handleToggleSave}
+                />
+              ))}
+            </div>
+
+            <div className="pt-2 text-center">
+              <Link
+                to="/resources"
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs rounded-xl border border-slate-200 transition-colors shadow-2xs"
+              >
+                <span>Explore Full Resource Library ({recentUploads.length} shown)</span>
+                <ArrowRight className="w-3.5 h-3.5 text-blue-700" />
+              </Link>
+            </div>
           </div>
         )}
       </section>
