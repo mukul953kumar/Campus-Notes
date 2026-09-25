@@ -241,7 +241,7 @@ export default function ProfilePage() {
                   <>
                     <span>•</span>
                     <span className="font-mono bg-blue-50 text-blue-900 px-2 py-0.5 rounded border border-blue-200 text-[11px] font-bold">
-                      Roll: {user.rollNumber}
+                      ID: {user.rollNumber}
                     </span>
                   </>
                 )}
@@ -445,7 +445,7 @@ export default function ProfilePage() {
                 type="text"
                 value="Kamla Nehru Institute of Technology, Sultanpur"
                 disabled
-                helperText="Affiliated college is linked to your @knit.ac.in account"
+                helperText="Affiliated college is linked to your verified student account"
               />
             </div>
 
@@ -911,7 +911,7 @@ export default function ProfilePage() {
               </div>
 
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">College Roll Number</span>
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Student ID</span>
                 <p className="text-sm font-mono font-bold text-blue-900">{user?.rollNumber || 'N/A'}</p>
               </div>
 

@@ -22,7 +22,7 @@ const validateCollegeDomain = async (email) => {
 
   if (!college) {
     throw new AppError(
-      'Access restricted: Only verified @knit.ac.in college email addresses are permitted to sign in',
+      'Access restricted: Only verified institute student email addresses are permitted to sign in',
       403
     );
   }

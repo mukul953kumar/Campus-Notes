@@ -108,7 +108,7 @@ export default function LoginPage() {
       handlePostLoginRedirect(result.data.user);
     } catch (err) {
       setErrorMessage(
-        err.message || 'Access restricted: Please select your official @knit.ac.in college Google account.'
+        err.message || 'Access restricted: Please select your official institute Google account.'
       );
     } finally {
       setIsLoading(false);
@@ -121,7 +121,7 @@ export default function LoginPage() {
     try {
       const targetEmail = (emailToLogin || devEmail).trim().toLowerCase();
       if (!targetEmail.endsWith('@knit.ac.in')) {
-        throw new Error('Only @knit.ac.in college emails are permitted.');
+        throw new Error('Only authorized institute emails are permitted.');
       }
       const result = await authService.devLogin(targetEmail);
       login(result.data.token, result.data.user);
@@ -160,9 +160,9 @@ export default function LoginPage() {
             <ShieldCheck className="w-5 h-5 text-blue-700 shrink-0 mt-0.5" />
             <div className="text-xs text-blue-950 leading-relaxed">
               <span className="font-semibold block mb-0.5 text-blue-900">
-                Single Sign-On (@knit.ac.in)
+                Institutional Single Sign-On
               </span>
-              Direct 1-click authentication using your official KNIT student Google account. No manual details required.
+              Use your registered college student ID to sign in. 1-click verification directly via Google.
             </div>
           </div>
         </div>
@@ -182,7 +182,7 @@ export default function LoginPage() {
             {isLoading ? (
               <div className="flex items-center gap-2 text-xs text-blue-700 font-medium py-3">
                 <div className="w-4 h-4 border-2 border-blue-700 border-t-transparent rounded-full animate-spin"></div>
-                <span>Verifying KNIT Google credentials...</span>
+                <span>Verifying institutional student ID...</span>
               </div>
             ) : (
               <div id="google-signin-btn" className="w-full flex justify-center"></div>
@@ -190,12 +190,9 @@ export default function LoginPage() {
           </div>
 
           <div className="text-center text-[11px] text-slate-400 space-y-1 pt-2">
-            <p className="flex items-center justify-center gap-1">
-              <Lock className="w-3 h-3 text-slate-400" />
-              <span>Student Name & Roll Number are verified from your college ID</span>
-            </p>
-            <p className="text-slate-400">
-              Format: <code className="font-mono text-slate-600 bg-slate-100 px-1 py-0.5 rounded">name.rollno@knit.ac.in</code>
+            <p className="flex items-center justify-center gap-1.5">
+              <Lock className="w-3.5 h-3.5 text-slate-400" />
+              <span>Student profile & academic branch are verified securely from your institute ID</span>
             </p>
           </div>
 
@@ -223,7 +220,7 @@ export default function LoginPage() {
             {showDevFallback && (
               <div className="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs">
                 <p className="text-slate-500 text-[11px]">
-                  Simulate direct Google Sign-in for KNIT students without active internet:
+                  Simulate direct Google Sign-in for authorized student accounts:
                 </p>
                 <div className="flex flex-wrap gap-2 pt-1">
                   <button
@@ -231,21 +228,21 @@ export default function LoginPage() {
                     onClick={() => handleDevLogin('mukul.24636@knit.ac.in')}
                     className="px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-slate-700 hover:border-blue-600 font-medium cursor-pointer"
                   >
-                    Mukul (24636)
+                    Demo Student 1
                   </button>
                   <button
                     type="button"
                     onClick={() => handleDevLogin('shreya.singh.22415@knit.ac.in')}
                     className="px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-slate-700 hover:border-blue-600 font-medium cursor-pointer"
                   >
-                    Shreya (22415)
+                    Demo Student 2
                   </button>
                   <button
                     type="button"
                     onClick={() => handleDevLogin('admin@knit.ac.in')}
                     className="px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-slate-700 hover:border-blue-600 font-medium cursor-pointer"
                   >
-                    Admin
+                    Demo Admin
                   </button>
                 </div>
               </div>

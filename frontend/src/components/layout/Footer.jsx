@@ -70,7 +70,7 @@ export default function Footer() {
               </li>
               <li>
                 <span className="text-slate-400 text-xs">
-                  Login restricted to @knit.ac.in
+                  Login restricted to verified student accounts
                 </span>
               </li>
             </ul>

@@ -48,7 +48,7 @@ const googleLogin = async (req, res, next) => {
     const cleanEmail = email.trim().toLowerCase();
     if (!cleanEmail.endsWith('@knit.ac.in')) {
       return next(
-        new AppError('Access restricted: Only official @knit.ac.in college Google accounts are permitted to sign in.', 403)
+        new AppError('Access restricted: Only official institute student Google accounts are permitted to sign in.', 403)
       );
     }
 
