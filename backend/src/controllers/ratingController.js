@@ -227,9 +227,38 @@ const deleteUserRating = async (req, res, next) => {
   }
 };
 
+/**
+ * Get all ratings and reviews authored by the current logged in student
+ * GET /api/ratings/my-reviews
+ */
+const getMyReviews = async (req, res, next) => {
+  try {
+    const ratings = await Rating.find({ userId: req.user._id })
+      .sort({ createdAt: -1 })
+      .populate({
+        path: 'resourceId',
+        select: 'title resourceType branch semester subjectId fileUrl averageRating ratingsCount verificationStatus',
+        populate: {
+          path: 'subjectId',
+          select: 'name code shortName'
+        }
+      })
+      .lean();
+
+    return sendResponse(res, {
+      statusCode: 200,
+      message: 'User reviews retrieved successfully',
+      data: ratings
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   submitRating,
   getResourceRatings,
   getUserRating,
-  deleteUserRating
+  deleteUserRating,
+  getMyReviews
 };

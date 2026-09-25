@@ -314,6 +314,12 @@ export const ratingService = {
       method: 'DELETE',
     });
   },
+
+  async getMyReviews() {
+    return apiRequest('/ratings/my-reviews', {
+      method: 'GET',
+    });
+  },
 };
 
 
