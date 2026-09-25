@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   FileText,
   BookOpen,
@@ -12,11 +12,13 @@ import {
   CheckCircle2,
   Calendar,
   Layers,
-  Star
+  Star,
+  Lock
 } from 'lucide-react';
 import Badge from '../common/Badge';
 import Button from '../common/Button';
 import { resourceService } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 function getResourceIcon(type) {
   switch (type) {
@@ -38,6 +40,8 @@ export default function ResourceRow({
   isSaved = false,
   onToggleSave,
 }) {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadCount, setDownloadCount] = useState(resource.downloadsCount || 0);
   const Icon = getResourceIcon(resource.resourceType);
@@ -59,8 +63,24 @@ export default function ResourceRow({
 
   const subjectLabel = resource.subjectId?.shortName || resource.subjectId?.code || 'KNIT';
 
+  const handleDetailsClick = (e) => {
+    if (!isAuthenticated) {
+      e.preventDefault();
+      navigate('/login', {
+        state: { from: { pathname: `/resources/${resource._id}` } }
+      });
+    }
+  };
+
   const handleDownload = async (e) => {
     e.preventDefault();
+    if (!isAuthenticated) {
+      navigate('/login', {
+        state: { from: { pathname: `/resources/${resource._id}` } }
+      });
+      return;
+    }
+
     if (!resource._id) return;
     setIsDownloading(true);
     try {
@@ -80,6 +100,19 @@ export default function ResourceRow({
     }
   };
 
+  const handleSaveClick = (e) => {
+    if (!isAuthenticated) {
+      e.preventDefault();
+      navigate('/login', {
+        state: { from: { pathname: `/resources/${resource._id}` } }
+      });
+      return;
+    }
+    if (onToggleSave) {
+      onToggleSave(resource._id);
+    }
+  };
+
   return (
     <div className="group p-4 sm:p-4.5 bg-white hover:bg-slate-50/80 border-b border-slate-200/90 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
       
@@ -94,6 +127,7 @@ export default function ResourceRow({
           <div className="flex flex-wrap items-center gap-2">
             <Link
               to={`/resources/${resource._id}`}
+              onClick={handleDetailsClick}
               className="text-sm font-semibold text-slate-900 hover:text-blue-700 transition-colors line-clamp-1"
               title={resource.title}
             >
@@ -174,37 +208,35 @@ export default function ResourceRow({
         {onToggleSave && (
           <button
             type="button"
-            onClick={() => onToggleSave(resource._id)}
+            onClick={handleSaveClick}
             className={`p-2 rounded-lg border transition-colors cursor-pointer ${
               isSaved
                 ? 'bg-blue-50 text-blue-700 border-blue-200'
                 : 'bg-white text-slate-400 hover:text-slate-700 border-slate-200 hover:bg-slate-50'
             }`}
-            title={isSaved ? 'Remove from Saved' : 'Save Bookmark'}
+            title={isSaved ? 'Remove from Saved' : (isAuthenticated ? 'Save Bookmark' : 'Sign in to save')}
           >
             <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-blue-700' : ''}`} />
           </button>
         )}
 
-        <Link to={`/resources/${resource._id}`}>
+        <Link to={`/resources/${resource._id}`} onClick={handleDetailsClick}>
           <Button variant="secondary" size="sm">
             Details
           </Button>
         </Link>
 
-        {resource.fileUrl && (
-          <Button
-            variant="outline"
-            size="sm"
-            icon={Download}
-            onClick={handleDownload}
-            isLoading={isDownloading}
-            className="text-slate-700"
-            title="Download PDF"
-          >
-            PDF
-          </Button>
-        )}
+        <Button
+          variant="outline"
+          size="sm"
+          icon={isAuthenticated ? Download : Lock}
+          onClick={handleDownload}
+          isLoading={isDownloading}
+          className="text-slate-700"
+          title={isAuthenticated ? 'Download PDF' : 'Sign in to download PDF'}
+        >
+          PDF
+        </Button>
       </div>
 
     </div>

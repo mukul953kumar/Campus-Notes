@@ -279,7 +279,14 @@ export default function App() {
             
             {/* Public catalog routes */}
             <Route path="resources" element={<ResourceLibraryPage />} />
-            <Route path="resources/:id" element={<ResourceDetailsPage />} />
+            <Route
+              path="resources/:id"
+              element={
+                <ProtectedRoute>
+                  <ResourceDetailsPage />
+                </ProtectedRoute>
+              }
+            />
             <Route path="pyqs" element={<PYQPage />} />
             <Route path="subjects" element={<SubjectsPage />} />
             <Route path="subjects/:id" element={<SubjectDetailsPage />} />

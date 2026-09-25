@@ -14,11 +14,11 @@ const ratingRoutes = require('./ratingRoutes');
 
 const router = express.Router();
 
-router.get('/', getResources);
+router.get('/', optionalAuth, getResources);
 router.get('/my-uploads', requireAuth, getMyUploads);
-router.get('/:id', optionalAuth, getResourceById);
-router.get('/:id/file', optionalAuth, streamResourceFile);
-router.get('/:id/download', optionalAuth, downloadResource);
+router.get('/:id', requireAuth, getResourceById);
+router.get('/:id/file', requireAuth, streamResourceFile);
+router.get('/:id/download', requireAuth, downloadResource);
 router.post('/upload', requireAuth, upload.single('file'), uploadResource);
 
 // Mount rating endpoints

@@ -121,7 +121,7 @@ const getResources = async (req, res, next) => {
 
     const formattedResources = resources.map((r) => ({
       ...r,
-      fileUrl: getSignedDownloadUrl(r.fileKey, r.fileUrl)
+      fileUrl: req.user ? getSignedDownloadUrl(r.fileKey, r.fileUrl) : null
     }));
 
     return sendResponse(res, {
