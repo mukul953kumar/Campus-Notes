@@ -180,146 +180,127 @@ export default function ResourceCard({
   };
 
   return (
-    <div className="group bg-white hover:bg-slate-50/40 border border-slate-200 hover:border-blue-300 rounded-2xl p-5 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between h-full space-y-4">
+    <div className="group bg-white hover:bg-slate-50/50 border border-slate-200 hover:border-blue-400 rounded-2xl p-4 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between aspect-square w-full">
       
-      {/* Top Header: Icon, Badges, WhatsApp & Bookmark */}
-      <div className="space-y-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className={`w-11 h-11 rounded-xl border flex items-center justify-center shrink-0 transition-colors shadow-2xs ${iconBoxStyle}`}>
-              <TypeIcon className="w-5 h-5" />
+      {/* Top Section */}
+      <div className="space-y-2">
+        {/* Row 1: Left (Icon + Subject badge + Type badge), Right (WhatsApp + Bookmark) */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 shadow-2xs ${iconBoxStyle}`}>
+              <TypeIcon className="w-4 h-4" />
             </div>
-            <div>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="font-bold text-blue-900 bg-blue-50/90 px-2 py-0.5 rounded border border-blue-200/90 text-[11px]">
-                  {subjectLabel}
-                </span>
-                <Badge variant={badgeVariant} size="sm">
-                  {displayType}
-                </Badge>
-              </div>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                Sem {resource.semester} • {resource.branch ? resource.branch.split(' ')[0] : 'General'}
-              </p>
+            <div className="flex items-center gap-1 min-w-0">
+              <span className="font-bold text-blue-900 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 text-[11px] truncate">
+                {subjectLabel}
+              </span>
+              <Badge variant={badgeVariant} size="sm">
+                {displayType}
+              </Badge>
             </div>
           </div>
 
-          {/* Action Icons: WhatsApp Share & Bookmark */}
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1 shrink-0">
             <button
               type="button"
               onClick={handleWhatsAppShare}
-              className="p-2 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-200 transition-all cursor-pointer shadow-2xs"
+              className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-200 transition-colors cursor-pointer shadow-2xs"
               title="Share note on WhatsApp"
             >
-              <WhatsAppIcon className="w-4 h-4 fill-[#25D366]" />
+              <WhatsAppIcon className="w-3.5 h-3.5 fill-[#25D366]" />
             </button>
 
             {onToggleSave && (
               <button
                 type="button"
                 onClick={handleSaveClick}
-                className={`p-2 rounded-xl border transition-all cursor-pointer ${
+                className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
                   isSaved
                     ? 'bg-blue-50 text-blue-700 border-blue-200 shadow-2xs'
                     : 'bg-white text-slate-400 hover:text-slate-700 border-slate-200 hover:bg-slate-50'
                 }`}
                 title={isSaved ? 'Remove from Saved' : (isAuthenticated ? 'Save Bookmark' : 'Sign in to save')}
               >
-                <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-blue-700' : ''}`} />
+                <Bookmark className={`w-3.5 h-3.5 ${isSaved ? 'fill-blue-700' : ''}`} />
               </button>
             )}
           </div>
         </div>
 
-        {/* Title */}
+        {/* Row 2: Title (Compact 2 lines) */}
         <div>
           <Link
             to={`/resources/${resource._id}`}
             onClick={handleDetailsClick}
-            className="text-sm font-bold text-slate-900 hover:text-blue-700 transition-colors line-clamp-2 leading-snug tracking-tight"
+            className="text-sm font-bold text-slate-900 hover:text-blue-700 transition-colors line-clamp-2 leading-snug tracking-tight h-10 flex items-center"
             title={resource.title}
           >
             {resource.title}
           </Link>
         </div>
 
-        {/* Categorization & Metadata Chips */}
-        <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-          {resource.unit ? (
-            <span className="inline-flex items-center gap-1 text-slate-600 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
-              <Layers className="w-3 h-3 text-slate-400" />
-              <span>Unit {resource.unit}</span>
-            </span>
-          ) : (
-            <span className="text-slate-500 bg-slate-50 px-2 py-0.5 rounded border border-slate-200/70">
-              Full Syllabus
-            </span>
-          )}
-
+        {/* Row 3: Compact Metadata Chips */}
+        <div className="flex items-center gap-1.5 text-[10px] text-slate-500 flex-wrap">
+          <span className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-medium">
+            Sem {resource.semester}
+          </span>
+          <span className="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">
+            {resource.unit ? `Unit ${resource.unit}` : 'Full Syllabus'}
+          </span>
           {resource.examYear && (
-            <span className="font-medium text-purple-800 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
-              {resource.examYear} {resource.examType || 'Exam'}
+            <span className="bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded font-medium border border-purple-200/60">
+              {resource.examYear}
             </span>
           )}
-
           {resource.verificationStatus === 'verified' && (
-            <Badge variant="verified" size="sm" showIcon>
-              Verified
-            </Badge>
+            <span className="inline-flex items-center gap-0.5 text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-semibold border border-emerald-200/80">
+              <ShieldCheck className="w-3 h-3 text-emerald-600" />
+              <span>Verified</span>
+            </span>
           )}
         </div>
       </div>
 
-      {/* Middle/Bottom: Uploader, Ratings & File Stats */}
-      <div className="pt-3 border-t border-slate-100 space-y-3">
-        <div className="flex items-center justify-between text-xs text-slate-500">
-          <span className="truncate text-[11px]">
-            By <strong className="font-medium text-slate-700">{resource.uploaderId?.name || 'Student'}</strong>
-          </span>
-
-          {uploadDate && (
-            <span className="text-[10px] text-slate-400 shrink-0">{uploadDate}</span>
-          )}
-        </div>
-
-        {/* Stats Strip */}
-        <div className="flex items-center justify-between text-[11px] text-slate-500 bg-slate-50/70 p-2 rounded-xl border border-slate-100">
-          <div className="flex items-center gap-1">
+      {/* Bottom Section */}
+      <div className="space-y-2 pt-2 border-t border-slate-100">
+        {/* Micro-Stats: Rating, Views, Downloads, Author */}
+        <div className="flex items-center justify-between text-[11px] text-slate-500">
+          <div className="flex items-center gap-1.5">
             {resource.ratingsCount > 0 ? (
-              <span className="inline-flex items-center gap-1 font-bold text-amber-900">
+              <span className="inline-flex items-center gap-0.5 font-bold text-amber-900">
                 <Star className="w-3 h-3 text-amber-500 fill-amber-400" />
                 <span>{resource.averageRating ? resource.averageRating.toFixed(1) : '5.0'}</span>
-                <span className="text-amber-700 font-normal text-[10px]">({resource.ratingsCount})</span>
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 text-slate-400 text-[10px]">
+              <span className="inline-flex items-center gap-0.5 text-slate-400 text-[10px]">
                 <Star className="w-3 h-3 text-slate-300" />
                 <span>Unrated</span>
               </span>
             )}
-          </div>
-
-          <div className="flex items-center gap-2 text-slate-500 text-[11px]">
-            <span className="inline-flex items-center gap-1 text-slate-600" title="Total Views">
+            <span>•</span>
+            <span className="inline-flex items-center gap-0.5 text-slate-600" title="Total Views">
               <Eye className="w-3 h-3 text-slate-400" />
               <span>{resource.viewsCount || 0}</span>
             </span>
             <span>•</span>
-            <span className="inline-flex items-center gap-1 text-slate-600 font-medium" title="Total Downloads">
+            <span className="inline-flex items-center gap-0.5 text-slate-600 font-medium" title="Total Downloads">
               <Download className="w-3 h-3 text-slate-400" />
               <span>{downloadCount}</span>
             </span>
           </div>
+
+          <span className="truncate max-w-[80px] text-[10px] text-slate-400" title={resource.uploaderId?.name || 'Student'}>
+            By {resource.uploaderId?.name?.split(' ')[0] || 'Student'}
+          </span>
         </div>
 
-        {/* Bottom Actions Buttons */}
-        <div className="grid grid-cols-2 gap-2 pt-1">
+        {/* Buttons Row */}
+        <div className="grid grid-cols-2 gap-2">
           <Link to={`/resources/${resource._id}`} onClick={handleDetailsClick} className="w-full">
             <Button
               variant="secondary"
               size="sm"
-              className="w-full justify-center font-semibold text-slate-700"
+              className="w-full justify-center text-xs font-semibold py-1.5 h-8 text-slate-700"
             >
               Details
             </Button>
@@ -331,7 +312,7 @@ export default function ResourceCard({
             icon={isAuthenticated ? Download : Lock}
             onClick={handleDownload}
             isLoading={isDownloading}
-            className="w-full justify-center text-slate-800 font-semibold border-slate-200 hover:border-blue-600 hover:text-blue-700"
+            className="w-full justify-center text-xs font-semibold py-1.5 h-8 text-slate-800 border-slate-200 hover:border-blue-600 hover:text-blue-700"
           >
             PDF
           </Button>

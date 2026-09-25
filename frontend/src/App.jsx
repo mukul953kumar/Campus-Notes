@@ -62,12 +62,12 @@ function HomePage() {
     { code: 'MCA', name: 'Master of Computer Applications', count: '1st - 4th Sem' },
   ];
 
-  // Load live campus recent uploads (Top 5)
+  // Load live campus recent uploads (Top 4)
   useEffect(() => {
     async function loadRecent() {
       setIsLoadingRecent(true);
       try {
-        const res = await resourceService.getResources({ limit: 5, sortBy: 'recent' });
+        const res = await resourceService.getResources({ limit: 4, sortBy: 'recent' });
         if (res?.data) {
           setRecentUploads(res.data);
         }
@@ -80,7 +80,7 @@ function HomePage() {
     loadRecent();
   }, []);
 
-  // Load personalized semester recommendations dynamically based on student branch & sem (Top 5)
+  // Load personalized semester recommendations dynamically based on student branch & sem (Top 4)
   useEffect(() => {
     if (user?.branch && user?.semester) {
       async function loadRecommended() {
@@ -89,7 +89,7 @@ function HomePage() {
           const res = await resourceService.getResources({
             branch: user.branch,
             semester: user.semester,
-            limit: 5,
+            limit: 4,
             sortBy: 'popular'
           });
           if (res?.data) {
@@ -261,8 +261,8 @@ function HomePage() {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3.5">
-                {recommendedUploads.slice(0, 5).map((item) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {recommendedUploads.slice(0, 4).map((item) => (
                   <ResourceCard
                     key={item._id}
                     resource={item}
@@ -322,13 +322,13 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Recently Verified Resources List (Top 5) */}
+      {/* Recently Verified Resources List (Top 4) */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-bold text-slate-900">Recent Materials</h2>
             <Badge variant="verified" size="sm" showIcon>
-              Latest 5 Live
+              Latest 4 Live
             </Badge>
           </div>
           <Link
@@ -349,8 +349,8 @@ function HomePage() {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3.5">
-              {recentUploads.slice(0, 5).map((item) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {recentUploads.slice(0, 4).map((item) => (
                 <ResourceCard
                   key={item._id}
                   resource={item}
@@ -365,7 +365,7 @@ function HomePage() {
                 to="/resources"
                 className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs rounded-xl border border-slate-200 transition-colors shadow-2xs"
               >
-                <span>Explore Full Resource Library ({recentUploads.length} shown)</span>
+                <span>Explore Full Resource Library ({Math.min(recentUploads.length, 4)} shown)</span>
                 <ArrowRight className="w-3.5 h-3.5 text-blue-700" />
               </Link>
             </div>
