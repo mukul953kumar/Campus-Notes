@@ -77,24 +77,40 @@ async function compileImagesToPdf(imageItems, documentTitle = 'Academic Notes') 
       image.src = item.previewUrl;
     });
 
+    // Handle smart scaling (max 1800px dimension for sharp, lightweight ~150DPI A4 output)
+    const MAX_DIMENSION = 1800;
+    let targetWidth = img.width;
+    let targetHeight = img.height;
+
+    if (targetWidth > MAX_DIMENSION || targetHeight > MAX_DIMENSION) {
+      if (targetWidth > targetHeight) {
+        targetHeight = Math.round((targetHeight * MAX_DIMENSION) / targetWidth);
+        targetWidth = MAX_DIMENSION;
+      } else {
+        targetWidth = Math.round((targetWidth * MAX_DIMENSION) / targetHeight);
+        targetHeight = MAX_DIMENSION;
+      }
+    }
+
     // Handle rotation on canvas
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     const rotation = item.rotation || 0;
 
     if (rotation === 90 || rotation === 270) {
-      canvas.width = img.height;
-      canvas.height = img.width;
+      canvas.width = targetHeight;
+      canvas.height = targetWidth;
     } else {
-      canvas.width = img.width;
-      canvas.height = img.height;
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
     }
 
     ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.rotate((rotation * Math.PI) / 180);
-    ctx.drawImage(img, -img.width / 2, -img.height / 2);
+    ctx.drawImage(img, -targetWidth / 2, -targetHeight / 2, targetWidth, targetHeight);
 
-    const imgData = canvas.toDataURL('image/jpeg', 0.86);
+    // 0.85 JPEG compression provides crystal clear text with small file size
+    const imgData = canvas.toDataURL('image/jpeg', 0.85);
 
     // Calculate dimensions to fit inside A4 page preserving aspect ratio
     const imgRatio = canvas.width / canvas.height;
@@ -628,24 +644,42 @@ export default function UploadResourcePage() {
                   </p>
                 </div>
               ) : (
-                <div className="flex items-center justify-between p-4 bg-blue-50/60 border border-blue-200 rounded-xl">
-                  <div className="flex items-center gap-3 truncate">
-                    <div className="w-10 h-10 rounded-lg bg-blue-700 text-white flex items-center justify-center shrink-0 shadow-xs">
-                      <FileText className="w-5 h-5" />
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-4 bg-blue-50/60 border border-blue-200 rounded-xl">
+                    <div className="flex items-center gap-3 truncate">
+                      <div className="w-10 h-10 rounded-lg bg-blue-700 text-white flex items-center justify-center shrink-0 shadow-xs">
+                        <FileText className="w-5 h-5" />
+                      </div>
+                      <div className="truncate text-left">
+                        <p className="text-sm font-medium text-slate-900 truncate">{file.name}</p>
+                        <p className="text-xs text-slate-500">
+                          {formatFileSize(file.size)} • Ready to upload {file.size > 10 * 1024 * 1024 ? '(Large File)' : '(Optimal)'}
+                        </p>
+                      </div>
                     </div>
-                    <div className="truncate text-left">
-                      <p className="text-sm font-medium text-slate-900 truncate">{file.name}</p>
-                      <p className="text-xs text-slate-500">{formatFileSize(file.size)} • Ready to upload</p>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemovePdf}
+                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-white rounded-lg transition-colors ml-2 cursor-pointer"
+                      title="Remove file"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleRemovePdf}
-                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-white rounded-lg transition-colors ml-2 cursor-pointer"
-                    title="Remove file"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
+
+                  {file.size > 10 * 1024 * 1024 && (
+                    <div className="p-3 bg-amber-50/90 border border-amber-200/90 rounded-xl flex items-start gap-2.5 text-xs text-amber-950">
+                      <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      <div className="space-y-1 text-left">
+                        <p className="font-bold text-amber-900">
+                          Notice: Large PDF File ({formatFileSize(file.size)})
+                        </p>
+                        <p className="text-amber-800 leading-relaxed">
+                          This file is within the 25 MB limit and will upload properly. If this PDF is made of uncompressed camera photos, you can also use our <strong>Photos to PDF (Auto-Stitch)</strong> mode to automatically create a super-sharp, lightweight ~5 MB document.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
