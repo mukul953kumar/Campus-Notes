@@ -150,8 +150,8 @@ const getLeaderboard = async (req, res, next) => {
 
     const rankedContributors = contributors.map((item, index) => {
       const rank = index + 1;
-      let badge = 'Note Sharer';
-      if (rank === 1) badge = 'Campus Scholar';
+      let badge = 'Note Contributor';
+      if (rank === 1) badge = 'Campus Champion';
       else if (rank === 2) badge = 'Master Contributor';
       else if (rank === 3) badge = 'Senior Contributor';
       else if (item.verifiedUploads >= 10) badge = 'Star Contributor';
