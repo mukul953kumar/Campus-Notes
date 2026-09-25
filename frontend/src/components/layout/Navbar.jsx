@@ -14,6 +14,7 @@ import {
   UploadCloud
 } from 'lucide-react';
 import Button from '../common/Button';
+import BrandLogo from '../common/BrandLogo';
 import { useAuth } from '../../context/AuthContext';
 
 export default function Navbar() {
@@ -42,19 +43,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16 gap-4">
           
           {/* Brand Logo */}
-          <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
-            <div className="w-9 h-9 rounded-lg bg-blue-700 flex items-center justify-center text-white shadow-xs group-hover:bg-blue-800 transition-colors">
-              <GraduationCap className="w-5 h-5" />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-bold text-slate-900 text-lg leading-tight tracking-tight">
-                Campus<span className="text-blue-700">Notes</span>
-              </span>
-              <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">
-                KNIT Sultanpur
-              </span>
-            </div>
-          </Link>
+          <BrandLogo size="md" />
 
           {/* Desktop Navigation Links */}
           <nav className="hidden md:flex items-center gap-1 lg:gap-2">

@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/api';
 import Button from '../../components/common/Button';
+import BrandLogo from '../../components/common/BrandLogo';
 import { GraduationCap, ShieldCheck, AlertCircle, Sparkles, CheckCircle2, ChevronDown, Lock } from 'lucide-react';
 
 const GOOGLE_CLIENT_ID =
@@ -138,8 +139,8 @@ export default function LoginPage() {
         
         {/* College Seal & Header */}
         <div className="text-center mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-blue-700 flex items-center justify-center text-white mx-auto shadow-md mb-3 ring-4 ring-blue-50">
-            <GraduationCap className="w-7 h-7" />
+          <div className="flex justify-center mb-3">
+            <BrandLogo size="lg" isClickable={false} />
           </div>
           <div className="inline-flex items-center gap-1.5 text-xs text-blue-700 bg-blue-50 border border-blue-200/80 px-2.5 py-0.5 rounded-full font-medium mb-2">
             <Sparkles className="w-3 h-3" />

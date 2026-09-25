@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { GraduationCap, ShieldCheck, FileText, Heart } from 'lucide-react';
+import { ShieldCheck, FileText, Heart } from 'lucide-react';
+import BrandLogo from '../common/BrandLogo';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -12,12 +13,7 @@ export default function Footer() {
           
           {/* Brand Info */}
           <div className="md:col-span-2 space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-md bg-blue-700 flex items-center justify-center text-white">
-                <GraduationCap className="w-4 h-4" />
-              </div>
-              <span className="font-bold text-slate-900 text-base">CampusNotes</span>
-            </div>
+            <BrandLogo size="md" />
             <p className="text-sm text-slate-500 max-w-sm leading-relaxed">
               Curated, peer-reviewed academic resource repository built specifically for students of Kamla Nehru Institute of Technology (KNIT), Sultanpur.
             </p>
