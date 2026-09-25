@@ -70,6 +70,16 @@ export default function ResourceDetailsPage() {
     loadResource();
   }, [id]);
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isFullscreenPreview) {
+        setIsFullscreenPreview(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isFullscreenPreview]);
+
   const handleToggleSave = async () => {
     try {
       await toggleBookmark(id);
@@ -351,41 +361,19 @@ export default function ResourceDetailsPage() {
                 <span className="font-semibold text-slate-800">In-Browser Document Preview</span>
               </div>
 
-              <div className="flex items-center gap-2">
-                {resource.fileUrl && (
-                  <a
-                    href={resource.fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-slate-600 hover:text-blue-700 px-2 py-1 rounded hover:bg-slate-100 transition-colors"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    <span>Open External</span>
-                  </a>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => setIsFullscreenPreview(!isFullscreenPreview)}
-                  className="flex items-center gap-1 text-slate-600 hover:text-blue-700 px-2 py-1 rounded hover:bg-slate-100 transition-colors cursor-pointer"
-                  title="Toggle Preview Size"
-                >
-                  {isFullscreenPreview ? (
-                    <Minimize2 className="w-3.5 h-3.5" />
-                  ) : (
-                    <Maximize2 className="w-3.5 h-3.5" />
-                  )}
-                  <span className="hidden sm:inline">
-                    {isFullscreenPreview ? 'Collapse' : 'Expand'}
-                  </span>
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setIsFullscreenPreview(true)}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 hover:text-blue-900 bg-blue-50/80 hover:bg-blue-100/80 border border-blue-200/90 px-3 py-1.5 rounded-xl transition-all cursor-pointer shadow-2xs"
+                title="Open Fullscreen Reader"
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
+                <span>Expand to Fullscreen</span>
+              </button>
             </div>
 
             {/* Embedded PDF iframe */}
-            <div className={`w-full bg-slate-900 transition-all duration-200 ${
-              isFullscreenPreview ? 'h-[85vh]' : 'h-[620px]'
-            }`}>
+            <div className="w-full h-[640px] bg-slate-900">
               {resource.fileUrl ? (
                 <iframe
                   src={`${resource.fileUrl}#toolbar=0&navpanes=0&scrollbar=1`}
@@ -414,6 +402,61 @@ export default function ResourceDetailsPage() {
             </div>
 
           </div>
+
+          {/* Immersive Fullscreen PDF Reader Overlay */}
+          {isFullscreenPreview && resource.fileUrl && (
+            <div className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex flex-col p-2 sm:p-4">
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl flex-1 flex flex-col overflow-hidden shadow-2xl">
+                
+                {/* Fullscreen Header */}
+                <div className="px-4 sm:px-6 py-3 bg-slate-900/95 border-b border-slate-800 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-blue-600/30 border border-blue-500/40 text-blue-400 flex items-center justify-center shrink-0">
+                      <FileText className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <h2 className="text-sm font-bold text-white truncate">{resource.title}</h2>
+                      <p className="text-[11px] text-slate-400">
+                        {resource.subjectId?.name || 'Academic Material'} • {formatFileSize(resource.fileSize)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2.5 shrink-0">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      icon={Download}
+                      onClick={handleDownload}
+                      isLoading={isDownloading}
+                      className="hidden sm:inline-flex shadow-xs"
+                    >
+                      Download PDF
+                    </Button>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsFullscreenPreview(false)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer border border-slate-700 shadow-2xs"
+                      title="Exit Fullscreen (Esc)"
+                    >
+                      <Minimize2 className="w-3.5 h-3.5" />
+                      <span>Exit Fullscreen</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Edge-to-edge PDF Viewer */}
+                <div className="flex-1 w-full bg-slate-950">
+                  <iframe
+                    src={`${resource.fileUrl}#toolbar=0&navpanes=0&scrollbar=1`}
+                    title={resource.title}
+                    className="w-full h-full border-0"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Student Ratings & Peer Reviews Section */}
           <ResourceReviewsSection
