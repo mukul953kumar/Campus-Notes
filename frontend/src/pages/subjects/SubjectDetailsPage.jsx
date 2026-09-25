@@ -208,13 +208,13 @@ export default function SubjectDetailsPage() {
         </div>
       </div>
 
-      {/* Materials List Card */}
-      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
-        <div className="px-5 sm:px-6 py-3.5 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between text-xs text-slate-600">
-          <span className="font-bold text-slate-900 text-sm">
+      {/* Materials Results Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between px-1 text-xs text-slate-600">
+          <span className="font-bold text-slate-900 text-sm sm:text-base">
             {isLoadingResources
               ? 'Loading course materials...'
-              : `${resources.length} ${resources.length === 1 ? 'Material' : 'Materials'} Found`}
+              : `${resources.length} ${resources.length === 1 ? 'Material' : 'Materials'} Available`}
           </span>
           <span className="text-[11px] text-slate-500 font-medium">
             {activeUnit === 'pyq' ? 'Previous Year Exam Papers' : activeUnit ? `Unit ${activeUnit} Notes` : 'Complete Course Repository'}
@@ -222,11 +222,11 @@ export default function SubjectDetailsPage() {
         </div>
 
         {isLoadingResources ? (
-          <div className="py-20">
+          <div className="bg-white border border-slate-200 rounded-2xl py-20 shadow-xs">
             <Loader message="Loading study materials..." size="md" />
           </div>
         ) : resources.length === 0 ? (
-          <div className="p-8 sm:p-12">
+          <div className="bg-white border border-slate-200 rounded-2xl p-8 sm:p-12 shadow-xs">
             <EmptyState
               icon={BookOpen}
               title={`No materials uploaded for ${activeUnit === 'pyq' ? 'PYQ' : activeUnit ? `Unit ${activeUnit}` : 'this subject'} yet`}
@@ -236,7 +236,7 @@ export default function SubjectDetailsPage() {
             />
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="space-y-3.5">
             {resources.map((item) => (
               <ResourceRow
                 key={item._id}

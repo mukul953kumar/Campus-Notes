@@ -159,23 +159,23 @@ export default function SavedResourcesPage() {
         </div>
       )}
 
-      {/* Bookmarks List Container Card */}
-      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
-        <div className="px-5 sm:px-6 py-3.5 bg-slate-50/80 border-b border-slate-200 text-xs font-bold text-slate-900 flex items-center justify-between">
-          <span>
+      {/* Bookmarks Results Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between px-1 text-xs text-slate-600">
+          <span className="font-bold text-slate-900 text-sm sm:text-base">
             {isLoading
               ? 'Loading saved bookmarks...'
-              : `${filteredBookmarks.length} ${filteredBookmarks.length === 1 ? 'Bookmark' : 'Bookmarks'}`}
+              : `${filteredBookmarks.length} ${filteredBookmarks.length === 1 ? 'Bookmark' : 'Bookmarks'} Saved`}
           </span>
           <span className="text-[11px] text-slate-400 font-normal">Personal Revision Library</span>
         </div>
 
         {isLoading ? (
-          <div className="py-20">
+          <div className="bg-white border border-slate-200 rounded-2xl py-20 shadow-xs">
             <Loader message="Loading saved materials..." size="md" />
           </div>
         ) : filteredBookmarks.length === 0 ? (
-          <div className="p-8 sm:p-12">
+          <div className="bg-white border border-slate-200 rounded-2xl p-8 sm:p-12 shadow-xs">
             <EmptyState
               icon={Bookmark}
               title={
@@ -200,7 +200,7 @@ export default function SavedResourcesPage() {
             />
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="space-y-3.5">
             {filteredBookmarks.map((item) => (
               <ResourceRow
                 key={item._id}

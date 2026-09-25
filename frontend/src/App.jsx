@@ -221,31 +221,31 @@ function HomePage() {
             </Link>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100 overflow-hidden shadow-xs">
-            {isLoadingRecommended ? (
-              <div className="p-8 text-center text-xs text-slate-500">
-                Curating your semester study materials...
-              </div>
-            ) : recommendedUploads.length === 0 ? (
-              <div className="p-8 text-center text-xs text-slate-500 space-y-2">
-                <p>No verified notes uploaded for {user.branch} Semester {user.semester} yet.</p>
-                <Link to="/upload">
-                  <Button size="sm" variant="primary" icon={Upload}>
-                    Be the First to Upload for Your Class
-                  </Button>
-                </Link>
-              </div>
-            ) : (
-              recommendedUploads.map((item) => (
+          {isLoadingRecommended ? (
+            <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center text-xs text-slate-500 shadow-xs">
+              Curating your semester study materials...
+            </div>
+          ) : recommendedUploads.length === 0 ? (
+            <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center text-xs text-slate-500 space-y-3 shadow-xs">
+              <p>No verified notes uploaded for {user.branch} Semester {user.semester} yet.</p>
+              <Link to="/upload">
+                <Button size="sm" variant="primary" icon={Upload}>
+                  Be the First to Upload for Your Class
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-3.5">
+              {recommendedUploads.map((item) => (
                 <ResourceRow
                   key={item._id}
                   resource={item}
                   isSaved={savedIds.includes(item._id)}
                   onToggleSave={handleToggleSave}
                 />
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
       )}
 
@@ -264,7 +264,7 @@ function HomePage() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5">
           {branches.map((b) => (
             <Link
               key={b.code}
@@ -302,26 +302,26 @@ function HomePage() {
           </Link>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100 overflow-hidden shadow-xs">
-          {isLoadingRecent ? (
-            <div className="p-8 text-center text-xs text-slate-500">
-              Loading recent verified materials...
-            </div>
-          ) : recentUploads.length === 0 ? (
-            <div className="p-8 text-center text-xs text-slate-500">
-              No verified materials available yet. Be the first to upload!
-            </div>
-          ) : (
-            recentUploads.map((item) => (
+        {isLoadingRecent ? (
+          <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center text-xs text-slate-500 shadow-xs">
+            Loading recent verified materials...
+          </div>
+        ) : recentUploads.length === 0 ? (
+          <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center text-xs text-slate-500 shadow-xs">
+            No verified materials available yet. Be the first to upload!
+          </div>
+        ) : (
+          <div className="space-y-3.5">
+            {recentUploads.map((item) => (
               <ResourceRow
                 key={item._id}
                 resource={item}
                 isSaved={savedIds.includes(item._id)}
                 onToggleSave={handleToggleSave}
               />
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Call to action for Student Uploads */}

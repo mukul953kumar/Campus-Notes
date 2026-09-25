@@ -365,11 +365,11 @@ export default function PYQPage() {
         </div>
       )}
 
-      {/* PYQ Papers Dense List Card */}
-      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
-        <div className="px-5 sm:px-6 py-3.5 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between text-xs text-slate-600">
+      {/* PYQ Papers Results Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between px-1 text-xs text-slate-600">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-900 text-sm">
+            <span className="font-bold text-slate-900 text-sm sm:text-base">
               {isLoading
                 ? 'Loading PYQ papers...'
                 : `${pyqs.length} Question ${pyqs.length === 1 ? 'Paper' : 'Papers'} Available`}
@@ -379,7 +379,7 @@ export default function PYQPage() {
           <button
             type="button"
             onClick={fetchPYQs}
-            className="flex items-center gap-1.5 hover:text-purple-700 transition-colors cursor-pointer font-medium"
+            className="flex items-center gap-1.5 text-slate-600 hover:text-purple-700 transition-colors cursor-pointer font-medium bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
             <span className="hidden sm:inline">Refresh</span>
@@ -387,11 +387,11 @@ export default function PYQPage() {
         </div>
 
         {isLoading ? (
-          <div className="py-20">
+          <div className="bg-white border border-slate-200 rounded-2xl py-20 shadow-xs">
             <Loader message="Loading examination archives..." size="md" />
           </div>
         ) : pyqs.length === 0 ? (
-          <div className="p-8 sm:p-12">
+          <div className="bg-white border border-slate-200 rounded-2xl p-8 sm:p-12 shadow-xs">
             <EmptyState
               icon={searchQuery ? SearchX : HelpCircle}
               title={searchQuery ? `No PYQs matching "${searchQuery}"` : 'No Question Papers Found'}
@@ -405,7 +405,7 @@ export default function PYQPage() {
             />
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="space-y-3.5">
             {pyqs.map((item) => (
               <ResourceRow
                 key={item._id}

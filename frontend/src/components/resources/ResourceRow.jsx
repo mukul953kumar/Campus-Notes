@@ -19,40 +19,55 @@ import Button from '../common/Button';
 import { resourceService } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
-function getResourceTypeMeta(type) {
-  const lower = String(type || '').toLowerCase();
-  if (lower === 'pyq') {
+function getResourceTypeMeta(type, title = '') {
+  const lowerType = String(type || '').toLowerCase();
+  const lowerTitle = String(title || '').toLowerCase();
+
+  if (
+    lowerType === 'pyq' ||
+    lowerTitle.includes('pyq') ||
+    lowerTitle.includes('question paper') ||
+    lowerTitle.includes('end-sem') ||
+    lowerTitle.includes('mid-sem') ||
+    lowerTitle.includes('ct1') ||
+    lowerTitle.includes('ct2') ||
+    lowerTitle.includes('class test')
+  ) {
     return {
       icon: HelpCircle,
       iconBoxStyle: 'bg-purple-50 text-purple-700 border-purple-200/90 group-hover:bg-purple-100/90',
-      badgeVariant: 'pyq'
+      badgeVariant: 'pyq',
+      displayType: 'PYQ'
     };
   }
-  if (lower === 'notes') {
-    return {
-      icon: BookOpen,
-      iconBoxStyle: 'bg-blue-50 text-blue-700 border-blue-200/90 group-hover:bg-blue-100/90',
-      badgeVariant: 'notes'
-    };
-  }
-  if (lower === 'assignment') {
+  if (lowerType === 'assignment' || lowerTitle.includes('assignment')) {
     return {
       icon: FileCheck,
       iconBoxStyle: 'bg-emerald-50 text-emerald-700 border-emerald-200/90 group-hover:bg-emerald-100/90',
-      badgeVariant: 'assignment'
+      badgeVariant: 'assignment',
+      displayType: 'ASSIGNMENT'
     };
   }
-  if (lower === 'practical' || lower === 'labfile' || lower === 'practicalfile') {
+  if (
+    lowerType === 'practical' ||
+    lowerType === 'labfile' ||
+    lowerType === 'practicalfile' ||
+    lowerTitle.includes('practical') ||
+    lowerTitle.includes('lab manual') ||
+    lowerTitle.includes('lab file')
+  ) {
     return {
       icon: Code,
       iconBoxStyle: 'bg-amber-50 text-amber-700 border-amber-200/90 group-hover:bg-amber-100/90',
-      badgeVariant: 'practical'
+      badgeVariant: 'practical',
+      displayType: 'PRACTICAL'
     };
   }
   return {
-    icon: FileText,
-    iconBoxStyle: 'bg-slate-50 text-slate-700 border-slate-200/90 group-hover:bg-slate-100/90',
-    badgeVariant: 'default'
+    icon: BookOpen,
+    iconBoxStyle: 'bg-blue-50 text-blue-700 border-blue-200/90 group-hover:bg-blue-100/90',
+    badgeVariant: 'notes',
+    displayType: 'NOTES'
   };
 }
 
@@ -68,13 +83,19 @@ export default function ResourceRow({
     resource.downloadsCount ?? resource.downloadCount ?? 0
   );
 
-  const { icon: TypeIcon, iconBoxStyle, badgeVariant } = getResourceTypeMeta(resource.resourceType);
+  const { icon: TypeIcon, iconBoxStyle, badgeVariant, displayType } = getResourceTypeMeta(
+    resource.resourceType,
+    resource.title
+  );
 
   const formatFileSize = (bytes) => {
-    if (!bytes || bytes <= 0) return 'PDF Document';
-    const mb = bytes / (1024 * 1024);
+    const num = Number(bytes);
+    if (!bytes || isNaN(num) || num <= 0) return 'PDF Document';
+    const mb = num / (1024 * 1024);
     if (mb >= 1) return `${mb.toFixed(1)} MB`;
-    return `${(bytes / 1024).toFixed(0)} KB`;
+    const kb = num / 1024;
+    if (kb >= 1) return `${kb.toFixed(0)} KB`;
+    return 'PDF Document';
   };
 
   const uploadDate = resource.createdAt
@@ -141,10 +162,10 @@ export default function ResourceRow({
   };
 
   return (
-    <div className="group p-4 sm:px-6 sm:py-4.5 bg-white hover:bg-slate-50/70 border-b border-slate-100 last:border-b-0 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-5">
+    <div className="group bg-white hover:bg-slate-50/50 border border-slate-200/90 hover:border-blue-300 rounded-2xl p-4.5 sm:p-5 shadow-2xs hover:shadow-xs transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
       
       {/* Left: Type-specific Icon & Metadata */}
-      <div className="flex items-start gap-3.5 sm:gap-4 min-w-0 flex-1">
+      <div className="flex items-start gap-3.5 sm:gap-4.5 min-w-0 flex-1">
         
         {/* Dynamic Colorful Icon Box */}
         <div className={`w-11 h-11 rounded-xl border flex items-center justify-center shrink-0 mt-0.5 transition-colors shadow-2xs ${iconBoxStyle}`}>
@@ -158,7 +179,7 @@ export default function ResourceRow({
             <Link
               to={`/resources/${resource._id}`}
               onClick={handleDetailsClick}
-              className="text-sm sm:text-[15px] font-bold text-slate-900 hover:text-blue-700 transition-colors line-clamp-1 tracking-tight"
+              className="text-sm sm:text-base font-bold text-slate-900 hover:text-blue-700 transition-colors line-clamp-1 tracking-tight"
               title={resource.title}
             >
               {resource.title}
@@ -180,7 +201,7 @@ export default function ResourceRow({
 
             {/* Color-coded Resource Type */}
             <Badge variant={badgeVariant} size="sm">
-              {resource.resourceType?.toUpperCase()}
+              {displayType}
             </Badge>
 
             {resource.unit ? (
@@ -194,7 +215,7 @@ export default function ResourceRow({
               </span>
             )}
 
-            {resource.resourceType === 'pyq' && resource.examYear && (
+            {resource.examYear && (
               <span className="font-medium text-purple-800 bg-purple-50 px-2 py-0.5 rounded border border-purple-200 text-[11px]">
                 {resource.examYear} {resource.examType || 'Exam'}
               </span>

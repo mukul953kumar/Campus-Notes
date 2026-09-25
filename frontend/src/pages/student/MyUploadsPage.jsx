@@ -146,23 +146,23 @@ export default function MyUploadsPage() {
         </div>
       )}
 
-      {/* Uploads List Container */}
-      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
-        <div className="px-4 sm:px-6 py-3 bg-slate-50/70 border-b border-slate-200 flex items-center justify-between text-xs text-slate-500 font-medium">
-          <span>
+      {/* Uploads Results Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between px-1 text-xs text-slate-600">
+          <span className="font-bold text-slate-900 text-sm sm:text-base">
             {isLoading
               ? 'Loading uploads...'
-              : `${uploads.length} ${uploads.length === 1 ? 'Material' : 'Materials'}`}
+              : `${uploads.length} ${uploads.length === 1 ? 'Material' : 'Materials'} Uploaded`}
           </span>
-          <span className="hidden sm:inline">KNIT Academic Repository</span>
+          <span className="text-[11px] text-slate-400 font-normal">KNIT Academic Repository</span>
         </div>
 
         {isLoading ? (
-          <div className="py-16">
+          <div className="bg-white border border-slate-200 rounded-2xl py-20 shadow-xs">
             <Loader message="Loading your uploaded documents..." size="md" />
           </div>
         ) : uploads.length === 0 ? (
-          <div className="p-8">
+          <div className="bg-white border border-slate-200 rounded-2xl p-8 sm:p-12 shadow-xs">
             <EmptyState
               icon={UploadCloud}
               title={
@@ -180,29 +180,30 @@ export default function MyUploadsPage() {
             />
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="space-y-3.5">
             {uploads.map((item) => (
-              <div key={item._id} className="p-4 sm:p-5 hover:bg-slate-50/60 transition-colors space-y-3">
-                
+              <div
+                key={item._id}
+                className="bg-white hover:bg-slate-50/50 border border-slate-200/90 hover:border-blue-300 rounded-2xl p-4.5 sm:p-5 shadow-2xs hover:shadow-xs transition-all space-y-3"
+              >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                  
                   <div className="space-y-1.5 flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-semibold text-sm text-slate-900 line-clamp-1">
+                      <span className="font-bold text-sm sm:text-base text-slate-900 line-clamp-1">
                         {item.title}
                       </span>
                       {getStatusBadge(item.verificationStatus)}
                     </div>
 
                     <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs text-slate-500">
-                      <span className="font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                      <span className="font-bold text-blue-900 bg-blue-50/90 px-2 py-0.5 rounded border border-blue-200/90 text-[11px]">
                         {item.subjectId?.shortName || item.subjectId?.code || 'KNIT'}
                       </span>
                       <Badge variant={item.resourceType} size="sm">
                         {item.resourceType?.toUpperCase()}
                       </Badge>
                       {item.unit && (
-                        <span className="text-slate-600 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200">
+                        <span className="text-slate-600 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200 text-[11px]">
                           Unit {item.unit}
                         </span>
                       )}
@@ -234,7 +235,7 @@ export default function MyUploadsPage() {
                   {/* Actions */}
                   <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
                     <Link to={`/resources/${item._id}`}>
-                      <Button variant="secondary" size="sm">
+                      <Button variant="secondary" size="sm" className="font-semibold text-slate-700">
                         View Details
                       </Button>
                     </Link>
@@ -245,13 +246,12 @@ export default function MyUploadsPage() {
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        <Button variant="outline" size="sm" icon={Download}>
+                        <Button variant="outline" size="sm" icon={Download} className="font-semibold text-slate-800 border-slate-200 hover:border-blue-600 hover:text-blue-700">
                           PDF
                         </Button>
                       </a>
                     )}
                   </div>
-
                 </div>
 
                 {/* Rejection notice box if rejected */}
@@ -264,7 +264,6 @@ export default function MyUploadsPage() {
                     </div>
                   </div>
                 )}
-
               </div>
             ))}
           </div>

@@ -425,16 +425,16 @@ export default function ResourceLibraryPage() {
         </div>
       )}
 
-      {/* Results Table Card */}
-      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+      {/* Results Section */}
+      <div className="space-y-4">
         
         {/* Results Header Bar */}
-        <div className="px-5 sm:px-6 py-3.5 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between text-xs text-slate-600">
+        <div className="flex items-center justify-between px-1 text-xs text-slate-600">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-900 text-sm">
+            <span className="font-bold text-slate-900 text-sm sm:text-base">
               {isLoading
                 ? 'Searching materials...'
-                : `${meta.total || 0} ${meta.total === 1 ? 'Material' : 'Materials'} Found`}
+                : `${meta.total || 0} ${meta.total === 1 ? 'Material' : 'Materials'} Available`}
             </span>
             {currentType && (
               <span className="hidden sm:inline text-slate-400 font-medium">
@@ -446,7 +446,7 @@ export default function ResourceLibraryPage() {
           <button
             type="button"
             onClick={fetchResources}
-            className="flex items-center gap-1.5 hover:text-blue-700 transition-colors cursor-pointer font-medium"
+            className="flex items-center gap-1.5 text-slate-600 hover:text-blue-700 transition-colors cursor-pointer font-medium bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs"
             title="Refresh list"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
@@ -456,11 +456,11 @@ export default function ResourceLibraryPage() {
 
         {/* Content Body */}
         {isLoading ? (
-          <div className="py-20">
+          <div className="bg-white border border-slate-200 rounded-2xl py-20 shadow-xs">
             <Loader message="Searching academic repository..." size="md" />
           </div>
         ) : resources.length === 0 ? (
-          <div className="p-8 sm:p-12">
+          <div className="bg-white border border-slate-200 rounded-2xl p-8 sm:p-12 shadow-xs">
             <EmptyState
               icon={searchQuery ? SearchX : FolderOpen}
               title={searchQuery ? `No matches for "${searchQuery}"` : 'No study materials found'}
@@ -476,7 +476,7 @@ export default function ResourceLibraryPage() {
             />
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="space-y-3.5">
             {resources.map((item) => (
               <ResourceRow
                 key={item._id}
