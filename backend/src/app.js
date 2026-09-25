@@ -14,11 +14,15 @@ const bookmarkRoutes = require('./routes/bookmarkRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const ratingRoutes = require('./routes/ratingRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const { generalApiLimiter } = require('./middleware/rateLimiter');
 
 const app = express();
 
 // Security HTTP headers
 app.use(helmet());
+
+// Apply global rate limiting across /api endpoints
+app.use('/api', generalApiLimiter);
 
 // CORS configuration
 const allowedOrigins = [
