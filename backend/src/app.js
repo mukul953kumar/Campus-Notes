@@ -25,15 +25,22 @@ app.use(helmet());
 app.use('/api', generalApiLimiter);
 
 // CORS configuration
+const configuredClientUrls = (process.env.CLIENT_URL || '')
+  .split(',')
+  .map((url) => url.trim().replace(/\/$/, ''))
+  .filter(Boolean);
+
 const allowedOrigins = [
-  process.env.CLIENT_URL || 'http://localhost:5173',
+  ...configuredClientUrls,
+  'http://localhost:5173',
   'http://localhost:3000'
 ];
 
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (e.g. mobile apps, curl, Postman) or matching allowedOrigins
-    if (!origin || allowedOrigins.includes(origin)) {
+    const normalizedOrigin = origin ? origin.replace(/\/$/, '') : '';
+    if (!origin || allowedOrigins.includes(normalizedOrigin)) {
       return callback(null, true);
     }
     return callback(new AppError('Blocked by CORS policy', 403));
