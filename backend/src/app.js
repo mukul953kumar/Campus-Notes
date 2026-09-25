@@ -32,6 +32,7 @@ const configuredClientUrls = (process.env.CLIENT_URL || '')
 
 const allowedOrigins = [
   ...configuredClientUrls,
+  'https://campusnotesknit.vercel.app',
   'http://localhost:5173',
   'http://localhost:3000'
 ];
@@ -40,7 +41,11 @@ app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (e.g. mobile apps, curl, Postman) or matching allowedOrigins
     const normalizedOrigin = origin ? origin.replace(/\/$/, '') : '';
-    if (!origin || allowedOrigins.includes(normalizedOrigin)) {
+    if (
+      !origin ||
+      allowedOrigins.includes(normalizedOrigin) ||
+      normalizedOrigin.endsWith('.vercel.app')
+    ) {
       return callback(null, true);
     }
     return callback(new AppError('Blocked by CORS policy', 403));
