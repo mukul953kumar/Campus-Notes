@@ -34,7 +34,7 @@ const TYPE_TABS = [
 ];
 
 export default function ResourceLibraryPage() {
-  const { savedIds, toggleBookmark } = useAuth();
+  const { user, savedIds, toggleBookmark } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const searchQuery = searchParams.get('q') || searchParams.get('search') || '';

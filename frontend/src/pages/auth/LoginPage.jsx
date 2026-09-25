@@ -10,7 +10,7 @@ const GOOGLE_CLIENT_ID =
   '175488387080-bvcmqddtvbocqmkamlfqk7brjrtgm0bg.apps.googleusercontent.com';
 
 export default function LoginPage() {
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
