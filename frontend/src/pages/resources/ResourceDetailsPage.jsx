@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { resourceService, adminService } from '../../services/api';
 import Button from '../../components/common/Button';
@@ -59,24 +59,36 @@ export default function ResourceDetailsPage() {
   const isSaved = savedIds.includes(id);
 
   useEffect(() => {
+    let isMounted = true;
+
     async function loadResource() {
       setIsLoading(true);
       setErrorMessage('');
       try {
         const response = await resourceService.getResourceById(id);
-        if (response && response.data) {
-          setResource(response.data);
-        } else {
-          setErrorMessage('Resource not found or no longer available.');
+        if (isMounted) {
+          if (response && response.data) {
+            setResource(response.data);
+          } else {
+            setErrorMessage('Resource not found or no longer available.');
+          }
         }
       } catch (err) {
-        setErrorMessage(err.message || 'Failed to load resource details.');
+        if (isMounted) {
+          setErrorMessage(err.message || 'Failed to load resource details.');
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     }
 
     loadResource();
+
+    return () => {
+      isMounted = false;
+    };
   }, [id]);
 
   useEffect(() => {

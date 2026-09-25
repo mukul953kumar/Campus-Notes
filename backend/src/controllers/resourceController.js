@@ -11,6 +11,20 @@ const fs = require('fs');
 const https = require('https');
 const http = require('http');
 
+// In-memory cache to deduplicate view counts within a 60-second window (prevents double-counting from React StrictMode & refreshes)
+const recentViewsMap = new Map();
+const VIEW_COOLDOWN_MS = 60 * 1000;
+
+const cleanupTimer = setInterval(() => {
+  const now = Date.now();
+  for (const [key, timestamp] of recentViewsMap.entries()) {
+    if (now - timestamp > VIEW_COOLDOWN_MS) {
+      recentViewsMap.delete(key);
+    }
+  }
+}, 5 * 60 * 1000);
+if (cleanupTimer.unref) cleanupTimer.unref();
+
 const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const normalizeResourceType = (type) => {
@@ -162,9 +176,22 @@ const getResourceById = async (req, res, next) => {
       }
     }
 
-    // Increment views count asynchronously
-    Resource.findByIdAndUpdate(req.params.id, { $inc: { viewsCount: 1 } }).exec();
-    resource.viewsCount = (resource.viewsCount || 0) + 1;
+    // Deduplicate view counts (by User ID or Client IP + Resource ID within cooldown window)
+    const clientId = req.user?._id ? String(req.user._id) : (req.ip || req.headers['x-forwarded-for'] || 'client');
+    const viewKey = `${clientId}_${req.params.id}`;
+    const now = Date.now();
+    const lastViewTime = recentViewsMap.get(viewKey);
+
+    let isNewView = false;
+    if (!lastViewTime || (now - lastViewTime > VIEW_COOLDOWN_MS)) {
+      recentViewsMap.set(viewKey, now);
+      isNewView = true;
+      Resource.findByIdAndUpdate(req.params.id, { $inc: { viewsCount: 1 } }).exec();
+    }
+
+    if (isNewView) {
+      resource.viewsCount = (resource.viewsCount || 0) + 1;
+    }
 
     resource.fileUrl = getSignedDownloadUrl(resource.fileKey, resource.fileUrl);
 
