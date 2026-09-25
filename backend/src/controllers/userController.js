@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const Resource = require('../models/Resource');
 const College = require('../models/College');
 const AppError = require('../utils/appError');
 const { sendResponse } = require('../utils/apiResponse');
@@ -70,7 +71,108 @@ const updateProfile = async (req, res, next) => {
   }
 };
 
+const getLeaderboard = async (req, res, next) => {
+  try {
+    const { branch, sortBy = 'uploads', limit = 25 } = req.query;
+    const limitNum = Math.min(50, Math.max(1, parseInt(limit, 10) || 25));
+
+    const matchStage = {
+      verificationStatus: 'verified',
+      isActive: true
+    };
+
+    if (branch) {
+      matchStage.branch = branch;
+    }
+
+    const aggregatePipeline = [
+      { $match: matchStage },
+      {
+        $group: {
+          _id: '$uploaderId',
+          verifiedUploads: { $sum: 1 },
+          totalDownloads: { $sum: '$downloadsCount' },
+          averageRating: { $avg: '$averageRating' },
+          totalRatingsCount: { $sum: '$ratingsCount' },
+          subjectsCovered: { $addToSet: '$subjectId' }
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      { $unwind: '$user' },
+      {
+        $match: {
+          'user.isActive': true
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          verifiedUploads: 1,
+          totalDownloads: 1,
+          averageRating: { $round: [{ $ifNull: ['$averageRating', 0] }, 1] },
+          totalRatingsCount: 1,
+          subjectsCount: { $size: '$subjectsCovered' },
+          user: {
+            _id: '$user._id',
+            name: '$user.name',
+            avatar: '$user.avatar',
+            branch: '$user.branch',
+            semester: '$user.semester',
+            role: '$user.role',
+            graduationYear: '$user.graduationYear'
+          }
+        }
+      }
+    ];
+
+    let sortStage = { verifiedUploads: -1, totalDownloads: -1, averageRating: -1 };
+    if (sortBy === 'downloads') {
+      sortStage = { totalDownloads: -1, verifiedUploads: -1, averageRating: -1 };
+    } else if (sortBy === 'rating') {
+      sortStage = { averageRating: -1, totalRatingsCount: -1, verifiedUploads: -1 };
+    }
+
+    aggregatePipeline.push({ $sort: sortStage });
+    aggregatePipeline.push({ $limit: limitNum });
+
+    const contributors = await Resource.aggregate(aggregatePipeline);
+
+    const rankedContributors = contributors.map((item, index) => {
+      const rank = index + 1;
+      let badge = 'Note Sharer';
+      if (rank === 1) badge = 'Campus Scholar';
+      else if (rank === 2) badge = 'Master Contributor';
+      else if (rank === 3) badge = 'Senior Contributor';
+      else if (item.verifiedUploads >= 10) badge = 'Star Contributor';
+      else if (item.verifiedUploads >= 5) badge = 'Campus Helper';
+
+      return {
+        rank,
+        badge,
+        ...item
+      };
+    });
+
+    return sendResponse(res, {
+      statusCode: 200,
+      message: 'Leaderboard retrieved successfully',
+      data: rankedContributors
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getProfile,
-  updateProfile
+  updateProfile,
+  getLeaderboard
 };
+

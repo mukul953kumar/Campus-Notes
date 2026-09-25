@@ -26,6 +26,7 @@ export default function Navbar() {
     { name: 'Browse Library', path: '/resources' },
     { name: 'PYQ Papers', path: '/pyqs' },
     { name: 'Subjects', path: '/subjects' },
+    { name: 'Leaderboard', path: '/leaderboard' },
   ];
 
   const isActive = (path) => {

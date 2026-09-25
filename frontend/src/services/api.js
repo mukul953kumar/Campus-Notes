@@ -108,6 +108,43 @@ export const authService = {
       body: JSON.stringify(updates),
     });
   },
+
+  async getLeaderboard(params = {}) {
+    const query = new URLSearchParams();
+    if (params.branch) query.append('branch', params.branch);
+    if (params.sortBy) query.append('sortBy', params.sortBy);
+    if (params.limit) query.append('limit', params.limit);
+    const queryString = query.toString() ? `?${query.toString()}` : '';
+    return apiRequest(`/users/leaderboard${queryString}`, {
+      method: 'GET',
+    });
+  },
+};
+
+export const userService = {
+  async getProfile() {
+    return apiRequest('/users/profile', {
+      method: 'GET',
+    });
+  },
+
+  async updateProfile(updates) {
+    return apiRequest('/users/profile', {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+  },
+
+  async getLeaderboard(params = {}) {
+    const query = new URLSearchParams();
+    if (params.branch) query.append('branch', params.branch);
+    if (params.sortBy) query.append('sortBy', params.sortBy);
+    if (params.limit) query.append('limit', params.limit);
+    const queryString = query.toString() ? `?${query.toString()}` : '';
+    return apiRequest(`/users/leaderboard${queryString}`, {
+      method: 'GET',
+    });
+  },
 };
 
 export const academicService = {

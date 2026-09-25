@@ -16,6 +16,7 @@ import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import PYQPage from './pages/pyq/PYQPage';
 import SubjectsPage from './pages/subjects/SubjectsPage';
 import SubjectDetailsPage from './pages/subjects/SubjectDetailsPage';
+import LeaderboardPage from './pages/leaderboard/LeaderboardPage';
 import Button from './components/common/Button';
 import Badge from './components/common/Badge';
 import EmptyState from './components/common/EmptyState';
@@ -290,6 +291,7 @@ export default function App() {
             <Route path="pyqs" element={<PYQPage />} />
             <Route path="subjects" element={<SubjectsPage />} />
             <Route path="subjects/:id" element={<SubjectDetailsPage />} />
+            <Route path="leaderboard" element={<LeaderboardPage />} />
 
             {/* Authentication routes */}
             <Route path="login" element={<LoginPage />} />
