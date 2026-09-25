@@ -173,7 +173,7 @@ export default function ProfilePage() {
             <span>Approved</span>
           </div>
           <div className="text-2xl font-bold text-slate-900">
-            {user?.stats?.approvedCount ?? 0}
+            {user?.stats?.approvedCount ?? user?.stats?.verifiedUploadsCount ?? 0}
           </div>
           <p className="text-[11px] text-slate-400 mt-1">Verified by college team</p>
         </div>
@@ -181,12 +181,12 @@ export default function ProfilePage() {
         <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
           <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">
             <Award className="w-4 h-4 text-amber-500" />
-            <span>Downloads</span>
+            <span>Impact</span>
           </div>
           <div className="text-2xl font-bold text-slate-900">
-            {user?.stats?.downloadsCount ?? 0}
+            {user?.stats?.downloadsReceived ?? user?.stats?.downloadsCount ?? 0}
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">Materials downloaded</p>
+          <p className="text-[11px] text-slate-400 mt-1">Downloads on your uploads</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">

@@ -117,6 +117,17 @@ const resourceSchema = new mongoose.Schema(
       default: 0,
       min: 0
     },
+    averageRating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5
+    },
+    ratingsCount: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
     examYear: {
       type: Number,
       default: null
@@ -145,6 +156,7 @@ resourceSchema.index({ subjectId: 1, verificationStatus: 1, resourceType: 1 });
 resourceSchema.index({ collegeId: 1, branch: 1, semester: 1, verificationStatus: 1 });
 resourceSchema.index({ uploaderId: 1, verificationStatus: 1 });
 resourceSchema.index({ fileHash: 1, collegeId: 1 });
+resourceSchema.index({ averageRating: -1, ratingsCount: -1 });
 resourceSchema.index({ title: 'text', description: 'text', tags: 'text' });
 
 const Resource = mongoose.model('Resource', resourceSchema);

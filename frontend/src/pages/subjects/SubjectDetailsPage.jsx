@@ -6,6 +6,7 @@ import Loader from '../../components/common/Loader';
 import EmptyState from '../../components/common/EmptyState';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
+import { useAuth } from '../../context/AuthContext';
 import {
   ArrowLeft,
   BookOpen,
@@ -20,6 +21,7 @@ import {
 export default function SubjectDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { savedIds, toggleBookmark } = useAuth();
 
   const [subject, setSubject] = useState(null);
   const [activeUnit, setActiveUnit] = useState(''); // '' = all, '1', '2', '3', '4', '5', 'pyq'
@@ -27,14 +29,6 @@ export default function SubjectDetailsPage() {
   const [isLoadingSubject, setIsLoadingSubject] = useState(true);
   const [isLoadingResources, setIsLoadingResources] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-
-  const [savedIds, setSavedIds] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('campus_notes_saved_ids') || '[]');
-    } catch {
-      return [];
-    }
-  });
 
   // Load subject metadata
   useEffect(() => {
@@ -82,13 +76,12 @@ export default function SubjectDetailsPage() {
     loadResources();
   }, [id, activeUnit]);
 
-  const handleToggleSave = (resourceId) => {
-    setSavedIds((prev) => {
-      const exists = prev.includes(resourceId);
-      const next = exists ? prev.filter((i) => i !== resourceId) : [...prev, resourceId];
-      localStorage.setItem('campus_notes_saved_ids', JSON.stringify(next));
-      return next;
-    });
+  const handleToggleSave = async (resourceId) => {
+    try {
+      await toggleBookmark(resourceId);
+    } catch (err) {
+      console.error('Failed to toggle bookmark:', err);
+    }
   };
 
   if (isLoadingSubject) {

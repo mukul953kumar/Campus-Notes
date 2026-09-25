@@ -35,6 +35,20 @@ const sanitizeFileName = (fileName) => {
     .replace(/-+/g, '-');
 };
 
+const extractCloudinaryPublicId = (fileKeyOrUrl) => {
+  if (!fileKeyOrUrl) return null;
+  const str = String(fileKeyOrUrl);
+  if (!str.startsWith('http')) {
+    return str;
+  }
+  // e.g. https://res.cloudinary.com/wmy5gqcq/raw/upload/v1790270522/campus-notes/academic-resources/1790270470803-d6e2212353c0-5th-sem-pyq-ct1-2.pdf
+  const match = str.match(/\/upload\/(?:(?:s--[^/]+--\/)?(?:v\d+\/)?)(.+?)(?:\?.*)?$/);
+  if (match && match[1]) {
+    return match[1];
+  }
+  return null;
+};
+
 const uploadFile = async ({ buffer, originalName, mimeType, folder = 'resources' }) => {
   if (!buffer || buffer.length === 0) {
     throw new AppError('File buffer is empty or missing.', 400);
@@ -44,7 +58,7 @@ const uploadFile = async ({ buffer, originalName, mimeType, folder = 'resources'
   const uniquePrefix = `${Date.now()}-${crypto.randomBytes(6).toString('hex')}`;
   const fileKey = `${uniquePrefix}-${safeName}`;
 
-  // 1. Cloudinary Free Cloud Storage
+  // 1. Cloudinary Free Cloud Storage with Signed URL
   if (isCloudinaryConfigured()) {
     const result = await new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
@@ -61,8 +75,14 @@ const uploadFile = async ({ buffer, originalName, mimeType, folder = 'resources'
       stream.end(buffer);
     });
 
+    const signedUrl = cloudinary.url(result.public_id, {
+      resource_type: 'raw',
+      sign_url: true,
+      secure: true
+    });
+
     return {
-      fileUrl: result.secure_url,
+      fileUrl: signedUrl || result.secure_url,
       fileKey: result.public_id,
       fileSize: buffer.length,
       storageType: 'cloudinary'
@@ -84,16 +104,21 @@ const uploadFile = async ({ buffer, originalName, mimeType, folder = 'resources'
   };
 };
 
-const getSignedDownloadUrl = async (fileKey) => {
-  if (fileKey && (fileKey.startsWith('http://') || fileKey.startsWith('https://'))) {
-    return fileKey;
+const getSignedDownloadUrl = (fileKey, fileUrl) => {
+  if (!isCloudinaryConfigured()) {
+    return fileUrl || (fileKey ? `/uploads/${fileKey}` : '');
   }
 
-  if (isCloudinaryConfigured()) {
-    return cloudinary.url(fileKey, { resource_type: 'raw', secure: true });
+  const publicId = extractCloudinaryPublicId(fileKey) || extractCloudinaryPublicId(fileUrl);
+  if (publicId) {
+    return cloudinary.url(publicId, {
+      resource_type: 'raw',
+      sign_url: true,
+      secure: true
+    });
   }
 
-  return `/uploads/${fileKey}`;
+  return fileUrl || '';
 };
 
 const deleteFile = async (fileKey) => {
@@ -101,7 +126,8 @@ const deleteFile = async (fileKey) => {
 
   if (isCloudinaryConfigured()) {
     try {
-      await cloudinary.uploader.destroy(fileKey, { resource_type: 'raw' });
+      const publicId = extractCloudinaryPublicId(fileKey) || fileKey;
+      await cloudinary.uploader.destroy(publicId, { resource_type: 'raw' });
       return;
     } catch (err) {
       console.error('[Cloudinary Delete Error]', err.message);
@@ -117,6 +143,8 @@ const deleteFile = async (fileKey) => {
 module.exports = {
   uploadFile,
   getSignedDownloadUrl,
+  extractCloudinaryPublicId,
   deleteFile,
+  isCloudinaryConfigured,
   localUploadsDir
 };

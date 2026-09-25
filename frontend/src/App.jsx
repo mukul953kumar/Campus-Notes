@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import MainLayout from './components/layout/MainLayout';
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -28,56 +28,64 @@ import {
   Sparkles,
   ArrowRight
 } from 'lucide-react';
+import { useAuth } from './context/AuthContext';
+import { resourceService } from './services/api';
+import ResourceRow from './components/resources/ResourceRow';
 
 function HomePage() {
+  const navigate = useNavigate();
+  const { savedIds, toggleBookmark } = useAuth();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [recentUploads, setRecentUploads] = useState([]);
+  const [isLoadingRecent, setIsLoadingRecent] = useState(true);
+
   const branches = [
-    { code: 'CSE', name: 'Computer Science & Engineering', count: 84 },
-    { code: 'IT', name: 'Information Technology', count: 62 },
-    { code: 'ECE', name: 'Electronics Engineering', count: 47 },
-    { code: 'EE', name: 'Electrical Engineering', count: 39 },
-    { code: 'ME', name: 'Mechanical Engineering', count: 31 },
-    { code: 'CE', name: 'Civil Engineering', count: 28 },
-    { code: 'MCA', name: 'Master of Computer Applications', count: 19 },
+    { code: 'CSE', name: 'Computer Science & Engineering', count: '1st - 8th Sem' },
+    { code: 'IT', name: 'Information Technology', count: '1st - 8th Sem' },
+    { code: 'ECE', name: 'Electronics Engineering', count: '1st - 8th Sem' },
+    { code: 'EE', name: 'Electrical Engineering', count: '1st - 8th Sem' },
+    { code: 'ME', name: 'Mechanical Engineering', count: '1st - 8th Sem' },
+    { code: 'CE', name: 'Civil Engineering', count: '1st - 8th Sem' },
+    { code: 'MCA', name: 'Master of Computer Applications', count: '1st - 4th Sem' },
   ];
 
-  const recentUploads = [
-    {
-      id: '1',
-      title: 'Database Management Systems (DBMS) - Complete Unit 1 to 5 Hand-Written Notes',
-      subject: 'DBMS',
-      subjectCode: 'BCS-501',
-      type: 'notes',
-      unit: 'Units 1-5',
-      author: 'Aman Verma',
-      branch: 'CSE',
-      verified: true,
-      downloads: 142,
-    },
-    {
-      id: '2',
-      title: 'Design and Analysis of Algorithms - End Semester Question Paper 2023-24',
-      subject: 'DAA',
-      subjectCode: 'BCS-502',
-      type: 'pyq',
-      unit: 'End-Sem',
-      author: 'Priya Singh',
-      branch: 'IT',
-      verified: true,
-      downloads: 98,
-    },
-    {
-      id: '3',
-      title: 'Operating Systems - Process Scheduling & Memory Management Solved Problems',
-      subject: 'OS',
-      subjectCode: 'BCS-401',
-      type: 'assignment',
-      unit: 'Unit 2 & 3',
-      author: 'Rohit Gupta',
-      branch: 'CSE',
-      verified: false,
-      downloads: 41,
-    },
-  ];
+  useEffect(() => {
+    async function loadRecent() {
+      setIsLoadingRecent(true);
+      try {
+        const res = await resourceService.getResources({ limit: 4, sortBy: 'recent' });
+        if (res?.data) {
+          setRecentUploads(res.data);
+        }
+      } catch (err) {
+        console.error('Failed to load recent uploads:', err);
+      } finally {
+        setIsLoadingRecent(false);
+      }
+    }
+    loadRecent();
+  }, []);
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/resources?q=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      navigate('/resources');
+    }
+  };
+
+  const handleQuickSearch = (term) => {
+    navigate(`/resources?q=${encodeURIComponent(term)}`);
+  };
+
+  const handleToggleSave = async (resourceId) => {
+    try {
+      await toggleBookmark(resourceId);
+    } catch (err) {
+      console.error('Failed to toggle bookmark:', err);
+    }
+  };
 
   return (
     <div className="space-y-12">
@@ -96,34 +104,58 @@ function HomePage() {
           Access high-quality lecture notes, previous year question papers (PYQs), and assignment guides shared by top-ranking students.
         </p>
 
-        {/* Quick Search Input */}
-        <div className="mt-8 max-w-xl mx-auto">
-          <div className="flex flex-col sm:flex-row items-center gap-2 bg-white p-2 rounded-xl border border-slate-300 shadow-sm">
+        {/* Quick Search Form */}
+        <form onSubmit={handleSearchSubmit} className="mt-8 max-w-xl mx-auto">
+          <div className="flex flex-col sm:flex-row items-center gap-2 bg-white p-2 rounded-xl border border-slate-300 shadow-sm focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
             <div className="relative flex-1 w-full">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search subject code (e.g. BCS-501, DBMS, OS)..."
                 className="w-full pl-9 pr-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 bg-transparent focus:outline-none"
               />
             </div>
-            <Link to="/resources" className="w-full sm:w-auto">
-              <Button size="md" variant="primary" className="w-full sm:w-auto">
-                Search Library
-              </Button>
-            </Link>
+            <Button type="submit" size="md" variant="primary" className="w-full sm:w-auto">
+              Search Library
+            </Button>
           </div>
           <div className="flex items-center justify-center gap-2 text-xs text-slate-500 mt-2.5">
             <span>Popular:</span>
-            <span className="cursor-pointer hover:text-blue-700 font-medium">DBMS</span>
+            <button
+              type="button"
+              onClick={() => handleQuickSearch('DBMS')}
+              className="cursor-pointer hover:text-blue-700 font-medium"
+            >
+              DBMS
+            </button>
             <span>•</span>
-            <span className="cursor-pointer hover:text-blue-700 font-medium">DAA</span>
+            <button
+              type="button"
+              onClick={() => handleQuickSearch('DAA')}
+              className="cursor-pointer hover:text-blue-700 font-medium"
+            >
+              DAA
+            </button>
             <span>•</span>
-            <span className="cursor-pointer hover:text-blue-700 font-medium">OS</span>
+            <button
+              type="button"
+              onClick={() => handleQuickSearch('OS')}
+              className="cursor-pointer hover:text-blue-700 font-medium"
+            >
+              OS
+            </button>
             <span>•</span>
-            <span className="cursor-pointer hover:text-blue-700 font-medium">Compiler Design</span>
+            <button
+              type="button"
+              onClick={() => handleQuickSearch('Compiler Design')}
+              className="cursor-pointer hover:text-blue-700 font-medium"
+            >
+              Compiler Design
+            </button>
           </div>
-        </div>
+        </form>
       </section>
 
       {/* Engineering Branches Catalog */}
@@ -145,7 +177,7 @@ function HomePage() {
           {branches.map((b) => (
             <Link
               key={b.code}
-              to={`/resources?branch=${b.code}`}
+              to={`/resources?branch=${encodeURIComponent(b.name)}`}
               className="p-4 rounded-xl bg-white border border-slate-200/90 hover:border-blue-400 hover:shadow-xs transition-all group"
             >
               <div className="flex items-center justify-between mb-1.5">
@@ -153,7 +185,7 @@ function HomePage() {
                   {b.code}
                 </span>
                 <span className="text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-                  {b.count} files
+                  {b.count}
                 </span>
               </div>
               <p className="text-xs text-slate-500 line-clamp-1">{b.name}</p>
@@ -168,7 +200,7 @@ function HomePage() {
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-bold text-slate-900">Recent Materials</h2>
             <Badge variant="verified" size="sm" showIcon>
-              Verified
+              Verified Live
             </Badge>
           </div>
           <Link
@@ -180,51 +212,24 @@ function HomePage() {
         </div>
 
         <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100 overflow-hidden shadow-xs">
-          {recentUploads.map((item) => (
-            <div
-              key={item.id}
-              className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/70 transition-colors"
-            >
-              <div className="flex items-start gap-3.5">
-                <div className="w-10 h-10 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-700 shrink-0 mt-0.5">
-                  <FileText className="w-5 h-5" />
-                </div>
-                <div className="space-y-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-semibold text-sm text-slate-900 hover:text-blue-700 cursor-pointer">
-                      {item.title}
-                    </span>
-                    {item.verified && (
-                      <Badge variant="verified" size="sm" showIcon>
-                        Verified
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                    <span className="font-medium text-slate-700">{item.subjectCode}</span>
-                    <span>•</span>
-                    <Badge variant={item.type} size="sm">
-                      {item.type.toUpperCase()}
-                    </Badge>
-                    <span>•</span>
-                    <span>{item.unit}</span>
-                    <span>•</span>
-                    <span>Uploaded by {item.author}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
-                <span className="text-xs text-slate-400 flex items-center gap-1">
-                  <Download className="w-3.5 h-3.5" />
-                  {item.downloads}
-                </span>
-                <Button size="sm" variant="secondary">
-                  Preview
-                </Button>
-              </div>
+          {isLoadingRecent ? (
+            <div className="p-8 text-center text-xs text-slate-500">
+              Loading recent verified materials...
             </div>
-          ))}
+          ) : recentUploads.length === 0 ? (
+            <div className="p-8 text-center text-xs text-slate-500">
+              No verified materials available yet. Be the first to upload!
+            </div>
+          ) : (
+            recentUploads.map((item) => (
+              <ResourceRow
+                key={item._id}
+                resource={item}
+                isSaved={savedIds.includes(item._id)}
+                onToggleSave={handleToggleSave}
+              />
+            ))
+          )}
         </div>
       </section>
 

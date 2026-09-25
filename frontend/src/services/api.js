@@ -248,4 +248,36 @@ export const adminService = {
   },
 };
 
+export const ratingService = {
+  async submitRating(resourceId, { rating, review }) {
+    return apiRequest(`/resources/${resourceId}/ratings`, {
+      method: 'POST',
+      body: JSON.stringify({ rating, review }),
+    });
+  },
+
+  async getResourceRatings(resourceId, params = {}) {
+    const query = new URLSearchParams();
+    if (params.page) query.append('page', params.page);
+    if (params.limit) query.append('limit', params.limit);
+    const queryString = query.toString() ? `?${query.toString()}` : '';
+    return apiRequest(`/resources/${resourceId}/ratings${queryString}`, {
+      method: 'GET',
+    });
+  },
+
+  async getUserRating(resourceId) {
+    return apiRequest(`/resources/${resourceId}/ratings/my-rating`, {
+      method: 'GET',
+    });
+  },
+
+  async deleteRating(resourceId) {
+    return apiRequest(`/resources/${resourceId}/ratings`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+
 

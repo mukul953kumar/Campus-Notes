@@ -77,6 +77,9 @@ const getVerificationQueue = async (req, res, next) => {
   }
 };
 
+const Bookmark = require('../models/Bookmark');
+const { deleteFile } = require('../services/storageService');
+
 const verifyResource = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -96,10 +99,10 @@ const verifyResource = async (req, res, next) => {
       resource.rejectionReason = '';
       await resource.save();
 
-      // Increment uploader's approvedCount
+      // Increment uploader's approvedCount and verifiedUploadsCount
       if (resource.uploaderId) {
         await User.findByIdAndUpdate(resource.uploaderId, {
-          $inc: { 'stats.approvedCount': 1 }
+          $inc: { 'stats.approvedCount': 1, 'stats.verifiedUploadsCount': 1 }
         });
       }
 
@@ -145,6 +148,9 @@ const deleteResourceAdmin = async (req, res, next) => {
 
     resource.isActive = false;
     await resource.save();
+
+    // Clean up bookmarks for this resource
+    await Bookmark.deleteMany({ resourceId: id });
 
     // Mark any open reports for this resource as resolved
     await Report.updateMany(

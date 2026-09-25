@@ -6,6 +6,9 @@ import Badge from '../../components/common/Badge';
 import Loader from '../../components/common/Loader';
 import EmptyState from '../../components/common/EmptyState';
 import ReportModal from '../../components/resources/ReportModal';
+import RatingStars from '../../components/resources/RatingStars';
+import ResourceReviewsSection from '../../components/resources/ResourceReviewsSection';
+import { useAuth } from '../../context/AuthContext';
 import {
   ArrowLeft,
   Download,
@@ -22,21 +25,24 @@ import {
   Clock,
   Maximize2,
   Minimize2,
-  Sparkles
+  Sparkles,
+  Star
 } from 'lucide-react';
 
 export default function ResourceDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { savedIds, toggleBookmark } = useAuth();
 
   const [resource, setResource] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [isSaved, setIsSaved] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [isFullscreenPreview, setIsFullscreenPreview] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+
+  const isSaved = savedIds.includes(id);
 
   useEffect(() => {
     async function loadResource() {
@@ -57,28 +63,11 @@ export default function ResourceDetailsPage() {
     }
 
     loadResource();
-
-    // Check saved state
-    try {
-      const savedIds = JSON.parse(localStorage.getItem('campus_notes_saved_ids') || '[]');
-      setIsSaved(savedIds.includes(id));
-    } catch {
-      setIsSaved(false);
-    }
   }, [id]);
 
-  const handleToggleSave = () => {
+  const handleToggleSave = async () => {
     try {
-      const savedIds = JSON.parse(localStorage.getItem('campus_notes_saved_ids') || '[]');
-      let updated;
-      if (savedIds.includes(id)) {
-        updated = savedIds.filter((item) => item !== id);
-        setIsSaved(false);
-      } else {
-        updated = [...savedIds, id];
-        setIsSaved(true);
-      }
-      localStorage.setItem('campus_notes_saved_ids', JSON.stringify(updated));
+      await toggleBookmark(id);
     } catch (e) {
       console.error('Error toggling bookmark:', e);
     }
@@ -213,6 +202,19 @@ export default function ResourceDetailsPage() {
               <span>•</span>
               <span>Semester {resource.semester}</span>
             </p>
+
+            {/* Average Rating Bar in Header */}
+            <div className="flex items-center gap-2 pt-1 text-xs">
+              <RatingStars rating={resource.averageRating || 0} size="sm" />
+              <span className="font-bold text-slate-800">
+                {resource.averageRating ? resource.averageRating.toFixed(1) : 'Not rated yet'}
+              </span>
+              {resource.ratingsCount > 0 && (
+                <span className="text-slate-500">
+                  ({resource.ratingsCount} {resource.ratingsCount === 1 ? 'rating' : 'ratings'})
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Action Buttons */}
@@ -334,6 +336,19 @@ export default function ResourceDetailsPage() {
             </div>
 
           </div>
+
+          {/* Student Ratings & Peer Reviews Section */}
+          <ResourceReviewsSection
+            resourceId={resource._id}
+            resourceTitle={resource.title}
+            onRatingUpdated={(newAverage, newCount) => {
+              setResource((prev) => ({
+                ...prev,
+                averageRating: newAverage,
+                ratingsCount: newCount
+              }));
+            }}
+          />
         </div>
 
         {/* Right Column: Academic Metadata & Uploader Credibility */}
@@ -426,6 +441,15 @@ export default function ResourceDetailsPage() {
                 <dt className="text-slate-500">File Size</dt>
                 <dd className="font-medium text-slate-800">
                   {formatFileSize(resource.fileSize)}
+                </dd>
+              </div>
+
+              <div className="pt-2.5 flex items-center justify-between">
+                <dt className="text-slate-500">Community Rating</dt>
+                <dd className="font-semibold text-slate-800 flex items-center gap-1.5">
+                  <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
+                  <span>{resource.averageRating ? resource.averageRating.toFixed(1) : '—'}</span>
+                  <span className="text-slate-400 font-normal">({resource.ratingsCount || 0})</span>
                 </dd>
               </div>
 

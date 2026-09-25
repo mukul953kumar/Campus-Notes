@@ -69,11 +69,19 @@ const userSchema = new mongoose.Schema(
         type: Number,
         default: 0
       },
+      approvedCount: {
+        type: Number,
+        default: 0
+      },
       verifiedUploadsCount: {
         type: Number,
         default: 0
       },
       downloadsReceived: {
+        type: Number,
+        default: 0
+      },
+      downloadsCount: {
         type: Number,
         default: 0
       },

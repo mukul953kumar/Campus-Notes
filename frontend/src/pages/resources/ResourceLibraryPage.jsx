@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { resourceService } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import ResourceRow from '../../components/resources/ResourceRow';
 import Pagination from '../../components/common/Pagination';
 import SearchInput from '../../components/common/SearchInput';
@@ -32,6 +33,7 @@ const TYPE_TABS = [
 ];
 
 export default function ResourceLibraryPage() {
+  const { savedIds, toggleBookmark } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const searchQuery = searchParams.get('q') || searchParams.get('search') || '';
@@ -46,15 +48,6 @@ export default function ResourceLibraryPage() {
   const [meta, setMeta] = useState({ page: 1, limit: 20, total: 0, totalPages: 1 });
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
-
-  // Local saved bookmarks tracking
-  const [savedIds, setSavedIds] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('campus_notes_saved_ids') || '[]');
-    } catch {
-      return [];
-    }
-  });
 
   const fetchResources = useCallback(async () => {
     setIsLoading(true);
@@ -140,13 +133,12 @@ export default function ResourceLibraryPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleToggleSave = (resourceId) => {
-    setSavedIds((prev) => {
-      const exists = prev.includes(resourceId);
-      const next = exists ? prev.filter((id) => id !== resourceId) : [...prev, resourceId];
-      localStorage.setItem('campus_notes_saved_ids', JSON.stringify(next));
-      return next;
-    });
+  const handleToggleSave = async (resourceId) => {
+    try {
+      await toggleBookmark(resourceId);
+    } catch (err) {
+      console.error('Failed to toggle bookmark:', err);
+    }
   };
 
   const hasActiveFilters = Boolean(

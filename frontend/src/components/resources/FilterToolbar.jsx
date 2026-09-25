@@ -37,6 +37,7 @@ const UNIT_OPTIONS = [
 
 const SORT_OPTIONS = [
   { value: 'recent', label: 'Most Recent' },
+  { value: 'rating', label: 'Highest Rated' },
   { value: 'popular', label: 'Most Downloaded' },
   { value: 'title', label: 'Title (A-Z)' },
 ];

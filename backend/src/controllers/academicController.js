@@ -33,6 +33,8 @@ const getBranches = async (req, res, next) => {
   }
 };
 
+const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 const getSubjects = async (req, res, next) => {
   try {
     const { branch, semester, collegeId, search } = req.query;
@@ -64,10 +66,11 @@ const getSubjects = async (req, res, next) => {
     }
 
     if (search) {
+      const safeSearch = escapeRegex(search.trim());
       filter.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { code: { $regex: search, $options: 'i' } },
-        { shortName: { $regex: search, $options: 'i' } }
+        { name: { $regex: safeSearch, $options: 'i' } },
+        { code: { $regex: safeSearch, $options: 'i' } },
+        { shortName: { $regex: safeSearch, $options: 'i' } }
       ];
     }
 

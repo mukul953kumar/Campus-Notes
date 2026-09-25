@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   FileText,
@@ -11,10 +11,12 @@ import {
   ExternalLink,
   CheckCircle2,
   Calendar,
-  Layers
+  Layers,
+  Star
 } from 'lucide-react';
 import Badge from '../common/Badge';
 import Button from '../common/Button';
+import { resourceService } from '../../services/api';
 
 function getResourceIcon(type) {
   switch (type) {
@@ -36,6 +38,8 @@ export default function ResourceRow({
   isSaved = false,
   onToggleSave,
 }) {
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadCount, setDownloadCount] = useState(resource.downloadsCount || 0);
   const Icon = getResourceIcon(resource.resourceType);
 
   const formatFileSize = (bytes) => {
@@ -54,6 +58,27 @@ export default function ResourceRow({
     : '';
 
   const subjectLabel = resource.subjectId?.shortName || resource.subjectId?.code || 'KNIT';
+
+  const handleDownload = async (e) => {
+    e.preventDefault();
+    if (!resource._id) return;
+    setIsDownloading(true);
+    try {
+      const res = await resourceService.downloadResource(resource._id);
+      if (res?.data?.fileUrl) {
+        window.open(res.data.fileUrl, '_blank', 'noopener,noreferrer');
+        setDownloadCount((prev) => prev + 1);
+      } else if (resource.fileUrl) {
+        window.open(resource.fileUrl, '_blank', 'noopener,noreferrer');
+      }
+    } catch {
+      if (resource.fileUrl) {
+        window.open(resource.fileUrl, '_blank', 'noopener,noreferrer');
+      }
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
     <div className="group p-4 sm:p-4.5 bg-white hover:bg-slate-50/80 border-b border-slate-200/90 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
@@ -114,12 +139,25 @@ export default function ResourceRow({
           </div>
 
           {/* Bottom metadata */}
-          <div className="flex items-center gap-3 text-[11px] text-slate-400 pt-0.5">
+          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 text-[11px] text-slate-400 pt-0.5">
+            {resource.ratingsCount > 0 ? (
+              <span className="inline-flex items-center gap-1 font-semibold text-amber-900 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/90 text-[11px]">
+                <Star className="w-3 h-3 text-amber-500 fill-amber-400" />
+                <span>{resource.averageRating ? resource.averageRating.toFixed(1) : '5.0'}</span>
+                <span className="text-amber-700/80 font-normal text-[10px]">({resource.ratingsCount})</span>
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200/60 text-[11px]">
+                <Star className="w-3 h-3 text-slate-300" />
+                <span>No ratings yet</span>
+              </span>
+            )}
+            <span>•</span>
             <span>{formatFileSize(resource.fileSize)}</span>
             <span>•</span>
             <span className="flex items-center gap-1">
               <Download className="w-3 h-3 text-slate-400" />
-              {resource.downloadsCount || 0} downloads
+              {downloadCount} downloads
             </span>
             {uploadDate && (
               <>
@@ -155,21 +193,17 @@ export default function ResourceRow({
         </Link>
 
         {resource.fileUrl && (
-          <a
-            href={resource.fileUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Direct Download PDF"
+          <Button
+            variant="outline"
+            size="sm"
+            icon={Download}
+            onClick={handleDownload}
+            isLoading={isDownloading}
+            className="text-slate-700"
+            title="Download PDF"
           >
-            <Button
-              variant="outline"
-              size="sm"
-              icon={Download}
-              className="text-slate-700"
-            >
-              PDF
-            </Button>
-          </a>
+            PDF
+          </Button>
         )}
       </div>
 

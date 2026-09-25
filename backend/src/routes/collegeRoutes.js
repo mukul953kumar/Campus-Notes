@@ -4,12 +4,13 @@ const {
   getCollegeById,
   createCollege
 } = require('../controllers/collegeController');
+const { requireAuth, requireRole } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
 router.route('/')
   .get(getAllColleges)
-  .post(createCollege);
+  .post(requireAuth, requireRole(['admin']), createCollege);
 
 router.route('/:id')
   .get(getCollegeById);

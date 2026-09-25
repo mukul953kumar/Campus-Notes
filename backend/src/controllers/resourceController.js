@@ -4,8 +4,14 @@ const User = require('../models/User');
 const College = require('../models/College');
 const AppError = require('../utils/appError');
 const { sendResponse } = require('../utils/apiResponse');
-const { uploadFile } = require('../services/storageService');
+const { uploadFile, getSignedDownloadUrl, isCloudinaryConfigured, localUploadsDir } = require('../services/storageService');
 const { verifyPdfMagicBytes, computeFileHash } = require('../utils/fileValidator');
+const path = require('path');
+const fs = require('fs');
+const https = require('https');
+const http = require('http');
+
+const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const normalizeResourceType = (type) => {
   if (!type) return '';
@@ -36,6 +42,7 @@ const getResources = async (req, res, next) => {
     } = req.query;
 
     const searchTerm = (search || q || '').trim();
+    const safeSearchTerm = escapeRegex(searchTerm);
     const pageNum = Math.max(1, parseInt(page, 10) || 1);
     const limitNum = Math.min(50, Math.max(1, parseInt(limit, 10) || 20));
     const skip = (pageNum - 1) * limitNum;
@@ -70,18 +77,18 @@ const getResources = async (req, res, next) => {
     if (searchTerm) {
       const matchedSubjects = await Subject.find({
         $or: [
-          { name: { $regex: searchTerm, $options: 'i' } },
-          { code: { $regex: searchTerm, $options: 'i' } },
-          { shortName: { $regex: searchTerm, $options: 'i' } }
+          { name: { $regex: safeSearchTerm, $options: 'i' } },
+          { code: { $regex: safeSearchTerm, $options: 'i' } },
+          { shortName: { $regex: safeSearchTerm, $options: 'i' } }
         ]
       }).select('_id');
 
       const matchedSubjectIds = matchedSubjects.map((s) => s._id);
 
       const searchConditions = [
-        { title: { $regex: searchTerm, $options: 'i' } },
-        { description: { $regex: searchTerm, $options: 'i' } },
-        { tags: { $regex: searchTerm, $options: 'i' } }
+        { title: { $regex: safeSearchTerm, $options: 'i' } },
+        { description: { $regex: safeSearchTerm, $options: 'i' } },
+        { tags: { $regex: safeSearchTerm, $options: 'i' } }
       ];
 
       if (matchedSubjectIds.length > 0) {
@@ -94,6 +101,8 @@ const getResources = async (req, res, next) => {
     let sort = { createdAt: -1 };
     if (sortBy === 'popular' || sortBy === 'downloads') {
       sort = { downloadsCount: -1, createdAt: -1 };
+    } else if (sortBy === 'rating' || sortBy === 'top-rated') {
+      sort = { averageRating: -1, ratingsCount: -1, createdAt: -1 };
     } else if (sortBy === 'title') {
       sort = { title: 1 };
     }
@@ -110,10 +119,15 @@ const getResources = async (req, res, next) => {
       Resource.countDocuments(filter)
     ]);
 
+    const formattedResources = resources.map((r) => ({
+      ...r,
+      fileUrl: getSignedDownloadUrl(r.fileKey, r.fileUrl)
+    }));
+
     return sendResponse(res, {
       statusCode: 200,
       message: 'Resources retrieved successfully',
-      data: resources,
+      data: formattedResources,
       meta: {
         page: pageNum,
         limit: limitNum,
@@ -147,6 +161,8 @@ const getResourceById = async (req, res, next) => {
         return next(new AppError('This resource is currently pending administrative verification.', 403));
       }
     }
+
+    resource.fileUrl = getSignedDownloadUrl(resource.fileKey, resource.fileUrl);
 
     return sendResponse(res, {
       statusCode: 200,
@@ -278,20 +294,79 @@ const downloadResource = async (req, res, next) => {
       $inc: { downloadsCount: 1 }
     });
 
+    if (resource.uploaderId) {
+      await User.findByIdAndUpdate(resource.uploaderId, {
+        $inc: { 'stats.downloadsReceived': 1 }
+      });
+    }
+
     if (req.user && req.user._id) {
       await User.findByIdAndUpdate(req.user._id, {
         $inc: { 'stats.downloadsCount': 1 }
       });
     }
 
+    const signedDownloadUrl = getSignedDownloadUrl(resource.fileKey, resource.fileUrl);
+
     return sendResponse(res, {
       statusCode: 200,
       message: 'Download URL retrieved successfully',
       data: {
-        fileUrl: resource.fileUrl,
+        fileUrl: signedDownloadUrl,
         fileName: `${resource.title.replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`,
         downloadsCount: (resource.downloadsCount || 0) + 1
       }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const streamResourceFile = async (req, res, next) => {
+  try {
+    const resource = await Resource.findById(req.params.id);
+    if (!resource || !resource.isActive) {
+      return next(new AppError('Resource not found or no longer available.', 404));
+    }
+
+    if (resource.verificationStatus !== 'verified') {
+      const isUploader = req.user && String(req.user._id) === String(resource.uploaderId);
+      const isAdmin = req.user && req.user.role === 'admin';
+      if (!isUploader && !isAdmin) {
+        return next(new AppError('This resource is currently pending verification.', 403));
+      }
+    }
+
+    const isDownload = req.query.download === 'true';
+    const dispositionType = isDownload ? 'attachment' : 'inline';
+    const safeFilename = `${resource.title.replace(/[^a-zA-Z0-9_.-]/g, '_')}.pdf`;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `${dispositionType}; filename="${safeFilename}"`);
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+
+    // If local file
+    if (resource.fileKey && !resource.fileKey.startsWith('http') && !resource.fileUrl.startsWith('http')) {
+      const localFilePath = path.join(localUploadsDir, resource.fileKey);
+      if (fs.existsSync(localFilePath)) {
+        return fs.createReadStream(localFilePath).pipe(res);
+      }
+    }
+
+    // If Cloudinary / Remote file
+    const targetUrl = getSignedDownloadUrl(resource.fileKey, resource.fileUrl);
+    if (!targetUrl) {
+      return next(new AppError('Document file could not be located.', 404));
+    }
+
+    const client = targetUrl.startsWith('https') ? https : http;
+    client.get(targetUrl, (stream) => {
+      if (stream.statusCode !== 200) {
+        return res.redirect(targetUrl);
+      }
+      stream.pipe(res);
+    }).on('error', () => {
+      res.redirect(targetUrl);
     });
   } catch (error) {
     next(error);
@@ -317,10 +392,15 @@ const getMyUploads = async (req, res, next) => {
       .populate('collegeId', 'name code')
       .lean();
 
+    const formattedUploads = uploads.map((u) => ({
+      ...u,
+      fileUrl: getSignedDownloadUrl(u.fileKey, u.fileUrl)
+    }));
+
     return sendResponse(res, {
       statusCode: 200,
       message: 'Student uploads retrieved successfully',
-      data: uploads
+      data: formattedUploads
     });
   } catch (error) {
     next(error);
@@ -332,6 +412,7 @@ module.exports = {
   getResourceById,
   uploadResource,
   downloadResource,
+  streamResourceFile,
   getMyUploads
 };
 
