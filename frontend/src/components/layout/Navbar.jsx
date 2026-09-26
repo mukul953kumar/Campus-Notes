@@ -18,6 +18,7 @@ import Button from '../common/Button';
 import BrandLogo from '../common/BrandLogo';
 import { useAuth } from '../../context/AuthContext';
 import { usePwa } from '../../context/PwaContext';
+import { Search } from 'lucide-react';
 
 export default function Navbar() {
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
@@ -55,8 +56,8 @@ export default function Navbar() {
                 key={link.name}
                 to={link.path}
                 className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${isActive(link.path)
-                    ? 'text-blue-700 bg-blue-50/80 font-semibold'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  ? 'text-blue-700 bg-blue-50/80 font-semibold'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
               >
                 {link.name}
@@ -235,8 +236,8 @@ export default function Navbar() {
               to={link.path}
               onClick={() => setMobileMenuOpen(false)}
               className={`block px-3 py-2 text-sm font-medium rounded-md ${isActive(link.path)
-                  ? 'text-blue-700 bg-blue-50 font-semibold'
-                  : 'text-slate-700 hover:bg-slate-100'
+                ? 'text-blue-700 bg-blue-50 font-semibold'
+                : 'text-slate-700 hover:bg-slate-100'
                 }`}
             >
               {link.name}

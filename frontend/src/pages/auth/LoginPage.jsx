@@ -105,7 +105,7 @@ export default function LoginPage() {
       handlePostLoginRedirect(result.data.user);
     } catch (err) {
       setErrorMessage(
-        err.message || 'Access restricted: Please select your official institute Google account.'
+        err.message || 'Failed to sign in with Google. Please try again.'
       );
     } finally {
       setIsLoading(false);
@@ -115,15 +115,15 @@ export default function LoginPage() {
   return (
     <div className="max-w-md mx-auto my-8 sm:my-14 px-4">
       <div className="bg-white border border-slate-200 rounded-3xl p-7 sm:p-9 shadow-sm">
-        
-        {/* College Seal & Header */}
+
+        {/* Header */}
         <div className="text-center mb-6">
           <div className="flex justify-center mb-3">
             <BrandLogo size="lg" isClickable={false} />
           </div>
           <div className="inline-flex items-center gap-1.5 text-xs text-blue-700 bg-blue-50 border border-blue-200/80 px-2.5 py-0.5 rounded-full font-medium mb-2">
-            <Sparkles className="w-3 h-3" />
-            <span>Official College Portal</span>
+            <Sparkles className="w-3 h-3 text-blue-600" />
+            <span>KNIT Student Community</span>
           </div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
             Sign In with Google
@@ -133,17 +133,11 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Domain Requirement Badge */}
-        <div className="p-4 bg-blue-50/70 border border-blue-200/80 rounded-2xl mb-6">
-          <div className="flex items-start gap-3">
-            <ShieldCheck className="w-5 h-5 text-blue-700 shrink-0 mt-0.5" />
-            <div className="text-xs text-blue-950 leading-relaxed">
-              <span className="font-semibold block mb-0.5 text-blue-900">
-                Institutional Single Sign-On
-              </span>
-              Use your registered college student ID to sign in. 1-click verification directly via Google.
-            </div>
-          </div>
+        {/* Simple Sign In Info */}
+        <div className="p-3.5 bg-slate-50 border border-slate-200/90 rounded-2xl mb-6">
+          <p className="text-xs text-slate-600 text-center leading-relaxed">
+            Sign in with your College Student Google Account.
+          </p>
         </div>
 
         {/* Error Alert */}
@@ -156,12 +150,12 @@ export default function LoginPage() {
 
         {/* Primary Direct Google Sign-In Container */}
         <div className="space-y-4 py-2">
-          
+
           <div className="flex flex-col items-center justify-center min-h-[50px]">
             {isLoading ? (
               <div className="flex items-center gap-2 text-xs text-blue-700 font-medium py-3">
                 <div className="w-4 h-4 border-2 border-blue-700 border-t-transparent rounded-full animate-spin"></div>
-                <span>Verifying institutional student ID...</span>
+                <span>Signing in with Google...</span>
               </div>
             ) : (
               <div id="google-signin-btn" className="w-full flex justify-center"></div>
@@ -171,16 +165,16 @@ export default function LoginPage() {
           <div className="text-center text-[11px] text-slate-400 space-y-1 pt-2">
             <p className="flex items-center justify-center gap-1.5">
               <Lock className="w-3.5 h-3.5 text-slate-400" />
-              <span>Student profile & academic branch are verified securely from your institute ID</span>
+              <span>Safe & secure 1-tap sign-in with Google</span>
             </p>
           </div>
 
         </div>
 
-        {/* Privacy & Syllabus Compliance */}
+        {/* Community Info */}
         <div className="border-t border-slate-100 pt-5 mt-6 text-center">
           <p className="text-[11px] text-slate-400 leading-relaxed">
-            By signing in, you agree to access KNIT academic notes and materials in accordance with institute policies.
+            Community-driven academic sharing platform for KNIT Sultanpur students.
           </p>
         </div>
 
