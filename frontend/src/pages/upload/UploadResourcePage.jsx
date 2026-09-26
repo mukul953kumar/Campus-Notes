@@ -214,7 +214,6 @@ export default function UploadResourcePage() {
           'Electrical Engineering',
           'Mechanical Engineering',
           'Civil Engineering',
-          'Master of Computer Applications',
         ]);
       }
     }

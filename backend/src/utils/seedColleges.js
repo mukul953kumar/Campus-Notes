@@ -14,8 +14,7 @@ const defaultColleges = [
       'Electronics Engineering',
       'Electrical Engineering',
       'Mechanical Engineering',
-      'Civil Engineering',
-      'Master of Computer Applications'
+      'Civil Engineering'
     ]
   },
   {

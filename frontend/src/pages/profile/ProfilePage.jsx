@@ -42,7 +42,6 @@ const BRANCH_OPTIONS = [
   { value: 'Electrical Engineering', label: 'Electrical Engineering (EE)' },
   { value: 'Mechanical Engineering', label: 'Mechanical Engineering (ME)' },
   { value: 'Civil Engineering', label: 'Civil Engineering (CE)' },
-  { value: 'Master of Computer Applications', label: 'Master of Computer Applications (MCA)' },
 ];
 
 const SEMESTER_OPTIONS = [

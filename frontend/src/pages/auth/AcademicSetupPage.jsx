@@ -20,8 +20,7 @@ const BRANCH_OPTIONS = [
   { value: 'Electronics Engineering', code: 'ECE', label: 'Electronics Engineering' },
   { value: 'Electrical Engineering', code: 'EE', label: 'Electrical Engineering' },
   { value: 'Mechanical Engineering', code: 'ME', label: 'Mechanical Engineering' },
-  { value: 'Civil Engineering', code: 'CE', label: 'Civil Engineering' },
-  { value: 'Master of Computer Applications', code: 'MCA', label: 'Master of Computer Applications' }
+  { value: 'Civil Engineering', code: 'CE', label: 'Civil Engineering' }
 ];
 
 const SEMESTER_OPTIONS = [

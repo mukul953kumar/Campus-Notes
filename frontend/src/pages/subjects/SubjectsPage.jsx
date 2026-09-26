@@ -23,7 +23,6 @@ const BRANCH_TABS = [
   { id: 'Electrical Engineering', label: 'Electrical (EE)' },
   { id: 'Mechanical Engineering', label: 'Mechanical (ME)' },
   { id: 'Civil Engineering', label: 'Civil (CE)' },
-  { id: 'Master of Computer Applications', label: 'MCA' },
 ];
 
 export default function SubjectsPage() {

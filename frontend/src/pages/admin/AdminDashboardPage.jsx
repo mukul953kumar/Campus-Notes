@@ -203,7 +203,6 @@ export default function AdminDashboardPage() {
           'Electrical Engineering',
           'Mechanical Engineering',
           'Civil Engineering',
-          'Master of Computer Applications',
         ]);
       }
     }

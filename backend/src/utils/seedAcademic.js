@@ -90,14 +90,7 @@ const knitSubjects = [
   { name: 'Building Material & Construction', shortName: 'BMC', code: 'BCE-301', branch: 'Civil Engineering', semester: 3, unitsCount: 5 },
   { name: 'Surveying & Geomatics', shortName: 'Survey', code: 'BCE-302', branch: 'Civil Engineering', semester: 3, unitsCount: 5 },
   { name: 'Structural Analysis', shortName: 'SA', code: 'BCE-401', branch: 'Civil Engineering', semester: 4, unitsCount: 5 },
-  { name: 'Geotechnical Engineering', shortName: 'GeoTech', code: 'BCE-501', branch: 'Civil Engineering', semester: 5, unitsCount: 5 },
-
-  // Master of Computer Applications
-  { name: 'Advanced Data Structures & Algorithms', shortName: 'ADSA', code: 'MCA-101', branch: 'Master of Computer Applications', semester: 1, unitsCount: 5 },
-  { name: 'Relational Database Management Systems', shortName: 'RDBMS', code: 'MCA-102', branch: 'Master of Computer Applications', semester: 1, unitsCount: 5 },
-  { name: 'Web Technology & Python Programming', shortName: 'Python-Web', code: 'MCA-201', branch: 'Master of Computer Applications', semester: 2, unitsCount: 5 },
-  { name: 'Advanced Java Programming', shortName: 'Adv-Java', code: 'MCA-301', branch: 'Master of Computer Applications', semester: 3, unitsCount: 5 },
-  { name: 'Software Project Management & Agile', shortName: 'SPM', code: 'MCA-401', branch: 'Master of Computer Applications', semester: 4, unitsCount: 5 }
+  { name: 'Geotechnical Engineering', shortName: 'GeoTech', code: 'BCE-501', branch: 'Civil Engineering', semester: 5, unitsCount: 5 }
 ];
 
 const seedAcademic = async () => {

@@ -55,7 +55,6 @@ const BRANCH_SHORT_CODES = {
   'Electrical Engineering': 'EE',
   'Mechanical Engineering': 'ME',
   'Civil Engineering': 'CE',
-  'Master of Computer Applications': 'MCA',
 };
 
 function getShortBranch(branch) {
@@ -106,7 +105,6 @@ function HomePage() {
     { code: 'EE', name: 'Electrical Engineering', count: '1st - 8th Sem' },
     { code: 'ME', name: 'Mechanical Engineering', count: '1st - 8th Sem' },
     { code: 'CE', name: 'Civil Engineering', count: '1st - 8th Sem' },
-    { code: 'MCA', name: 'Master of Computer Applications', count: '1st - 4th Sem' },
   ];
 
   const [semesterSubjects, setSemesterSubjects] = useState([]);
@@ -358,11 +356,7 @@ function HomePage() {
 
                 {/* Quick Actions */}
                 <div className="flex items-center gap-2 shrink-0">
-                  <Link to="/saved">
-                    <Button size="sm" variant="outline" icon={Bookmark} className="text-xs font-semibold cursor-pointer">
-                      Saved ({savedIds.length})
-                    </Button>
-                  </Link>
+
                   <Link to="/profile" className="text-xs text-slate-400 hover:text-blue-700 underline px-1 hidden sm:inline-block">
                     Profile
                   </Link>
@@ -402,7 +396,7 @@ function HomePage() {
                   <div className="min-w-0">
                     <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium truncate">Bookmarked</p>
                     <p className="text-xs sm:text-sm font-bold text-slate-900 truncate">
-                      {savedIds.length} Saved Notes
+                      {savedIds.length} Saved
                     </p>
                   </div>
                 </div>
@@ -613,12 +607,12 @@ function HomePage() {
         </section>
       )}
 
-      {/* Engineering Branches Catalog (7 branches in 1 clean desktop row) */}
+      {/* Engineering Branches Catalog (6 branches in 1 clean desktop row) */}
       <section>
         <div className="flex items-center justify-between mb-3 sm:mb-4">
           <div>
             <h2 className="text-lg sm:text-xl font-bold text-slate-900">Explore by Branch</h2>
-            <p className="text-[11px] sm:text-xs text-slate-500">Official B.Tech & MCA curriculums</p>
+            <p className="text-[11px] sm:text-xs text-slate-500">Official B.Tech engineering curriculums</p>
           </div>
           <Link
             to="/subjects"
@@ -628,7 +622,7 @@ function HomePage() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 sm:gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
           {branches.map((b) => (
             <Link
               key={b.code}
@@ -702,10 +696,10 @@ function HomePage() {
       <section className="space-y-3 sm:space-y-4">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <h2 className="text-base sm:text-xl font-bold text-slate-900 truncate">Campus Champions</h2>
+
             <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold shrink-0">
               <Trophy className="w-3.5 h-3.5 text-amber-500" />
-              <span>Honor Roll</span>
+              <span>Campus Honor Roll</span>
             </div>
           </div>
           <Link
@@ -735,7 +729,7 @@ function HomePage() {
                   <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300">
                     #1 Campus Champion
                   </span>
-                  <span className="text-xs text-slate-500 font-medium">{topContributors[0].badge}</span>
+
                 </div>
                 <h3 className="text-base font-bold text-slate-900 mt-0.5">
                   {topContributors[0].user?.name || 'Top Contributor'}
@@ -856,89 +850,89 @@ export default function App() {
     <AuthProvider>
       <PwaProvider>
         <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<MainLayout />}>
-            <Route index element={<HomePage />} />
+          <Routes>
+            <Route path="/" element={<MainLayout />}>
+              <Route index element={<HomePage />} />
 
-            {/* Public catalog routes */}
-            <Route path="resources" element={<ResourceLibraryPage />} />
-            <Route path="resources/:id" element={<ResourceDetailsPage />} />
-            <Route path="pyqs" element={<PYQPage />} />
-            <Route path="subjects" element={<SubjectsPage />} />
-            <Route path="subjects/:id" element={<SubjectDetailsPage />} />
-            <Route path="leaderboard" element={<LeaderboardPage />} />
-            <Route path="guidelines" element={<UploadGuidelinesPage />} />
+              {/* Public catalog routes */}
+              <Route path="resources" element={<ResourceLibraryPage />} />
+              <Route path="resources/:id" element={<ResourceDetailsPage />} />
+              <Route path="pyqs" element={<PYQPage />} />
+              <Route path="subjects" element={<SubjectsPage />} />
+              <Route path="subjects/:id" element={<SubjectDetailsPage />} />
+              <Route path="leaderboard" element={<LeaderboardPage />} />
+              <Route path="guidelines" element={<UploadGuidelinesPage />} />
 
-            {/* Authentication routes */}
-            <Route path="login" element={<LoginPage />} />
-            <Route path="register" element={<RegisterPage />} />
+              {/* Authentication routes */}
+              <Route path="login" element={<LoginPage />} />
+              <Route path="register" element={<RegisterPage />} />
 
-            {/* Protected Student routes */}
-            <Route
-              path="onboarding"
-              element={
-                <ProtectedRoute>
-                  <AcademicSetupPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="profile"
-              element={
-                <ProtectedRoute>
-                  <ProfilePage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="upload"
-              element={
-                <ProtectedRoute>
-                  <UploadResourcePage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="saved"
-              element={
-                <ProtectedRoute>
-                  <SavedResourcesPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="my-uploads"
-              element={
-                <ProtectedRoute>
-                  <MyUploadsPage />
-                </ProtectedRoute>
-              }
-            />
+              {/* Protected Student routes */}
+              <Route
+                path="onboarding"
+                element={
+                  <ProtectedRoute>
+                    <AcademicSetupPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="profile"
+                element={
+                  <ProtectedRoute>
+                    <ProfilePage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="upload"
+                element={
+                  <ProtectedRoute>
+                    <UploadResourcePage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="saved"
+                element={
+                  <ProtectedRoute>
+                    <SavedResourcesPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="my-uploads"
+                element={
+                  <ProtectedRoute>
+                    <MyUploadsPage />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Admin Moderation route */}
-            <Route
-              path="admin"
-              element={
-                <AdminRoute>
-                  <AdminDashboardPage />
-                </AdminRoute>
-              }
-            />
+              {/* Admin Moderation route */}
+              <Route
+                path="admin"
+                element={
+                  <AdminRoute>
+                    <AdminDashboardPage />
+                  </AdminRoute>
+                }
+              />
 
-            {/* 404 Route */}
-            <Route
-              path="*"
-              element={
-                <PlaceholderPage
-                  title="Page Not Found"
-                  description="The academic page you are looking for does not exist."
-                />
-              }
-            />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </PwaProvider>
-  </AuthProvider>
-);
+              {/* 404 Route */}
+              <Route
+                path="*"
+                element={
+                  <PlaceholderPage
+                    title="Page Not Found"
+                    description="The academic page you are looking for does not exist."
+                  />
+                }
+              />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </PwaProvider>
+    </AuthProvider>
+  );
 }

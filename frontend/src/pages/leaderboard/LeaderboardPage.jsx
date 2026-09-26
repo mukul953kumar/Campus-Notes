@@ -23,8 +23,7 @@ const BRANCH_OPTIONS = [
   { value: 'Electronics Engineering', label: 'Electronics (ECE)' },
   { value: 'Electrical Engineering', label: 'Electrical (EE)' },
   { value: 'Mechanical Engineering', label: 'Mechanical (ME)' },
-  { value: 'Civil Engineering', label: 'Civil (CE)' },
-  { value: 'Master of Computer Applications', label: 'MCA' }
+  { value: 'Civil Engineering', label: 'Civil (CE)' }
 ];
 
 const SORT_OPTIONS = [
@@ -77,7 +76,6 @@ function getShortBranch(branch) {
   if (b.includes('electrical') || b.includes('ee')) return 'EE';
   if (b.includes('mechanical') || b.includes('me')) return 'ME';
   if (b.includes('civil') || b.includes('ce')) return 'CE';
-  if (b.includes('master of computer applications') || b.includes('mca')) return 'MCA';
   return branch;
 }
 
