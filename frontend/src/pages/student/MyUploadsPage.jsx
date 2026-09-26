@@ -15,7 +15,10 @@ import {
   Upload,
   Calendar,
   Layers,
-  ArrowRight
+  ArrowRight,
+  RotateCcw,
+  MessageSquare,
+  BookOpen
 } from 'lucide-react';
 
 const STATUS_TABS = [
@@ -254,13 +257,51 @@ export default function MyUploadsPage() {
                   </div>
                 </div>
 
-                {/* Rejection notice box if rejected */}
-                {item.verificationStatus === 'rejected' && item.rejectionReason && (
-                  <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-start gap-2">
-                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-semibold">Moderator Note: </span>
-                      <span>{item.rejectionReason}</span>
+                {/* Rejection notice box if rejected with improvement feedback */}
+                {item.verificationStatus === 'rejected' && (
+                  <div className="p-3.5 bg-rose-50/90 border border-rose-200/90 rounded-xl text-xs text-rose-900 space-y-2.5">
+                    <div className="flex items-start gap-2.5">
+                      <div className="w-6 h-6 rounded-md bg-rose-100 text-rose-700 flex items-center justify-center shrink-0 mt-0.5">
+                        <AlertCircle className="w-4 h-4 text-rose-600" />
+                      </div>
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-rose-950">
+                            Revision Needed • Moderator Feedback
+                          </span>
+                          <span className="text-[10px] font-semibold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-full">
+                            Action Required
+                          </span>
+                        </div>
+                        <p className="text-slate-800 italic bg-white/80 p-2.5 rounded-lg border border-rose-200/70 font-medium">
+                          "{item.rejectionReason || 'Document did not meet verification standards. Please review academic guidelines and submit an updated document.'}"
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-end gap-2 pt-1 border-t border-rose-200/60">
+                      <Link to="/upload">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          icon={BookOpen}
+                          className="text-[11px] font-semibold border-rose-200 text-slate-700 hover:bg-white"
+                        >
+                          Upload Guidelines
+                        </Button>
+                      </Link>
+                      <Link
+                        to={`/upload?reupload=true&title=${encodeURIComponent(item.title)}&branch=${encodeURIComponent(item.branch || '')}&semester=${item.semester || ''}&subjectId=${item.subjectId?._id || ''}&resourceType=${item.resourceType || 'notes'}&unit=${item.unit || ''}&feedback=${encodeURIComponent(item.rejectionReason || '')}`}
+                      >
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          icon={RotateCcw}
+                          className="text-[11px] font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-xs"
+                        >
+                          Fix & Re-upload Material
+                        </Button>
+                      </Link>
                     </div>
                   </div>
                 )}

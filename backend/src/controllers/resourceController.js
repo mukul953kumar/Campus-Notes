@@ -224,7 +224,8 @@ const uploadResource = async (req, res, next) => {
     const duplicate = await Resource.findOne({
       fileHash,
       collegeId: targetCollegeId,
-      isActive: true
+      isActive: true,
+      verificationStatus: { $ne: 'rejected' }
     });
 
     if (duplicate) {

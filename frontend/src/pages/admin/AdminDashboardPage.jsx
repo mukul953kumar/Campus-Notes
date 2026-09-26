@@ -28,8 +28,20 @@ import {
   BookOpen,
   ChevronLeft,
   ChevronRight,
-  AlertTriangle
+  AlertTriangle,
+  MessageSquare,
+  Send,
+  Info
 } from 'lucide-react';
+
+const REJECTION_PRESETS = [
+  'Pages are blurry or handwriting is unreadable. Please upload clearer photos/scans.',
+  'Pages are rotated sideways or upside down. Please rotate pages before uploading.',
+  'Incomplete notes or missing units. Please upload the complete unit material.',
+  'Incorrect subject or branch selected. Please choose the correct academic subject.',
+  'Duplicate submission. This exact study material is already available in the library.',
+  'Low contrast or poor lighting. Please ensure readable contrast and lighting.',
+];
 
 export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState('queue'); // 'queue' | 'resources' | 'reports' | 'users'
@@ -229,20 +241,21 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // Confirm Reject Handler
+  // Confirm Reject Handler with Improvement Message
   const handleConfirmReject = async () => {
     if (!rejectingItem) return;
+    const finalReason = rejectionReason.trim() || 'Document does not conform to academic quality guidelines. Please review guidelines and submit an updated document.';
     setIsActionLoading(true);
     setActionFeedback({ type: '', message: '' });
     try {
-      await adminService.verifyResource(rejectingItem._id, 'reject', rejectionReason);
+      await adminService.verifyResource(rejectingItem._id, 'reject', finalReason);
       setQueue((prev) => prev.filter((item) => item._id !== rejectingItem._id));
       if (activeTab === 'resources') loadAllResources();
       setRejectingItem(null);
       setRejectionReason('');
       loadMetrics();
-      setActionFeedback({ type: 'success', message: 'Document rejected with feedback saved.' });
-      setTimeout(() => setActionFeedback({ type: '', message: '' }), 3000);
+      setActionFeedback({ type: 'success', message: 'Document rejected. Improvement feedback sent to student.' });
+      setTimeout(() => setActionFeedback({ type: '', message: '' }), 3500);
     } catch (err) {
       setActionFeedback({ type: 'error', message: err.message || 'Failed to reject resource.' });
     } finally {
@@ -1094,30 +1107,73 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* Reject Reason Modal */}
+      {/* Reject Reason Modal with Improvement Feedback */}
       {rejectingItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-6 overflow-hidden shadow-2xl space-y-4">
+          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg p-5 sm:p-6 overflow-hidden shadow-2xl space-y-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
-                <AlertCircle className="w-4 h-4" />
+              <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                <AlertCircle className="w-5 h-5" />
               </div>
-              <h3 className="font-bold text-slate-900 text-base">Reject Material</h3>
+              <div>
+                <h3 className="font-bold text-slate-900 text-base">Reject Material & Send Feedback</h3>
+                <p className="text-xs text-slate-500">Provide actionable guidance so the student can revise & re-upload</p>
+              </div>
             </div>
 
-            <p className="text-xs text-slate-500">
-              Provide a clear reason for rejecting <span className="font-semibold text-slate-800">"{rejectingItem.title}"</span> so the student can fix and re-upload.
-            </p>
+            <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl text-xs space-y-1">
+              <span className="font-semibold text-slate-700">Material Under Review:</span>
+              <p className="font-bold text-slate-900 truncate">"{rejectingItem.title}"</p>
+              <div className="flex items-center gap-2 text-[11px] text-slate-500 pt-0.5">
+                <span>{rejectingItem.branch}</span>
+                <span>•</span>
+                <span>Sem {rejectingItem.semester}</span>
+                {rejectingItem.uploaderId?.name && (
+                  <>
+                    <span>•</span>
+                    <span>Uploader: {rejectingItem.uploaderId.name}</span>
+                  </>
+                )}
+              </div>
+            </div>
 
-            <textarea
-              rows={3}
-              value={rejectionReason}
-              onChange={(e) => setRejectionReason(e.target.value)}
-              placeholder="e.g. Pages 4-6 are blurry, scanned upside down, or missing unit coverage..."
-              className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-100"
-            />
+            {/* Quick Reason Presets */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600">
+                <span>Quick Preset Reasons (Click to insert):</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto pr-1">
+                {REJECTION_PRESETS.map((preset, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => setRejectionReason(preset)}
+                    className="text-left text-[11px] px-2.5 py-1 rounded-lg border border-slate-200 hover:border-blue-400 bg-white hover:bg-blue-50/50 text-slate-700 transition-colors cursor-pointer"
+                  >
+                    {preset}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-            <div className="flex items-center justify-end gap-2.5 pt-2">
+            <div className="space-y-1">
+              <label className="block text-xs font-bold text-slate-700">
+                Feedback Message for Student
+              </label>
+              <textarea
+                rows={3}
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                placeholder="Write specific instructions for the student (e.g. Please rotate pages 4-6, ensure clear scan contrast, or re-tag to Unit 3)..."
+                className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-100"
+              />
+              <p className="text-[11px] text-slate-400 flex items-center gap-1">
+                <Info className="w-3 h-3 text-slate-400" />
+                This message will be instantly displayed on the student's dashboard with a "Fix & Re-upload" button.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
               <Button
                 variant="outline"
                 size="sm"
@@ -1131,10 +1187,11 @@ export default function AdminDashboardPage() {
               <Button
                 variant="danger"
                 size="sm"
+                icon={Send}
                 onClick={handleConfirmReject}
                 isLoading={isActionLoading}
               >
-                Confirm Rejection
+                Send Message & Reject
               </Button>
             </div>
           </div>

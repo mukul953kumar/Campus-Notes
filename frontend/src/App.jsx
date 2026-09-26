@@ -8,6 +8,7 @@ import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import ProfilePage from './pages/profile/ProfilePage';
 import UploadResourcePage from './pages/upload/UploadResourcePage';
+import UploadGuidelinesPage from './pages/upload/UploadGuidelinesPage';
 import ResourceLibraryPage from './pages/resources/ResourceLibraryPage';
 import ResourceDetailsPage from './pages/resources/ResourceDetailsPage';
 import SavedResourcesPage from './pages/student/SavedResourcesPage';
@@ -37,7 +38,8 @@ import {
   Eye,
   GraduationCap,
   Bookmark,
-  HelpCircle
+  HelpCircle,
+  AlertCircle
 } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 import { resourceService, userService, academicService } from './services/api';
@@ -70,6 +72,8 @@ function HomePage() {
   const [isLoadingRecent, setIsLoadingRecent] = useState(true);
   const [isLoadingRecommended, setIsLoadingRecommended] = useState(false);
   const [isLoadingContributors, setIsLoadingContributors] = useState(true);
+  const [rejectedUploads, setRejectedUploads] = useState([]);
+  const [dismissedRejectedNotice, setDismissedRejectedNotice] = useState(false);
 
   const branches = [
     { code: 'CSE', name: 'Computer Science & Engineering', count: '1st - 8th Sem' },
@@ -100,6 +104,27 @@ function HomePage() {
     }
     loadRecent();
   }, []);
+
+  // Check if student has any rejected submissions needing revision
+  useEffect(() => {
+    if (!user) {
+      setRejectedUploads([]);
+      return;
+    }
+    async function loadRejectedUploads() {
+      try {
+        const res = await resourceService.getMyUploads('rejected');
+        if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
+          setRejectedUploads(res.data);
+        } else {
+          setRejectedUploads([]);
+        }
+      } catch (err) {
+        console.error('Failed to load rejected uploads:', err);
+      }
+    }
+    loadRejectedUploads();
+  }, [user]);
 
   // Load personalized semester recommendations dynamically based on student branch & sem (Top 4)
   useEffect(() => {
@@ -208,8 +233,66 @@ function HomePage() {
       {/* Top Welcome / Command Center Section */}
       <section className="max-w-5xl mx-auto pt-1 sm:pt-2">
         {user ? (
-          // Logged-in Student Workspace Command Center (Mobile & Desktop)
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 shadow-2xs space-y-4">
+          <div className="space-y-4">
+            {/* Action Required: Note Revision Alert Banner */}
+            {rejectedUploads.length > 0 && !dismissedRejectedNotice && (
+              <div className="bg-rose-50/95 border border-rose-200/90 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0 mt-0.5">
+                      <AlertCircle className="w-5 h-5 text-rose-600" />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="font-bold text-slate-900 text-sm sm:text-base">
+                          Action Required: Study Material Needs Revision
+                        </h2>
+                        <Badge variant="rejected" size="sm">
+                          {rejectedUploads.length} {rejectedUploads.length === 1 ? 'Notice' : 'Notices'}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-slate-600">
+                        A moderator reviewed <span className="font-semibold text-slate-900">"{rejectedUploads[0].title}"</span> and provided feedback for improvement.
+                      </p>
+                      <div className="mt-2 p-2.5 bg-white/95 border border-rose-200/80 rounded-xl text-xs text-slate-800 space-y-1">
+                        <span className="font-bold text-rose-900 flex items-center gap-1.5">
+                          <span>Moderator Feedback:</span>
+                        </span>
+                        <p className="text-slate-700 italic font-medium leading-relaxed">
+                          "{rejectedUploads[0].rejectionReason || 'Document did not meet verification standards. Please review academic guidelines and submit an updated document.'}"
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                    <Link
+                      to={`/upload?reupload=true&title=${encodeURIComponent(rejectedUploads[0].title)}&branch=${encodeURIComponent(rejectedUploads[0].branch || '')}&semester=${rejectedUploads[0].semester || ''}&subjectId=${rejectedUploads[0].subjectId?._id || ''}&resourceType=${rejectedUploads[0].resourceType || 'notes'}&unit=${rejectedUploads[0].unit || ''}&feedback=${encodeURIComponent(rejectedUploads[0].rejectionReason || '')}`}
+                    >
+                      <Button variant="primary" size="sm" icon={Upload} className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs">
+                        Fix & Re-upload
+                      </Button>
+                    </Link>
+                    <Link to="/my-uploads">
+                      <Button variant="outline" size="sm" className="text-xs font-semibold">
+                        View All
+                      </Button>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setDismissedRejectedNotice(true)}
+                      className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-rose-100/50 cursor-pointer"
+                      title="Dismiss notice for this session"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Logged-in Student Workspace Command Center (Mobile & Desktop) */}
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 shadow-2xs space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex items-center gap-3.5">
                 <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-xl bg-blue-700 text-white flex items-center justify-center text-sm sm:text-base font-bold shrink-0 shadow-2xs overflow-hidden">
@@ -328,6 +411,7 @@ function HomePage() {
               </div>
             )}
           </div>
+        </div>
         ) : (
           // Guest User Public Landing Header
           <div className="text-center py-2 sm:py-6">
@@ -760,6 +844,7 @@ export default function App() {
             <Route path="subjects" element={<SubjectsPage />} />
             <Route path="subjects/:id" element={<SubjectDetailsPage />} />
             <Route path="leaderboard" element={<LeaderboardPage />} />
+            <Route path="guidelines" element={<UploadGuidelinesPage />} />
 
             {/* Authentication routes */}
             <Route path="login" element={<LoginPage />} />

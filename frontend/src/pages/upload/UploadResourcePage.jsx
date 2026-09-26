@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { academicService, resourceService } from '../../services/api';
 import Button from '../../components/common/Button';
@@ -25,7 +25,12 @@ import {
   Plus,
   Layers,
   Check,
-  Eye
+  Eye,
+  ChevronDown,
+  ChevronUp,
+  Info,
+  HelpCircle,
+  ShieldCheck
 } from 'lucide-react';
 
 const RESOURCE_TYPES = [
@@ -145,8 +150,21 @@ async function compileImagesToPdf(imageItems, documentTitle = 'Academic Notes') 
 export default function UploadResourcePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
+
+  // Search parameters for Re-upload / Revision flow
+  const isReupload = searchParams.get('reupload') === 'true';
+  const paramFeedback = searchParams.get('feedback') || '';
+  const paramTitle = searchParams.get('title') || '';
+  const paramBranch = searchParams.get('branch') || '';
+  const paramSemester = searchParams.get('semester') || '';
+  const paramSubjectId = searchParams.get('subjectId') || '';
+  const paramResourceType = searchParams.get('resourceType') || '';
+  const paramUnit = searchParams.get('unit') || '';
+
+  const [showGuidelines, setShowGuidelines] = useState(true);
 
   const [branches, setBranches] = useState([]);
   const [subjects, setSubjects] = useState([]);
@@ -162,13 +180,13 @@ export default function UploadResourcePage() {
   const [imagePages, setImagePages] = useState([]);
 
   const [isDragOver, setIsDragOver] = useState(false);
-  const [title, setTitle] = useState('');
+  const [title, setTitle] = useState(paramTitle || '');
   const [description, setDescription] = useState('');
-  const [branch, setBranch] = useState(user?.branch || 'Information Technology');
-  const [semester, setSemester] = useState(user?.semester ? String(user.semester) : '5');
-  const [subjectId, setSubjectId] = useState('');
-  const [unit, setUnit] = useState('');
-  const [resourceType, setResourceType] = useState('notes');
+  const [branch, setBranch] = useState(paramBranch || user?.branch || 'Information Technology');
+  const [semester, setSemester] = useState(paramSemester || (user?.semester ? String(user.semester) : '5'));
+  const [subjectId, setSubjectId] = useState(paramSubjectId || '');
+  const [unit, setUnit] = useState(paramUnit || '');
+  const [resourceType, setResourceType] = useState(paramResourceType || 'notes');
   const [examYear, setExamYear] = useState(String(new Date().getFullYear()));
   const [examType, setExamType] = useState('End-Sem');
   const [tagsInput, setTagsInput] = useState('');
@@ -212,9 +230,12 @@ export default function UploadResourcePage() {
         const res = await academicService.getSubjects({ branch, semester });
         if (res?.data) {
           setSubjects(res.data);
-          if (res.data.length > 0) {
+          // If paramSubjectId is valid for this branch/semester, select it
+          if (paramSubjectId && res.data.some((s) => s._id === paramSubjectId)) {
+            setSubjectId(paramSubjectId);
+          } else if (res.data.length > 0 && !subjectId) {
             setSubjectId(res.data[0]._id);
-          } else {
+          } else if (res.data.length === 0) {
             setSubjectId('');
           }
         }
@@ -225,7 +246,7 @@ export default function UploadResourcePage() {
       }
     }
     loadSubjects();
-  }, [branch, semester]);
+  }, [branch, semester, paramSubjectId]);
 
   // Handle PDF file selection
   const handlePdfValidation = (selectedFile) => {
@@ -545,6 +566,125 @@ export default function UploadResourcePage() {
           <div className="leading-relaxed">{errorMessage}</div>
         </div>
       )}
+
+      {/* Revision Notice Banner (when student arrives from Fix & Re-upload) */}
+      {isReupload && (
+        <div className="bg-amber-50/90 border border-amber-300/80 rounded-2xl p-4 sm:p-5 shadow-xs space-y-2.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="w-7 h-7 rounded-lg bg-amber-200/90 text-amber-900 flex items-center justify-center font-bold text-xs">
+                <AlertCircle className="w-4 h-4 text-amber-800" />
+              </span>
+              <div>
+                <h3 className="font-bold text-sm sm:text-base text-amber-950">
+                  Revision Submission: Addressing Moderator Feedback
+                </h3>
+                <p className="text-xs text-amber-800/80">
+                  Previous details pre-filled. Please upload your improved document below.
+                </p>
+              </div>
+            </div>
+            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-200/80 text-amber-900 border border-amber-300">
+              Revision Mode
+            </span>
+          </div>
+
+          {paramFeedback && (
+            <div className="bg-white/95 border border-amber-200/90 rounded-xl p-3 text-xs space-y-1">
+              <span className="font-bold text-amber-900 flex items-center gap-1.5">
+                <span>Moderator Feedback:</span>
+              </span>
+              <p className="text-slate-800 italic font-medium leading-relaxed">
+                "{paramFeedback}"
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Academic Upload Guidelines Card */}
+      <div className="bg-gradient-to-r from-blue-50/70 via-indigo-50/40 to-slate-50 border border-blue-200/80 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
+        <div
+          className="flex items-center justify-between cursor-pointer select-none"
+          onClick={() => setShowGuidelines(!showGuidelines)}
+        >
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-blue-700 text-white flex items-center justify-center shadow-2xs shrink-0">
+              <BookOpen className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+                <span>Academic Upload Guidelines</span>
+                <span className="text-[10px] font-bold text-blue-800 bg-blue-100 px-2 py-0.5 rounded-full border border-blue-200">
+                  Peer Standards
+                </span>
+              </h2>
+              <p className="text-xs text-slate-500">
+                Follow these quality criteria for prompt moderator verification
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-white/80 rounded-lg transition-colors cursor-pointer"
+            aria-label="Toggle Guidelines"
+          >
+            {showGuidelines ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+        </div>
+
+        {showGuidelines && (
+          <div className="pt-2 border-t border-blue-200/60 grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+            <div className="flex items-start gap-2.5 bg-white/90 p-3 rounded-xl border border-blue-100 shadow-2xs">
+              <div className="w-5 h-5 rounded-md bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0 mt-0.5 font-bold text-[10px]">
+                ✓
+              </div>
+              <div className="space-y-0.5">
+                <span className="font-bold text-slate-900">Legible & Well-Lit Pages</span>
+                <p className="text-slate-600 text-[11px] leading-relaxed">
+                  Scans must be high contrast and readable. Avoid blur, dark shadows, or low-light captures.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2.5 bg-white/90 p-3 rounded-xl border border-blue-100 shadow-2xs">
+              <div className="w-5 h-5 rounded-md bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0 mt-0.5 font-bold text-[10px]">
+                ✓
+              </div>
+              <div className="space-y-0.5">
+                <span className="font-bold text-slate-900">Upright Page Orientation</span>
+                <p className="text-slate-600 text-[11px] leading-relaxed">
+                  Pages must be upright (portrait). Use the rotate tool on each photo before compiling.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2.5 bg-white/90 p-3 rounded-xl border border-blue-100 shadow-2xs">
+              <div className="w-5 h-5 rounded-md bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0 mt-0.5 font-bold text-[10px]">
+                ✓
+              </div>
+              <div className="space-y-0.5">
+                <span className="font-bold text-slate-900">Accurate Subject & Unit</span>
+                <p className="text-slate-600 text-[11px] leading-relaxed">
+                  Select the exact Branch, Semester, and Subject code. Label Unit 1–5 or Full Syllabus accurately.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2.5 bg-white/90 p-3 rounded-xl border border-blue-100 shadow-2xs">
+              <div className="w-5 h-5 rounded-md bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0 mt-0.5 font-bold text-[10px]">
+                ✓
+              </div>
+              <div className="space-y-0.5">
+                <span className="font-bold text-slate-900">Original & Authentic Study Material</span>
+                <p className="text-slate-600 text-[11px] leading-relaxed">
+                  Upload genuine lecture notes, PYQs, and lab manuals. No duplicate submissions or copyrighted book scans.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Main Upload Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
