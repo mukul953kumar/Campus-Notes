@@ -743,17 +743,13 @@ function HomePage() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="hidden sm:block text-right">
-                <p className="text-xs font-semibold text-slate-800">Become a Campus Champion</p>
-                <p className="text-[11px] text-slate-500">Upload verified notes to claim spot #2 on the leaderboard</p>
-              </div>
-              <Link to="/upload">
-                <Button size="sm" variant="outline" icon={Upload} className="text-xs font-semibold cursor-pointer">
-                  Upload Notes
-                </Button>
-              </Link>
-            </div>
+            <Link
+              to="/leaderboard"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 hover:text-blue-800 bg-blue-50/80 hover:bg-blue-100/80 px-3 py-1.5 rounded-xl border border-blue-200 transition-colors cursor-pointer shrink-0 self-start md:self-auto"
+            >
+              <span>View Leaderboard</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
         ) : (
           <div className={`flex sm:grid ${topContributors.length === 2 ? 'sm:grid-cols-2 max-w-2xl' : topContributors.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2 lg:grid-cols-4'} gap-3.5 overflow-x-auto no-scrollbar pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible snap-x snap-mandatory`}>

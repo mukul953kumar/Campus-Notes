@@ -105,7 +105,7 @@ export default function LoginPage() {
       handlePostLoginRedirect(result.data.user);
     } catch (err) {
       setErrorMessage(
-        err.message || 'Failed to sign in with Google. Please try again.'
+        err.message || 'Access restricted: Please select your official institute Google account.'
       );
     } finally {
       setIsLoading(false);

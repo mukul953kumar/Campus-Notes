@@ -35,14 +35,14 @@ export default function UploadGuidelinesPage() {
         <p className="text-xs sm:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed">
           Help your fellow KNITians excel by following these verification standards. High-quality submissions get approved quickly and earn top contributor honor.
         </p>
-        <div className="pt-2 flex items-center justify-center gap-3">
-          <Link to="/upload">
-            <Button variant="primary" size="md" icon={Upload}>
+        <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2.5 sm:gap-3 w-full sm:w-auto">
+          <Link to="/upload" className="w-full sm:w-auto">
+            <Button variant="primary" size="md" icon={Upload} className="w-full sm:w-auto">
               Upload Study Material
             </Button>
           </Link>
-          <Link to="/my-uploads">
-            <Button variant="outline" size="md">
+          <Link to="/my-uploads" className="w-full sm:w-auto">
+            <Button variant="outline" size="md" className="w-full sm:w-auto">
               View My Uploads
             </Button>
           </Link>
@@ -262,14 +262,14 @@ export default function UploadGuidelinesPage() {
         <p className="text-xs sm:text-sm text-blue-100 max-w-lg mx-auto leading-relaxed">
           Every note you share helps batchmates and juniors clear backlogs and ace sessional & university examinations.
         </p>
-        <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
-          <Link to="/upload">
-            <Button variant="secondary" size="md" icon={Upload} className="bg-white text-blue-900 hover:bg-slate-100 font-bold">
+        <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2.5 sm:gap-3 w-full sm:w-auto">
+          <Link to="/upload" className="w-full sm:w-auto">
+            <Button variant="secondary" size="md" icon={Upload} className="w-full sm:w-auto bg-white text-blue-900 hover:bg-slate-100 font-bold">
               Upload Now
             </Button>
           </Link>
-          <Link to="/resources">
-            <Button variant="outline" size="md" className="text-white border-white/40 hover:bg-white/10 font-medium">
+          <Link to="/resources" className="w-full sm:w-auto">
+            <Button variant="outline" size="md" className="w-full sm:w-auto text-white border-white/40 hover:bg-white/10 font-medium">
               Explore Library
             </Button>
           </Link>

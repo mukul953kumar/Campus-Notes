@@ -11,9 +11,9 @@ const VARIANTS = {
 };
 
 const SIZES = {
-  sm: 'text-xs px-2.5 py-1.5 gap-1.5 rounded-md',
-  md: 'text-sm px-3.5 py-2 gap-2 rounded-lg',
-  lg: 'text-base px-4.5 py-2.5 gap-2.5 rounded-lg',
+  sm: 'text-xs px-3 py-1.5 gap-1.5 rounded-lg',
+  md: 'text-xs sm:text-sm px-3.5 py-2 gap-2 rounded-lg',
+  lg: 'text-sm sm:text-base px-4 py-2 sm:px-4.5 sm:py-2.5 gap-2 sm:gap-2.5 rounded-xl',
 };
 
 export default function Button({

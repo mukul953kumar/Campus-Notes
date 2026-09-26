@@ -194,8 +194,8 @@ export default function PYQPage() {
           </p>
         </div>
 
-        <Link to="/upload" className="shrink-0 self-start sm:self-auto">
-          <Button variant="primary" size="md" icon={Upload}>
+        <Link to="/upload" className="shrink-0 w-full sm:w-auto">
+          <Button variant="primary" size="md" icon={Upload} className="w-full sm:w-auto">
             Upload PYQ Paper
           </Button>
         </Link>

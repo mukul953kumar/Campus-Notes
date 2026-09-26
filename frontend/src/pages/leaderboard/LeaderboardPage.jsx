@@ -95,9 +95,9 @@ export default function LeaderboardPage() {
             </p>
           </div>
 
-          <div className="shrink-0 flex items-center gap-3">
-            <Link to="/upload">
-              <Button variant="primary" size="md" icon={Upload}>
+          <div className="shrink-0 flex items-center gap-3 w-full sm:w-auto">
+            <Link to="/upload" className="w-full sm:w-auto">
+              <Button variant="primary" size="md" icon={Upload} className="w-full sm:w-auto">
                 Upload & Join Leaderboard
               </Button>
             </Link>
@@ -106,10 +106,10 @@ export default function LeaderboardPage() {
       </div>
 
       {/* Filter and Sorting Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs min-w-0">
         
         {/* Sort Criteria Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none min-w-0">
           {SORT_OPTIONS.map((tab) => {
             const Icon = tab.icon;
             const isSelected = selectedSort === tab.id;
@@ -413,7 +413,7 @@ export default function LeaderboardPage() {
               </span>
             </div>
 
-            <div className="divide-y divide-slate-100 overflow-x-auto">
+            <div className="divide-y divide-slate-100">
               {contributors.map((item) => {
                 const rank = item.rank;
                 const user = item.user;
@@ -421,11 +421,11 @@ export default function LeaderboardPage() {
                 return (
                   <div
                     key={item._id}
-                    className="p-4 sm:p-4.5 hover:bg-slate-50/90 transition-colors flex items-center justify-between gap-4 min-w-[500px]"
+                    className="p-3.5 sm:p-4.5 hover:bg-slate-50/90 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4"
                   >
                     {/* Rank + User Identity */}
-                    <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                      <div className="w-8 text-center shrink-0">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="w-7 text-center shrink-0">
                         {rank === 1 && <span className="text-base">🥇</span>}
                         {rank === 2 && <span className="text-base">🥈</span>}
                         {rank === 3 && <span className="text-base">🥉</span>}
@@ -445,11 +445,11 @@ export default function LeaderboardPage() {
                       </div>
 
                       <div className="min-w-0 flex-1 space-y-0.5">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-sm font-bold text-slate-900 truncate">
                             {user.name}
                           </p>
-                          <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.2 rounded-sm shrink-0">
+                          <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded-sm shrink-0">
                             {item.badge}
                           </span>
                         </div>
@@ -459,10 +459,10 @@ export default function LeaderboardPage() {
                       </div>
                     </div>
 
-                    {/* Stats columns */}
-                    <div className="flex items-center gap-6 sm:gap-8 text-right shrink-0">
+                    {/* Stats: Balanced 3-column micro grid on mobile, horizontal row on desktop */}
+                    <div className="grid grid-cols-3 sm:flex items-center gap-2 sm:gap-8 pt-2 sm:pt-0 border-t border-slate-100 sm:border-0 text-center sm:text-right shrink-0 bg-slate-50/70 sm:bg-transparent p-2 sm:p-0 rounded-xl sm:rounded-none">
                       <div>
-                        <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Verified Notes</p>
+                        <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Notes</p>
                         <p className="text-xs sm:text-sm font-bold text-slate-900 mt-0.5">
                           {item.verifiedUploads}
                         </p>
@@ -475,9 +475,9 @@ export default function LeaderboardPage() {
                         </p>
                       </div>
 
-                      <div className="w-16">
+                      <div className="sm:w-16">
                         <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Rating</p>
-                        <p className="text-xs sm:text-sm font-bold text-amber-700 flex items-center justify-end gap-1 mt-0.5">
+                        <p className="text-xs sm:text-sm font-bold text-amber-700 flex items-center justify-center sm:justify-end gap-1 mt-0.5">
                           <Star className="w-3 h-3 fill-amber-400 text-amber-500" />
                           <span>{item.averageRating > 0 ? item.averageRating.toFixed(1) : '5.0'}</span>
                         </p>
@@ -507,12 +507,12 @@ export default function LeaderboardPage() {
           </p>
         </div>
 
-        <Link to="/upload" className="shrink-0">
+        <Link to="/upload" className="shrink-0 w-full sm:w-auto">
           <Button
-            size="lg"
+            size="md"
             variant="outline"
             icon={Upload}
-            className="bg-white text-blue-800 hover:bg-blue-50 border-white font-semibold cursor-pointer"
+            className="w-full sm:w-auto bg-white text-blue-800 hover:bg-blue-50 border-white font-semibold cursor-pointer"
           >
             Upload Study Material
           </Button>

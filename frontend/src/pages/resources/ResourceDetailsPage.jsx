@@ -347,11 +347,11 @@ export default function ResourceDetailsPage() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0 w-full sm:w-auto">
             <button
               type="button"
               onClick={handleWhatsAppShare}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold text-xs sm:text-sm shadow-2xs hover:shadow-xs transition-all cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold text-xs sm:text-sm shadow-2xs hover:shadow-xs transition-all cursor-pointer w-full sm:w-auto"
               title="Share this note directly to WhatsApp student groups"
             >
               <WhatsAppIcon className="w-4 h-4 fill-white shrink-0" />
@@ -364,6 +364,7 @@ export default function ResourceDetailsPage() {
               icon={Download}
               onClick={handleDownload}
               isLoading={isDownloading}
+              className="w-full sm:w-auto"
             >
               Download PDF ({formatFileSize(resource.fileSize)})
             </Button>
@@ -373,7 +374,7 @@ export default function ResourceDetailsPage() {
               size="lg"
               icon={Bookmark}
               onClick={handleToggleSave}
-              className={isSaved ? 'text-blue-700 border-blue-200 bg-blue-50' : ''}
+              className={`w-full sm:w-auto ${isSaved ? 'text-blue-700 border-blue-200 bg-blue-50' : ''}`}
             >
               {isSaved ? 'Saved' : 'Save'}
             </Button>

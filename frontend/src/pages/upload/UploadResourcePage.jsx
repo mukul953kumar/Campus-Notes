@@ -164,7 +164,7 @@ export default function UploadResourcePage() {
   const paramResourceType = searchParams.get('resourceType') || '';
   const paramUnit = searchParams.get('unit') || '';
 
-  const [showGuidelines, setShowGuidelines] = useState(true);
+  const [showGuidelines, setShowGuidelines] = useState(false);
 
   const [branches, setBranches] = useState([]);
   const [subjects, setSubjects] = useState([]);
@@ -616,11 +616,13 @@ export default function UploadResourcePage() {
               <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
                 <span>Academic Upload Guidelines</span>
                 <span className="text-[10px] font-bold text-blue-800 bg-blue-100 px-2 py-0.5 rounded-full border border-blue-200">
-                  Peer Standards
+                  {showGuidelines ? 'Peer Standards' : 'Tap to View'}
                 </span>
               </h2>
               <p className="text-xs text-slate-500">
-                Follow these quality criteria for prompt moderator verification
+                {showGuidelines
+                  ? 'Follow these quality criteria for prompt moderator verification'
+                  : 'Click to expand page orientation, lighting, and tagging requirements'}
               </p>
             </div>
           </div>
