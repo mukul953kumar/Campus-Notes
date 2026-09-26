@@ -62,16 +62,16 @@ export default function MobileBottomNav() {
         </Link>
 
         {/* 3. Center Elevated Upload Action Button */}
-        <div className="flex items-center justify-center -mt-5">
+        <div className="flex items-center justify-center -mt-4">
           <Link
             to="/upload"
-            className="flex flex-col items-center justify-center group active:scale-90 transition-transform cursor-pointer"
+            className="flex flex-col items-center justify-center group active:scale-95 transition-transform cursor-pointer"
             aria-label="Upload Academic Note"
           >
-            <div className="w-13 h-13 rounded-full bg-gradient-to-tr from-blue-700 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-700/35 border-4 border-white">
-              <Plus className="w-6 h-6 stroke-[2.5px] group-hover:scale-110 transition-transform" />
+            <div className="w-11 h-11 rounded-full bg-blue-700 hover:bg-blue-800 text-white flex items-center justify-center shadow-md shadow-blue-700/25 border-2 border-white transition-colors">
+              <Plus className="w-5 h-5 stroke-[2.5px]" />
             </div>
-            <span className="text-[10px] font-bold text-blue-700 mt-0.5">Upload</span>
+            <span className="text-[9px] font-bold text-blue-700 mt-0.5">Upload</span>
           </Link>
         </div>
 
