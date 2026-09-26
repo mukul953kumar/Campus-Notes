@@ -40,7 +40,7 @@ import {
   HelpCircle
 } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
-import { resourceService, userService } from './services/api';
+import { resourceService, userService, academicService } from './services/api';
 import ResourceRow from './components/resources/ResourceRow';
 import ResourceCard from './components/resources/ResourceCard';
 
@@ -81,12 +81,14 @@ function HomePage() {
     { code: 'MCA', name: 'Master of Computer Applications', count: '1st - 4th Sem' },
   ];
 
-  // Load live campus recent uploads (Top 4)
+  const [semesterSubjects, setSemesterSubjects] = useState([]);
+
+  // Load live campus recent uploads (Fetch 8 to allow deduplication against recommendations)
   useEffect(() => {
     async function loadRecent() {
       setIsLoadingRecent(true);
       try {
-        const res = await resourceService.getResources({ limit: 4, sortBy: 'recent' });
+        const res = await resourceService.getResources({ limit: 8, sortBy: 'recent' });
         if (res?.data) {
           setRecentUploads(res.data);
         }
@@ -126,6 +128,28 @@ function HomePage() {
     }
   }, [user?.branch, user?.semester]);
 
+  // Load active semester subjects for the student
+  useEffect(() => {
+    if (user?.branch && user?.semester) {
+      async function loadSubjects() {
+        try {
+          const res = await academicService.getSubjects({
+            branch: user.branch,
+            semester: user.semester,
+          });
+          if (res?.data && Array.isArray(res.data)) {
+            setSemesterSubjects(res.data.slice(0, 6));
+          }
+        } catch (err) {
+          console.error('Failed to load semester subjects:', err);
+        }
+      }
+      loadSubjects();
+    } else {
+      setSemesterSubjects([]);
+    }
+  }, [user?.branch, user?.semester]);
+
   // Load top contributors leaderboard highlight (Top 4)
   useEffect(() => {
     async function loadContributors() {
@@ -143,6 +167,20 @@ function HomePage() {
     }
     loadContributors();
   }, []);
+
+  // Derive student rank on campus
+  const userRankItem = topContributors.find(
+    (c) => c.user?._id === user?._id || c.user?.email === user?.email
+  );
+  const userRank = userRankItem?.rank;
+
+  // Deduplicate recent notes so they don't repeat what is already recommended
+  const uniqueRecentUploads = recentUploads.filter(
+    (item) => !recommendedUploads.some((rec) => rec._id === item._id)
+  );
+  const finalRecentUploads = uniqueRecentUploads.length > 0
+    ? uniqueRecentUploads.slice(0, 4)
+    : recentUploads.slice(0, 4);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -166,63 +204,150 @@ function HomePage() {
   };
 
   return (
-    <div className="space-y-6 sm:space-y-12">
-      {/* Top Welcome / Hero Section */}
-      <section className="max-w-3xl mx-auto pt-1 sm:pt-6 pb-1 sm:pb-4 text-center">
+    <div className="space-y-6 sm:space-y-10">
+      {/* Top Welcome / Command Center Section */}
+      <section className="max-w-5xl mx-auto pt-1 sm:pt-2">
         {user ? (
-          // Logged-in Personalized Mobile Header
-          <div className="sm:hidden text-left mb-4 bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-slate-500 font-medium">Welcome back,</p>
-                <h1 className="text-lg font-bold text-slate-900 flex items-center gap-1.5">
-                  <span>{user.name?.split(' ')[0] || 'Student'}</span>
-                  <span className="text-base">👋</span>
-                </h1>
-              </div>
-              {user.branch && (
-                <div className="flex flex-col items-end">
-                  <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200/80 px-2.5 py-0.5 rounded-full">
-                    {getShortBranch(user.branch)} • Sem {user.semester}
-                  </span>
-                  <Link to="/profile" className="text-[10px] text-slate-400 hover:text-blue-700 mt-0.5 underline">
-                    Edit Profile
-                  </Link>
+          // Logged-in Student Workspace Command Center (Mobile & Desktop)
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 shadow-2xs space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-xl bg-blue-700 text-white flex items-center justify-center text-sm sm:text-base font-bold shrink-0 shadow-2xs overflow-hidden">
+                  {user.avatar ? (
+                    <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                  ) : (
+                    user.name?.slice(0, 2).toUpperCase() || 'ST'
+                  )}
                 </div>
-              )}
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h1 className="text-lg sm:text-2xl font-bold text-slate-900 tracking-tight">
+                      Welcome back, {user.name?.split(' ')[0] || 'Student'} 👋
+                    </h1>
+                    {user.branch && (
+                      <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200/80 px-2.5 py-0.5 rounded-full">
+                        {getShortBranch(user.branch)} • Sem {user.semester}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                    Your semester syllabus, peer-reviewed notes, and exam question papers.
+                  </p>
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="flex items-center gap-2 shrink-0">
+                <Link to="/upload">
+                  <Button size="sm" variant="primary" icon={Upload} className="text-xs font-semibold cursor-pointer">
+                    Upload Note
+                  </Button>
+                </Link>
+                <Link to="/saved">
+                  <Button size="sm" variant="outline" icon={Bookmark} className="text-xs font-semibold cursor-pointer">
+                    Saved ({savedIds.length})
+                  </Button>
+                </Link>
+                <Link to="/profile" className="text-xs text-slate-400 hover:text-blue-700 underline px-1 hidden sm:inline-block">
+                  Profile
+                </Link>
+              </div>
             </div>
+
+            {/* Live Student Academic Stats Strip */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5 pt-3 border-t border-slate-100">
+              <div className="bg-slate-50/70 rounded-xl p-2.5 sm:p-3 border border-slate-100 flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-100/80 text-blue-700 flex items-center justify-center shrink-0">
+                  <BookOpen className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium truncate">Branch & Semester</p>
+                  <p className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                    {getShortBranch(user.branch) || 'KNIT'} • Sem {user.semester || 'All'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-slate-50/70 rounded-xl p-2.5 sm:p-3 border border-slate-100 flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-emerald-100/80 text-emerald-700 flex items-center justify-center shrink-0">
+                  <FileText className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium truncate">My Uploads</p>
+                  <p className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                    {user.stats?.verifiedUploadsCount ?? user.stats?.uploadsCount ?? 0} Verified
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-slate-50/70 rounded-xl p-2.5 sm:p-3 border border-slate-100 flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-amber-100/80 text-amber-700 flex items-center justify-center shrink-0">
+                  <Bookmark className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium truncate">Bookmarked</p>
+                  <p className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                    {savedIds.length} Saved Notes
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-slate-50/70 rounded-xl p-2.5 sm:p-3 border border-slate-100 flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-purple-100/80 text-purple-700 flex items-center justify-center shrink-0">
+                  <Trophy className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium truncate">Campus Honor</p>
+                  <p className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                    {userRank ? `#${userRank} Champion` : 'Active Contributor'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Active Semester Subjects 1-Click Quick Navigation */}
+            {semesterSubjects.length > 0 && (
+              <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-1.5 text-xs">
+                <span className="text-slate-400 font-medium text-[11px] mr-1">Sem {user.semester} Subjects:</span>
+                {semesterSubjects.map((sub) => (
+                  <button
+                    key={sub._id || sub.code}
+                    type="button"
+                    onClick={() => handleQuickSearch(sub.code || sub.name)}
+                    className="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-[11px] transition-colors cursor-pointer border border-blue-200/60"
+                  >
+                    {sub.shortName || sub.code}
+                  </button>
+                ))}
+                <Link
+                  to="/subjects"
+                  className="text-xs text-slate-500 hover:text-blue-700 font-medium ml-1 inline-flex items-center gap-0.5"
+                >
+                  All Subjects <ArrowRight className="w-3 h-3" />
+                </Link>
+              </div>
+            )}
           </div>
         ) : (
-          // Guest User Mobile Header
-          <div className="sm:hidden mb-4">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200/80 text-blue-700 text-xs font-medium mb-2">
+          // Guest User Public Landing Header
+          <div className="text-center py-2 sm:py-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200/80 text-blue-700 text-xs font-medium mb-3 sm:mb-5">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>KNIT Academic Portal</span>
+              <span>Curated for Kamla Nehru Institute of Technology</span>
             </div>
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight leading-tight">
-              Academic Notes & <span className="text-blue-700">PYQs</span>
+
+            <h1 className="text-2xl sm:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
+              Verified Academic Resources for <span className="text-blue-700">KNITians</span>
             </h1>
+
+            <p className="mt-2.5 sm:mt-4 text-xs sm:text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto">
+              Access high-quality lecture notes, previous year question papers (PYQs), and assignment guides shared by top-ranking students.
+            </p>
           </div>
         )}
 
-        {/* Desktop Hero Headline (Shown on sm: and up) */}
-        <div className="hidden sm:block">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200/80 text-blue-700 text-xs font-medium mb-5">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Curated for Kamla Nehru Institute of Technology</span>
-          </div>
-
-          <h1 className="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
-            Verified Academic Resources for <span className="text-blue-700">KNITians</span>
-          </h1>
-
-          <p className="mt-4 text-base sm:text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto">
-            Access high-quality lecture notes, previous year question papers (PYQs), and assignment guides shared by top-ranking students.
-          </p>
-        </div>
-
-        {/* Streamlined Search Form (Single-line on mobile with integrated button) */}
-        <form onSubmit={handleSearchSubmit} className="mt-3 sm:mt-8 max-w-xl mx-auto">
+        {/* Streamlined Quick Search Bar */}
+        <form onSubmit={handleSearchSubmit} className="mt-4 sm:mt-6 max-w-2xl mx-auto">
           <div className="flex items-center bg-white p-1.5 sm:p-2 rounded-xl sm:rounded-2xl border border-slate-300 shadow-2xs focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
             <div className="relative flex-1 flex items-center">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 shrink-0 pointer-events-none" />
@@ -230,7 +355,7 @@ function HomePage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search subject code (e.g. BCS-501, DBMS)..."
+                placeholder={user?.semester ? `Search Sem ${user.semester} notes, subject codes (DBMS, DAA, OS)...` : "Search subject code (e.g. BCS-501, DBMS)..."}
                 className="w-full pl-9 pr-2 py-1.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 bg-transparent focus:outline-none"
               />
             </div>
@@ -244,7 +369,7 @@ function HomePage() {
             </Button>
           </div>
 
-          {/* Popular Subject Chips (Horizontal scrollable on mobile) */}
+          {/* Popular Subject Chips */}
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 mt-2 text-xs text-slate-500">
             <span className="shrink-0 text-slate-400 font-medium text-[11px]">Popular:</span>
             {['DBMS', 'DAA', 'OS', 'Compiler Design', 'CN', 'Maths'].map((term) => (
@@ -312,7 +437,7 @@ function HomePage() {
 
       {/* Personalized Semester Recommendations (if student has branch & semester set) */}
       {user?.branch && user?.semester && (
-        <section className="bg-blue-50/60 border border-blue-200/80 rounded-2xl p-4 sm:p-7 space-y-3.5 sm:space-y-4 shadow-xs">
+        <section className="bg-blue-50/60 border border-blue-200/80 rounded-2xl p-4 sm:p-6 space-y-3.5 sm:space-y-4 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3">
             <div className="space-y-0.5 sm:space-y-1">
               <div className="flex items-center gap-2">
@@ -346,7 +471,7 @@ function HomePage() {
             </div>
           ) : recommendedUploads.length === 0 ? (
             <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-10 text-center text-xs text-slate-500 space-y-3 shadow-xs">
-              <p>No verified notes uploaded for {user.branch} Semester {user.semester} yet.</p>
+              <p>No verified notes uploaded for {getShortBranch(user.branch)} Semester {user.semester} yet.</p>
               <Link to="/upload">
                 <Button size="sm" variant="primary" icon={Upload}>
                   Be the First to Upload for Your Class
@@ -354,9 +479,9 @@ function HomePage() {
               </Link>
             </div>
           ) : (
-            <div className="space-y-3 sm:space-y-4">
-              {/* Horizontal swipeable carousel on mobile, responsive 4-column grid on tablet/desktop */}
-              <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-3.5 overflow-x-auto no-scrollbar pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible snap-x snap-mandatory">
+            <div className="space-y-3">
+              {/* Adaptive desktop grid (3-column if <=3 cards to avoid blank space, 4-col if 4) */}
+              <div className={`flex sm:grid ${recommendedUploads.length <= 3 ? 'sm:grid-cols-2 lg:grid-cols-3' : 'sm:grid-cols-2 lg:grid-cols-4'} gap-3.5 overflow-x-auto no-scrollbar pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible snap-x snap-mandatory`}>
                 {recommendedUploads.slice(0, 4).map((item) => (
                   <div key={item._id} className="w-[285px] sm:w-auto shrink-0 snap-start">
                     <ResourceCard
@@ -367,22 +492,12 @@ function HomePage() {
                   </div>
                 ))}
               </div>
-
-              <div className="pt-1 text-center">
-                <Link
-                  to={`/resources?branch=${encodeURIComponent(user.branch)}&semester=${user.semester}`}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-blue-50 text-blue-700 font-bold text-xs rounded-xl border border-blue-200 transition-colors shadow-2xs"
-                >
-                  <span>View All Semester {user.semester} Notes ({getShortBranch(user.branch)})</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
             </div>
           )}
         </section>
       )}
 
-      {/* Engineering Branches Catalog */}
+      {/* Engineering Branches Catalog (7 branches in 1 clean desktop row) */}
       <section>
         <div className="flex items-center justify-between mb-3 sm:mb-4">
           <div>
@@ -397,34 +512,29 @@ function HomePage() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 sm:gap-3">
           {branches.map((b) => (
             <Link
               key={b.code}
               to={`/resources?branch=${encodeURIComponent(b.name)}`}
-              className="p-3 sm:p-4 rounded-xl bg-white border border-slate-200/90 hover:border-blue-400 hover:shadow-xs transition-all group"
+              className="p-3 rounded-xl bg-white border border-slate-200/90 hover:border-blue-400 hover:shadow-xs transition-all group text-center"
             >
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
-                  {b.code}
-                </span>
-                <span className="text-[10px] sm:text-[11px] font-medium text-slate-500 bg-slate-100 px-1.5 sm:px-2 py-0.5 rounded-full">
-                  {b.count}
-                </span>
+              <div className="text-sm font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
+                {b.code}
               </div>
-              <p className="text-[11px] sm:text-xs text-slate-500 line-clamp-1">{b.name}</p>
+              <p className="text-[11px] text-slate-400 truncate mt-0.5">{b.count}</p>
             </Link>
           ))}
         </div>
       </section>
 
-      {/* Recently Verified Resources List (Top 4) */}
+      {/* Recently Verified Resources List (Deduplicated against recommended) */}
       <section className="space-y-3 sm:space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h2 className="text-lg sm:text-xl font-bold text-slate-900">Recent Materials</h2>
             <Badge variant="verified" size="sm" showIcon>
-              Latest 4 Live
+              Latest Live
             </Badge>
           </div>
           <Link
@@ -439,15 +549,15 @@ function HomePage() {
           <div className="bg-white border border-slate-200 rounded-2xl p-8 sm:p-10 text-center text-xs text-slate-500 shadow-xs">
             Loading recent verified materials...
           </div>
-        ) : recentUploads.length === 0 ? (
+        ) : finalRecentUploads.length === 0 ? (
           <div className="bg-white border border-slate-200 rounded-2xl p-8 sm:p-10 text-center text-xs text-slate-500 shadow-xs">
             No verified materials available yet. Be the first to upload!
           </div>
         ) : (
-          <div className="space-y-3 sm:space-y-4">
-            {/* Horizontal swipeable carousel on mobile, responsive 4-column grid on tablet/desktop */}
-            <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-3.5 overflow-x-auto no-scrollbar pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible snap-x snap-mandatory">
-              {recentUploads.slice(0, 4).map((item) => (
+          <div className="space-y-3">
+            {/* Adaptive grid to prevent empty gaps on desktop */}
+            <div className={`flex sm:grid ${finalRecentUploads.length <= 3 ? 'sm:grid-cols-2 lg:grid-cols-3' : 'sm:grid-cols-2 lg:grid-cols-4'} gap-3.5 overflow-x-auto no-scrollbar pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible snap-x snap-mandatory`}>
+              {finalRecentUploads.map((item) => (
                 <div key={item._id} className="w-[285px] sm:w-auto shrink-0 snap-start">
                   <ResourceCard
                     resource={item}
@@ -463,7 +573,7 @@ function HomePage() {
                 to="/resources"
                 className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2 sm:py-2.5 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs rounded-xl border border-slate-200 transition-colors shadow-2xs"
               >
-                <span>Explore Full Resource Library ({Math.min(recentUploads.length, 4)} shown)</span>
+                <span>Explore Full Resource Library</span>
                 <ArrowRight className="w-3.5 h-3.5 text-blue-700" />
               </Link>
             </div>
@@ -471,7 +581,7 @@ function HomePage() {
         )}
       </section>
 
-      {/* Top Academic Contributors Showcase (Priority 2) */}
+      {/* Top Academic Contributors Showcase (Honor Spotlight if 1, Adaptive Grid if multiple) */}
       <section className="space-y-3 sm:space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -495,8 +605,42 @@ function HomePage() {
           <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center text-xs text-slate-500 shadow-xs">
             No contributors ranked yet. Upload notes to become the first campus champion!
           </div>
+        ) : topContributors.length === 1 ? (
+          // Featured Honor Spotlight Banner when 1 champion exists (avoids 3 empty columns)
+          <div className="bg-white border border-amber-200/90 rounded-2xl p-4 sm:p-5 shadow-2xs flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
+                🥇
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300">
+                    #1 Campus Champion
+                  </span>
+                  <span className="text-xs text-slate-500 font-medium">{topContributors[0].badge}</span>
+                </div>
+                <h3 className="text-base font-bold text-slate-900 mt-0.5">
+                  {topContributors[0].user?.name || 'Top Contributor'}
+                </h3>
+                <p className="text-xs text-slate-500">
+                  {getShortBranch(topContributors[0].user?.branch) || 'KNIT'} {topContributors[0].user?.semester ? `• Sem ${topContributors[0].user.semester}` : ''} • <strong>{topContributors[0].verifiedUploads}</strong> verified notes • <strong>{topContributors[0].totalDownloads}</strong> downloads
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:block text-right">
+                <p className="text-xs font-semibold text-slate-800">Become a Campus Champion</p>
+                <p className="text-[11px] text-slate-500">Upload verified notes to claim spot #2 on the leaderboard</p>
+              </div>
+              <Link to="/upload">
+                <Button size="sm" variant="outline" icon={Upload} className="text-xs font-semibold cursor-pointer">
+                  Upload Notes
+                </Button>
+              </Link>
+            </div>
+          </div>
         ) : (
-          <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-3.5 overflow-x-auto no-scrollbar pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible snap-x snap-mandatory">
+          <div className={`flex sm:grid ${topContributors.length === 2 ? 'sm:grid-cols-2 max-w-2xl' : topContributors.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2 lg:grid-cols-4'} gap-3.5 overflow-x-auto no-scrollbar pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible snap-x snap-mandatory`}>
             {topContributors.map((c) => {
               const isFirst = c.rank === 1;
               const isSecond = c.rank === 2;
@@ -533,7 +677,7 @@ function HomePage() {
                           {c.user?.name || 'Contributor'}
                         </h4>
                         <p className="text-[11px] text-slate-400 truncate">
-                          {c.user?.branch || 'KNIT'} {c.user?.semester ? `• Sem ${c.user.semester}` : ''}
+                          {getShortBranch(c.user?.branch) || 'KNIT'} {c.user?.semester ? `• Sem ${c.user.semester}` : ''}
                         </p>
                       </div>
                     </div>
