@@ -73,7 +73,7 @@ export default function Navbar() {
             </Link>
 
             <Link to="/upload">
-              <Button size="sm" icon={Upload} variant="outline" className="hidden lg:inline-flex">
+              <Button size="sm" icon={Upload} variant="primary" className="hidden sm:inline-flex">
                 Upload Note
               </Button>
             </Link>
