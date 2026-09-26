@@ -10,14 +10,18 @@ import {
   LogOut,
   Shield,
   ChevronDown,
-  UploadCloud
+  UploadCloud,
+  Download,
+  Smartphone
 } from 'lucide-react';
 import Button from '../common/Button';
 import BrandLogo from '../common/BrandLogo';
 import { useAuth } from '../../context/AuthContext';
+import { usePwa } from '../../context/PwaContext';
 
 export default function Navbar() {
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const { isInstalled, promptInstall } = usePwa();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const location = useLocation();
@@ -40,7 +44,7 @@ export default function Navbar() {
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 gap-4">
-          
+
           {/* Brand Logo */}
           <BrandLogo size="md" />
 
@@ -50,11 +54,10 @@ export default function Navbar() {
               <Link
                 key={link.name}
                 to={link.path}
-                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                  isActive(link.path)
+                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${isActive(link.path)
                     ? 'text-blue-700 bg-blue-50/80 font-semibold'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                }`}
+                  }`}
               >
                 {link.name}
               </Link>
@@ -62,7 +65,18 @@ export default function Navbar() {
           </nav>
 
           {/* Quick Actions */}
-          <div className="hidden sm:flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-2.5">
+            {!isInstalled && (
+              <Button
+                size="sm"
+                variant="outline"
+                icon={Download}
+                onClick={promptInstall}
+                className="hidden sm:inline-flex text-xs font-bold text-blue-700 bg-blue-50/80 border-blue-200 hover:bg-blue-100/90 shadow-2xs cursor-pointer"
+              >
+                Install App
+              </Button>
+            )}
 
             <Link
               to="/saved"
@@ -149,6 +163,19 @@ export default function Navbar() {
                           <span>Admin Portal</span>
                         </Link>
                       )}
+                      {!isInstalled && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setUserDropdownOpen(false);
+                            promptInstall();
+                          }}
+                          className="flex items-center gap-2 w-full px-4 py-2 text-xs font-bold text-blue-700 hover:bg-blue-50 cursor-pointer"
+                        >
+                          <Download className="w-3.5 h-3.5 text-blue-600" />
+                          <span>Install App</span>
+                        </button>
+                      )}
                     </div>
 
                     <div className="py-1">
@@ -207,17 +234,29 @@ export default function Navbar() {
               key={link.name}
               to={link.path}
               onClick={() => setMobileMenuOpen(false)}
-              className={`block px-3 py-2 text-sm font-medium rounded-md ${
-                isActive(link.path)
+              className={`block px-3 py-2 text-sm font-medium rounded-md ${isActive(link.path)
                   ? 'text-blue-700 bg-blue-50 font-semibold'
                   : 'text-slate-700 hover:bg-slate-100'
-              }`}
+                }`}
             >
               {link.name}
             </Link>
           ))}
 
           <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
+            {!isInstalled && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  promptInstall();
+                }}
+                className="flex items-center gap-2 px-3 py-2 text-sm font-bold text-blue-700 bg-blue-50/80 hover:bg-blue-100 rounded-md cursor-pointer text-left"
+              >
+                <Download className="w-4 h-4 text-blue-600" />
+                <span>Install CampusNotes App</span>
+              </button>
+            )}
             <Link
               to="/saved"
               onClick={() => setMobileMenuOpen(false)}
