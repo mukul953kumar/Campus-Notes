@@ -646,18 +646,19 @@ function HomePage() {
 
       {/* Recently Verified Resources List (Deduplicated against recommended) */}
       <section className="space-y-3 sm:space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg sm:text-xl font-bold text-slate-900">Recent Materials</h2>
-            <Badge variant="verified" size="sm" showIcon>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <h2 className="text-base sm:text-xl font-bold text-slate-900 truncate">Recent Materials</h2>
+            <Badge variant="verified" size="sm" showIcon className="shrink-0">
               Latest Live
             </Badge>
           </div>
           <Link
             to="/resources"
-            className="text-xs font-semibold text-blue-700 hover:text-blue-800 inline-flex items-center gap-1"
+            className="text-xs font-bold text-blue-700 hover:text-blue-800 inline-flex items-center gap-1 shrink-0 whitespace-nowrap"
           >
-            View Full Library <ArrowRight className="w-3.5 h-3.5" />
+            <span>View Library</span>
+            <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
@@ -670,9 +671,9 @@ function HomePage() {
             No verified materials available yet. Be the first to upload!
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {/* Adaptive grid to prevent empty gaps on desktop */}
-            <div className={`flex sm:grid ${finalRecentUploads.length <= 3 ? 'sm:grid-cols-2 lg:grid-cols-3' : 'sm:grid-cols-2 lg:grid-cols-4'} gap-3.5 overflow-x-auto no-scrollbar pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible snap-x snap-mandatory`}>
+            <div className={`flex sm:grid ${finalRecentUploads.length <= 3 ? 'sm:grid-cols-2 lg:grid-cols-3' : 'sm:grid-cols-2 lg:grid-cols-4'} gap-3.5 overflow-x-auto no-scrollbar pb-2 sm:overflow-visible snap-x snap-mandatory`}>
               {finalRecentUploads.map((item) => (
                 <div key={item._id} className="w-[285px] sm:w-auto shrink-0 snap-start">
                   <ResourceCard
@@ -687,10 +688,10 @@ function HomePage() {
             <div className="pt-1 text-center">
               <Link
                 to="/resources"
-                className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2 sm:py-2.5 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs rounded-xl border border-slate-200 transition-colors shadow-2xs"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
               >
                 <span>Explore Full Resource Library</span>
-                <ArrowRight className="w-3.5 h-3.5 text-blue-700" />
+                <ArrowRight className="w-3.5 h-3.5 text-white" />
               </Link>
             </div>
           </div>
@@ -699,19 +700,20 @@ function HomePage() {
 
       {/* Top Academic Contributors Showcase (Honor Spotlight if 1, Adaptive Grid if multiple) */}
       <section className="space-y-3 sm:space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg sm:text-xl font-bold text-slate-900">Campus Champions</h2>
-            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <h2 className="text-base sm:text-xl font-bold text-slate-900 truncate">Campus Champions</h2>
+            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold shrink-0">
               <Trophy className="w-3.5 h-3.5 text-amber-500" />
               <span>Honor Roll</span>
             </div>
           </div>
           <Link
             to="/leaderboard"
-            className="text-xs font-semibold text-blue-700 hover:text-blue-800 inline-flex items-center gap-1"
+            className="text-xs font-bold text-blue-700 hover:text-blue-800 inline-flex items-center gap-1 shrink-0 whitespace-nowrap"
           >
-            Full Leaderboard <ArrowRight className="w-3.5 h-3.5" />
+            <span>Full Leaderboard</span>
+            <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 

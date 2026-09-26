@@ -319,25 +319,30 @@ export default function ResourceCard({
         {/* Buttons Row */}
         <div className="grid grid-cols-2 gap-2">
           <Link to={`/resources/${resource._id}`} onClick={handleDetailsClick} className="w-full">
-            <Button
-              variant="secondary"
-              size="sm"
-              className="w-full justify-center text-xs font-semibold py-1.5 h-8 text-slate-700"
+            <button
+              type="button"
+              className="w-full justify-center text-xs font-bold py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200/90 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              Details
-            </Button>
+              <Eye className="w-3.5 h-3.5 text-slate-600" />
+              <span>Details</span>
+            </button>
           </Link>
 
-          <Button
-            variant="outline"
-            size="sm"
-            icon={isAuthenticated ? Download : Lock}
+          <button
+            type="button"
             onClick={handleDownload}
-            isLoading={isDownloading}
-            className="w-full justify-center text-xs font-semibold py-1.5 h-8 text-slate-800 border-slate-200 hover:border-blue-600 hover:text-blue-700"
+            disabled={isDownloading}
+            className="w-full justify-center text-xs font-bold py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-70"
           >
-            PDF
-          </Button>
+            {isDownloading ? (
+              <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            ) : isAuthenticated ? (
+              <Download className="w-3.5 h-3.5 text-white" />
+            ) : (
+              <Lock className="w-3.5 h-3.5 text-blue-200" />
+            )}
+            <span>PDF</span>
+          </button>
         </div>
       </div>
 
