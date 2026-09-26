@@ -44,6 +44,22 @@ import { resourceService, userService } from './services/api';
 import ResourceRow from './components/resources/ResourceRow';
 import ResourceCard from './components/resources/ResourceCard';
 
+const BRANCH_SHORT_CODES = {
+  'Information Technology': 'IT',
+  'Computer Science & Engineering': 'CSE',
+  'Computer Science and Engineering': 'CSE',
+  'Electronics Engineering': 'ECE',
+  'Electrical Engineering': 'EE',
+  'Mechanical Engineering': 'ME',
+  'Civil Engineering': 'CE',
+  'Master of Computer Applications': 'MCA',
+};
+
+function getShortBranch(branch) {
+  if (!branch) return '';
+  return BRANCH_SHORT_CODES[branch] || branch;
+}
+
 function HomePage() {
   const navigate = useNavigate();
   const { user, savedIds, toggleBookmark } = useAuth();
@@ -167,7 +183,7 @@ function HomePage() {
               {user.branch && (
                 <div className="flex flex-col items-end">
                   <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200/80 px-2.5 py-0.5 rounded-full">
-                    {user.branch} • Sem {user.semester}
+                    {getShortBranch(user.branch)} • Sem {user.semester}
                   </span>
                   <Link to="/profile" className="text-[10px] text-slate-400 hover:text-blue-700 mt-0.5 underline">
                     Edit Profile
@@ -301,7 +317,7 @@ function HomePage() {
             <div className="space-y-0.5 sm:space-y-1">
               <div className="flex items-center gap-2">
                 <span className="text-[11px] sm:text-xs font-bold text-blue-700 bg-blue-100 px-2.5 py-0.5 rounded-full border border-blue-200/80">
-                  Sem {user.semester} • {user.branch}
+                  {getShortBranch(user.branch)} • Sem {user.semester}
                 </span>
                 <Link
                   to="/profile"
@@ -357,7 +373,7 @@ function HomePage() {
                   to={`/resources?branch=${encodeURIComponent(user.branch)}&semester=${user.semester}`}
                   className="inline-flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-blue-50 text-blue-700 font-bold text-xs rounded-xl border border-blue-200 transition-colors shadow-2xs"
                 >
-                  <span>View All Semester {user.semester} Notes ({user.branch})</span>
+                  <span>View All Semester {user.semester} Notes ({getShortBranch(user.branch)})</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
