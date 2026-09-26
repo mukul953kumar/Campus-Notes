@@ -357,7 +357,7 @@ function HomePage() {
 
               {/* Quick Actions */}
               <div className="flex items-center gap-2 shrink-0">
-                <Link to="/upload">
+                <Link to="/upload" className="hidden sm:inline-flex">
                   <Button size="sm" variant="primary" icon={Upload} className="text-xs font-semibold cursor-pointer">
                     Upload Note
                   </Button>

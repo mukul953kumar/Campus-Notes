@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   GraduationCap,
-  Search,
   Upload,
   Bookmark,
   User,
@@ -62,18 +61,8 @@ export default function Navbar() {
             ))}
           </nav>
 
-          {/* Quick Search Shortcut & Actions */}
+          {/* Quick Actions */}
           <div className="hidden sm:flex items-center gap-3">
-            <Link
-              to="/resources"
-              className="flex items-center gap-2 text-xs text-slate-400 bg-slate-100 hover:bg-slate-200/80 border border-slate-200/80 px-3 py-1.5 rounded-lg transition-colors cursor-pointer w-40 lg:w-52"
-            >
-              <Search className="w-3.5 h-3.5 text-slate-400" />
-              <span className="truncate">Search notes, codes...</span>
-              <kbd className="ml-auto font-mono text-[10px] bg-white text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">
-                /
-              </kbd>
-            </Link>
 
             <Link
               to="/saved"
@@ -189,11 +178,6 @@ export default function Navbar() {
 
           {/* Mobile Menu Button */}
           <div className="flex md:hidden items-center gap-2">
-            <Link to="/upload" className="sm:hidden">
-              <Button size="sm" icon={Upload} variant="outline">
-                Upload
-              </Button>
-            </Link>
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
