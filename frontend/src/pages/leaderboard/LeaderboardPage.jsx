@@ -6,17 +6,14 @@ import EmptyState from '../../components/common/EmptyState';
 import Button from '../../components/common/Button';
 import {
   Trophy,
-  Medal,
-  Award,
   Upload,
   Download,
   Star,
   BookOpen,
   Filter,
-  ArrowRight,
-  Sparkles,
   Users,
-  GraduationCap
+  ChevronDown,
+  ArrowUpDown
 } from 'lucide-react';
 
 const BRANCH_OPTIONS = [
@@ -36,11 +33,52 @@ const SORT_OPTIONS = [
   { id: 'rating', label: 'Highest Rated', icon: Star }
 ];
 
-function getAvatarBg(rank) {
-  if (rank === 1) return 'bg-amber-600 text-white';
+// Helper to extract uppercase first letter of user's name
+function getUserInitial(name) {
+  if (!name || typeof name !== 'string') return 'S';
+  const cleanName = name.trim();
+  return cleanName.charAt(0).toUpperCase();
+}
+
+// Helper to get consistent background colors for initial avatars
+function getAvatarColorClass(name, rank) {
+  if (rank === 1) return 'bg-amber-500 text-white';
   if (rank === 2) return 'bg-slate-700 text-white';
   if (rank === 3) return 'bg-orange-600 text-white';
-  return 'bg-blue-700 text-white';
+
+  const colors = [
+    'bg-blue-700 text-white',
+    'bg-purple-700 text-white',
+    'bg-rose-700 text-white',
+    'bg-emerald-700 text-white',
+    'bg-indigo-700 text-white',
+    'bg-cyan-700 text-white',
+    'bg-teal-700 text-white',
+    'bg-amber-700 text-white'
+  ];
+
+  let hash = 0;
+  if (name) {
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+  }
+  const index = Math.abs(hash) % colors.length;
+  return colors[index];
+}
+
+// Short branch name acronym helper
+function getShortBranch(branch) {
+  if (!branch) return 'KNIT';
+  const b = branch.toLowerCase();
+  if (b.includes('computer science') || b.includes('cse')) return 'CSE';
+  if (b.includes('information technology') || b.includes('it')) return 'IT';
+  if (b.includes('electronics') || b.includes('ece')) return 'ECE';
+  if (b.includes('electrical') || b.includes('ee')) return 'EE';
+  if (b.includes('mechanical') || b.includes('me')) return 'ME';
+  if (b.includes('civil') || b.includes('ce')) return 'CE';
+  if (b.includes('master of computer applications') || b.includes('mca')) return 'MCA';
+  return branch;
 }
 
 export default function LeaderboardPage() {
@@ -74,42 +112,69 @@ export default function LeaderboardPage() {
     fetchLeaderboard();
   }, [fetchLeaderboard]);
 
-  const topThree = contributors.slice(0, 3);
+  const top1 = contributors[0];
+  const top2 = contributors[1];
+  const top3 = contributors[2];
 
   return (
-    <div className="space-y-8 py-4">
+    <div className="space-y-8 py-4 max-w-7xl mx-auto">
       
-      {/* Top Header Banner */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2.5 max-w-2xl">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-800 text-xs font-bold">
-              <Trophy className="w-3.5 h-3.5 text-amber-500" />
-              <span>Campus Academic Honor Roll</span>
+      {/* 1. Header Banner (Dark Navy Gradient matching exact reference UI) */}
+      <div className="bg-gradient-to-r from-[#172554] via-[#1e3a8a] to-[#1e1b4b] rounded-3xl p-6 sm:p-8 shadow-xl text-white relative overflow-hidden">
+        {/* Subtle background glow highlights */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+          
+          {/* Left Title & Metadata */}
+          <div className="flex items-start gap-4 max-w-2xl">
+            <div className="w-12 h-12 rounded-full bg-amber-400/20 border border-amber-400/40 text-amber-400 flex items-center justify-center shrink-0 shadow-lg mt-1">
+              <Trophy className="w-6 h-6 fill-amber-400 text-amber-500" />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-              Top Contributors Leaderboard
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-              Recognizing dedicated KNITians who empower junior and peer batches with verified handwritten lecture notes, exam guides, and solved question papers.
-            </p>
+
+            <div className="space-y-1.5">
+              <p className="text-blue-200 text-xs font-semibold tracking-wide uppercase">
+                Campus Academic Honor Roll
+              </p>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight">
+                Top Contributors Leaderboard
+              </h1>
+              <p className="text-xs sm:text-sm text-blue-100/80 leading-relaxed font-normal">
+                Recognizing dedicated KNITians who empower junior and peer batches with verified handwritten lecture notes, exam guides, and solved question papers.
+              </p>
+            </div>
           </div>
 
-          <div className="shrink-0 flex items-center gap-3 w-full sm:w-auto">
+          {/* Right Cursive Script & CTA Button */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 shrink-0 w-full lg:w-auto justify-between lg:justify-end">
+            <div className="hidden lg:block text-right">
+              <span className="font-serif italic text-blue-100/90 text-xl tracking-widest block select-none drop-shadow-xs">
+                Learn • Share • Grow
+              </span>
+              <div className="w-36 h-0.5 bg-gradient-to-r from-transparent via-blue-300/40 to-transparent ml-auto mt-1"></div>
+            </div>
+
             <Link to="/upload" className="w-full sm:w-auto">
-              <Button variant="primary" size="md" icon={Upload} className="w-full sm:w-auto">
+              <Button
+                variant="primary"
+                size="md"
+                icon={Upload}
+                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-lg border-transparent cursor-pointer"
+              >
                 Upload & Join Leaderboard
               </Button>
             </Link>
           </div>
+
         </div>
       </div>
 
-      {/* Filter and Sorting Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs min-w-0">
+      {/* 2. Filter and Sorting Bar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs">
         
         {/* Sort Criteria Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none min-w-0">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none min-w-0">
           {SORT_OPTIONS.map((tab) => {
             const Icon = tab.icon;
             const isSelected = selectedSort === tab.id;
@@ -118,13 +183,13 @@ export default function LeaderboardPage() {
                 key={tab.id}
                 type="button"
                 onClick={() => setSelectedSort(tab.id)}
-                className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs transition-all whitespace-nowrap cursor-pointer ${
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs transition-all whitespace-nowrap cursor-pointer ${
                   isSelected
-                    ? 'bg-blue-700 text-white font-bold shadow-xs'
-                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/80 font-medium'
+                    ? 'bg-blue-600 text-white font-bold shadow-xs'
+                    : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/90 font-medium'
                 }`}
               >
-                <Icon className="w-3.5 h-3.5" />
+                <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-slate-500'}`} />
                 <span>{tab.label}</span>
               </button>
             );
@@ -132,26 +197,29 @@ export default function LeaderboardPage() {
         </div>
 
         {/* Branch Selector Filter */}
-        <div className="flex items-center gap-2 sm:max-w-xs w-full">
+        <div className="flex items-center gap-2.5 sm:max-w-xs w-full justify-end">
           <Filter className="w-4 h-4 text-slate-400 shrink-0" />
-          <select
-            value={selectedBranch}
-            onChange={(e) => setSelectedBranch(e.target.value)}
-            className="w-full text-xs py-2 px-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 font-medium focus:outline-hidden focus:ring-2 focus:ring-blue-600 cursor-pointer"
-          >
-            {BRANCH_OPTIONS.map((b) => (
-              <option key={b.value} value={b.value}>
-                {b.label}
-              </option>
-            ))}
-          </select>
+          <div className="relative w-full">
+            <select
+              value={selectedBranch}
+              onChange={(e) => setSelectedBranch(e.target.value)}
+              className="w-full text-xs py-2 pl-3.5 pr-8 bg-slate-50 border border-slate-200/90 rounded-xl text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-600 appearance-none cursor-pointer"
+            >
+              {BRANCH_OPTIONS.map((b) => (
+                <option key={b.value} value={b.value}>
+                  {b.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
         </div>
 
       </div>
 
       {/* Main Content Area */}
       {isLoading ? (
-        <div className="py-20">
+        <div className="py-24">
           <Loader message="Loading academic leaderboard..." size="lg" />
         </div>
       ) : errorMessage ? (
@@ -164,7 +232,7 @@ export default function LeaderboardPage() {
           />
         </div>
       ) : contributors.length === 0 ? (
-        <div className="py-12 bg-white border border-slate-200 rounded-2xl">
+        <div className="py-16 bg-white border border-slate-200 rounded-3xl text-center">
           <EmptyState
             title="No Verified Contributors Yet"
             description={
@@ -177,310 +245,424 @@ export default function LeaderboardPage() {
           />
         </div>
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-10">
           
-          {/* Top 3 Podium Showcase */}
-          {topThree.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between px-1">
-                <h2 className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4 text-amber-500" />
-                  <span>Podium Contributor Honors</span>
-                </h2>
-                <span className="text-[11px] font-medium text-slate-400">KNIT Sultanpur Academic Hall of Fame</span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4.5 items-stretch">
-                {topThree.map((item) => {
-                  const rank = item.rank;
-                  const user = item.user;
-
-                  // Rank 1: Gold Theme
-                  if (rank === 1) {
-                    return (
-                      <div
-                        key={item._id}
-                        className="bg-white border border-amber-200/90 rounded-2xl p-5 shadow-2xs hover:shadow-xs hover:border-amber-300 transition-all flex flex-col justify-between"
-                      >
-                        {/* Top Rank Badge */}
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200/80 text-amber-700 flex items-center justify-center font-bold">
-                            <Trophy className="w-5 h-5 text-amber-600 fill-amber-400" />
-                          </div>
-
-                          <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-amber-50 text-amber-900 border border-amber-200 flex items-center gap-1">
-                            <Sparkles className="w-3 h-3 text-amber-500" />
-                            <span>Rank #1 • Campus Champion</span>
-                          </span>
-                        </div>
-
-                        {/* User Identity */}
-                        <div className="flex items-center gap-3.5 mb-4">
-                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-base shrink-0 overflow-hidden shadow-2xs ${getAvatarBg(rank)}`}>
-                            {user.avatar ? (
-                              <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-                            ) : (
-                              user.name?.slice(0, 2).toUpperCase() || 'ST'
-                            )}
-                          </div>
-
-                          <div className="min-w-0 flex-1 space-y-0.5">
-                            <div className="flex items-center gap-1.5">
-                              <p className="font-bold text-slate-900 text-base leading-tight truncate">
-                                {user.name}
-                              </p>
-                              <span className="text-xs">🥇</span>
-                            </div>
-                            <p className="text-xs text-slate-500 font-medium truncate">
-                              {user.branch || 'KNIT Student'} {user.semester ? `• Sem ${user.semester}` : ''}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Performance Metrics Row */}
-                        <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 text-center">
-                          <div className="bg-slate-50/80 p-2 rounded-xl border border-slate-200/60">
-                            <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Notes</p>
-                            <p className="font-bold text-sm text-slate-900 mt-0.5">{item.verifiedUploads}</p>
-                          </div>
-
-                          <div className="bg-slate-50/80 p-2 rounded-xl border border-slate-200/60">
-                            <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Downloads</p>
-                            <p className="font-bold text-sm text-blue-700 mt-0.5">{item.totalDownloads}</p>
-                          </div>
-
-                          <div className="bg-slate-50/80 p-2 rounded-xl border border-slate-200/60">
-                            <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Rating</p>
-                            <p className="font-bold text-sm text-amber-600 flex items-center justify-center gap-1 mt-0.5">
-                              <Star className="w-3 h-3 fill-amber-400 text-amber-500" />
-                              <span>{item.averageRating > 0 ? item.averageRating.toFixed(1) : '5.0'}</span>
-                            </p>
-                          </div>
-                        </div>
-
+          {/* 3. 3D Podium Section (Top 3 Showcase) */}
+          <div className="bg-gradient-to-b from-blue-50/70 via-indigo-50/30 to-white rounded-3xl p-5 sm:p-10 border border-slate-200/70 shadow-xs relative overflow-hidden">
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end max-w-4xl mx-auto pt-6 pb-2">
+              
+              {/* RANK 2 (Left - Silver Podium) */}
+              <div className="order-2 md:order-1 flex flex-col items-center">
+                {top2 ? (
+                  <div className="w-full space-y-0 text-center">
+                    {/* Laurel Wreath Ring & Avatar */}
+                    <div className="relative inline-block mb-3">
+                      {/* Silver Laurel Wreath Ring SVG */}
+                      <svg className="w-24 h-24 text-slate-400 absolute -top-3 -left-3 pointer-events-none" viewBox="0 0 100 100" fill="none" stroke="currentColor">
+                        <path d="M20 70 C10 50 15 25 35 15 C30 30 30 55 45 65" strokeWidth="2.5" strokeLinecap="round" />
+                        <path d="M80 70 C90 50 85 25 65 15 C70 30 70 55 55 65" strokeWidth="2.5" strokeLinecap="round" />
+                      </svg>
+                      
+                      {/* Avatar Circle displaying First Letter Initial */}
+                      <div className={`w-18 h-18 rounded-full border-4 border-slate-300 ${getAvatarColorClass(top2.user?.name, 2)} flex items-center justify-center font-extrabold text-2xl shadow-md relative z-10`}>
+                        {getUserInitial(top2.user?.name)}
                       </div>
-                    );
-                  }
-
-                  // Rank 2: Silver Theme
-                  if (rank === 2) {
-                    return (
-                      <div
-                        key={item._id}
-                        className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs hover:shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between"
-                      >
-                        {/* Top Rank Badge */}
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center font-bold">
-                            <Medal className="w-5 h-5 text-slate-500 fill-slate-300" />
-                          </div>
-
-                          <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-800 border border-slate-200">
-                            Rank #2 • Master Contributor
-                          </span>
-                        </div>
-
-                        {/* User Identity */}
-                        <div className="flex items-center gap-3.5 mb-4">
-                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-base shrink-0 overflow-hidden shadow-2xs ${getAvatarBg(rank)}`}>
-                            {user.avatar ? (
-                              <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-                            ) : (
-                              user.name?.slice(0, 2).toUpperCase() || 'ST'
-                            )}
-                          </div>
-
-                          <div className="min-w-0 flex-1 space-y-0.5">
-                            <div className="flex items-center gap-1.5">
-                              <p className="font-bold text-slate-900 text-base leading-tight truncate">
-                                {user.name}
-                              </p>
-                              <span className="text-xs">🥈</span>
-                            </div>
-                            <p className="text-xs text-slate-500 font-medium truncate">
-                              {user.branch || 'KNIT Student'} {user.semester ? `• Sem ${user.semester}` : ''}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Performance Metrics Row */}
-                        <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 text-center">
-                          <div className="bg-slate-50/80 p-2 rounded-xl border border-slate-200/60">
-                            <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Notes</p>
-                            <p className="font-bold text-sm text-slate-900 mt-0.5">{item.verifiedUploads}</p>
-                          </div>
-
-                          <div className="bg-slate-50/80 p-2 rounded-xl border border-slate-200/60">
-                            <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Downloads</p>
-                            <p className="font-bold text-sm text-blue-700 mt-0.5">{item.totalDownloads}</p>
-                          </div>
-
-                          <div className="bg-slate-50/80 p-2 rounded-xl border border-slate-200/60">
-                            <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Rating</p>
-                            <p className="font-bold text-sm text-amber-600 flex items-center justify-center gap-1 mt-0.5">
-                              <Star className="w-3 h-3 fill-amber-400 text-amber-500" />
-                              <span>{item.averageRating > 0 ? item.averageRating.toFixed(1) : '5.0'}</span>
-                            </p>
-                          </div>
-                        </div>
-
-                      </div>
-                    );
-                  }
-
-                  // Rank 3: Bronze Theme
-                  return (
-                    <div
-                      key={item._id}
-                      className="bg-white border border-orange-200/80 rounded-2xl p-5 shadow-2xs hover:shadow-xs hover:border-orange-300 transition-all flex flex-col justify-between"
-                    >
-                      {/* Top Rank Badge */}
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="w-10 h-10 rounded-xl bg-orange-50 border border-orange-200 text-orange-800 flex items-center justify-center font-bold">
-                          <Award className="w-5 h-5 text-orange-600 fill-orange-400" />
-                        </div>
-
-                        <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-orange-50 text-orange-900 border border-orange-200">
-                          Rank #3 • Senior Contributor
-                        </span>
-                      </div>
-
-                      {/* User Identity */}
-                      <div className="flex items-center gap-3.5 mb-4">
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-base shrink-0 overflow-hidden shadow-2xs ${getAvatarBg(rank)}`}>
-                          {user.avatar ? (
-                            <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-                          ) : (
-                            user.name?.slice(0, 2).toUpperCase() || 'ST'
-                          )}
-                        </div>
-
-                        <div className="min-w-0 flex-1 space-y-0.5">
-                          <div className="flex items-center gap-1.5">
-                            <p className="font-bold text-slate-900 text-base leading-tight truncate">
-                              {user.name}
-                            </p>
-                            <span className="text-xs">🥉</span>
-                          </div>
-                          <p className="text-xs text-slate-500 font-medium truncate">
-                            {user.branch || 'KNIT Student'} {user.semester ? `• Sem ${user.semester}` : ''}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Performance Metrics Row */}
-                      <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 text-center">
-                        <div className="bg-slate-50/80 p-2 rounded-xl border border-slate-200/60">
-                          <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Notes</p>
-                          <p className="font-bold text-sm text-slate-900 mt-0.5">{item.verifiedUploads}</p>
-                        </div>
-
-                        <div className="bg-slate-50/80 p-2 rounded-xl border border-slate-200/60">
-                          <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Downloads</p>
-                          <p className="font-bold text-sm text-blue-700 mt-0.5">{item.totalDownloads}</p>
-                        </div>
-
-                        <div className="bg-slate-50/80 p-2 rounded-xl border border-slate-200/60">
-                          <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Rating</p>
-                          <p className="font-bold text-sm text-amber-600 flex items-center justify-center gap-1 mt-0.5">
-                            <Star className="w-3 h-3 fill-amber-400 text-amber-500" />
-                            <span>{item.averageRating > 0 ? item.averageRating.toFixed(1) : '5.0'}</span>
-                          </p>
-                        </div>
-                      </div>
-
                     </div>
-                  );
-                })}
+
+                    {/* Silver 3D Cylinder Pedestal */}
+                    <div className="relative">
+                      <div className="bg-gradient-to-r from-slate-300 via-slate-200 to-slate-400 h-8 rounded-[100%] border-t border-white shadow-xs"></div>
+                      <div className="bg-gradient-to-b from-slate-400 via-slate-500 to-slate-600 h-20 sm:h-24 rounded-b-2xl shadow-lg border-t border-slate-300 flex items-center justify-center relative">
+                        <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-800 font-extrabold border-2 border-white flex items-center justify-center text-sm shadow-md absolute -top-4">
+                          2
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Contributor Card Below Podium */}
+                    <div className="bg-white rounded-2xl p-4 shadow-md border border-slate-200/80 space-y-2 mt-[-15px] relative z-20 mx-auto max-w-[260px]">
+                      <h3 className="font-extrabold text-slate-900 text-sm truncate">
+                        {top2.user?.name || 'Contributor'}
+                      </h3>
+                      <p className="text-[11px] text-slate-400 font-medium truncate">
+                        {top2.user?.branch || 'KNIT'} • Sem {top2.user?.semester || '5'}
+                      </p>
+
+                      <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-slate-100 text-center">
+                        <div className="bg-slate-50 p-1.5 rounded-xl border border-slate-100">
+                          <p className="text-[9px] text-slate-400 font-bold uppercase">NOTES</p>
+                          <p className="font-extrabold text-xs text-slate-900 mt-0.5">{top2.verifiedUploads}</p>
+                        </div>
+                        <div className="bg-slate-50 p-1.5 rounded-xl border border-slate-100">
+                          <p className="text-[9px] text-slate-400 font-bold uppercase">DOWNLOADS</p>
+                          <p className="font-extrabold text-xs text-slate-900 mt-0.5">{top2.totalDownloads}</p>
+                        </div>
+                        <div className="bg-slate-50 p-1.5 rounded-xl border border-slate-100">
+                          <p className="text-[9px] text-slate-400 font-bold uppercase">RATING</p>
+                          <p className="font-extrabold text-xs text-amber-600 flex items-center justify-center gap-0.5 mt-0.5">
+                            <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-500" />
+                            <span>{top2.averageRating > 0 ? top2.averageRating.toFixed(1) : '4.5'}</span>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                ) : (
+                  <div className="text-xs text-slate-400 py-8">Spot #2 Open</div>
+                )}
+              </div>
+
+              {/* RANK 1 (Center - Highest Gold Podium) */}
+              <div className="order-1 md:order-2 flex flex-col items-center">
+                {top1 ? (
+                  <div className="w-full space-y-0 text-center">
+                    {/* Crown Icon Above Avatar */}
+                    <div className="text-2xl mb-1 drop-shadow-xs">👑</div>
+
+                    {/* Golden Laurel Wreath Ring & Avatar */}
+                    <div className="relative inline-block mb-3">
+                      {/* Gold Laurel Wreath Ring SVG */}
+                      <svg className="w-28 h-28 text-amber-400 absolute -top-3.5 -left-3.5 pointer-events-none" viewBox="0 0 100 100" fill="none" stroke="currentColor">
+                        <path d="M18 72 C8 50 12 22 34 12 C28 28 28 55 44 67" strokeWidth="3" strokeLinecap="round" />
+                        <path d="M82 72 C92 50 88 22 66 12 C72 28 72 55 56 67" strokeWidth="3" strokeLinecap="round" />
+                      </svg>
+                      
+                      {/* Avatar Circle displaying First Letter Initial */}
+                      <div className={`w-21 h-21 rounded-full border-4 border-amber-400 ${getAvatarColorClass(top1.user?.name, 1)} flex items-center justify-center font-extrabold text-3xl shadow-xl relative z-10`}>
+                        {getUserInitial(top1.user?.name)}
+                      </div>
+                    </div>
+
+                    {/* Gold 3D Cylinder Pedestal */}
+                    <div className="relative">
+                      <div className="bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-400 h-10 sm:h-12 rounded-[100%] border-t-2 border-yellow-200 shadow-md"></div>
+                      <div className="bg-gradient-to-b from-amber-400 via-amber-500 to-amber-600 h-28 sm:h-32 rounded-b-2xl shadow-xl border-t border-amber-300 flex items-center justify-center relative">
+                        <div className="w-9 h-9 rounded-full bg-amber-400 text-amber-950 font-extrabold border-2 border-white flex items-center justify-center text-base shadow-md absolute -top-4">
+                          1
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Contributor Card Below Podium */}
+                    <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-xl border border-amber-200 space-y-2 mt-[-18px] relative z-20 mx-auto max-w-[280px]">
+                      <h3 className="font-extrabold text-slate-900 text-base flex items-center justify-center gap-1.5 truncate">
+                        <span>{top1.user?.name || 'Top Contributor'}</span>
+                        <span className="text-sm">🏅</span>
+                      </h3>
+                      <p className="text-[11px] text-slate-400 font-medium truncate">
+                        {top1.user?.branch || 'KNIT'} • Sem {top1.user?.semester || '5'}
+                      </p>
+
+                      <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-slate-100 text-center">
+                        <div className="bg-slate-50 p-1.5 rounded-xl border border-slate-100">
+                          <p className="text-[9px] text-slate-400 font-bold uppercase">NOTES</p>
+                          <p className="font-extrabold text-sm text-slate-900 mt-0.5">{top1.verifiedUploads}</p>
+                        </div>
+                        <div className="bg-slate-50 p-1.5 rounded-xl border border-slate-100">
+                          <p className="text-[9px] text-slate-400 font-bold uppercase">DOWNLOADS</p>
+                          <p className="font-extrabold text-sm text-slate-900 mt-0.5">{top1.totalDownloads}</p>
+                        </div>
+                        <div className="bg-slate-50 p-1.5 rounded-xl border border-slate-100">
+                          <p className="text-[9px] text-slate-400 font-bold uppercase">RATING</p>
+                          <p className="font-extrabold text-sm text-amber-600 flex items-center justify-center gap-0.5 mt-0.5">
+                            <Star className="w-3 h-3 fill-amber-400 text-amber-500" />
+                            <span>{top1.averageRating > 0 ? top1.averageRating.toFixed(1) : '3.0'}</span>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                ) : (
+                  <div className="text-xs text-slate-400 py-8">Spot #1 Open</div>
+                )}
+              </div>
+
+              {/* RANK 3 (Right - Bronze Podium) */}
+              <div className="order-3 flex flex-col items-center">
+                {top3 ? (
+                  <div className="w-full space-y-0 text-center">
+                    {/* Laurel Wreath Ring & Avatar */}
+                    <div className="relative inline-block mb-3">
+                      {/* Bronze Laurel Wreath Ring SVG */}
+                      <svg className="w-24 h-24 text-amber-600/80 absolute -top-3 -left-3 pointer-events-none" viewBox="0 0 100 100" fill="none" stroke="currentColor">
+                        <path d="M20 70 C10 50 15 25 35 15 C30 30 30 55 45 65" strokeWidth="2.5" strokeLinecap="round" />
+                        <path d="M80 70 C90 50 85 25 65 15 C70 30 70 55 55 65" strokeWidth="2.5" strokeLinecap="round" />
+                      </svg>
+                      
+                      {/* Avatar Circle displaying First Letter Initial */}
+                      <div className={`w-18 h-18 rounded-full border-4 border-amber-600 ${getAvatarColorClass(top3.user?.name, 3)} flex items-center justify-center font-extrabold text-2xl shadow-md relative z-10`}>
+                        {getUserInitial(top3.user?.name)}
+                      </div>
+                    </div>
+
+                    {/* Bronze 3D Cylinder Pedestal */}
+                    <div className="relative">
+                      <div className="bg-gradient-to-r from-amber-600 via-amber-500 to-amber-700 h-8 rounded-[100%] border-t border-amber-400 shadow-xs"></div>
+                      <div className="bg-gradient-to-b from-amber-700 via-amber-800 to-amber-900 h-16 sm:h-20 rounded-b-2xl shadow-lg border-t border-amber-600 flex items-center justify-center relative">
+                        <div className="w-8 h-8 rounded-full bg-amber-600 text-white font-extrabold border-2 border-white flex items-center justify-center text-sm shadow-md absolute -top-4">
+                          3
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Contributor Card Below Podium */}
+                    <div className="bg-white rounded-2xl p-4 shadow-md border border-slate-200/80 space-y-2 mt-[-15px] relative z-20 mx-auto max-w-[260px]">
+                      <h3 className="font-extrabold text-slate-900 text-sm truncate">
+                        {top3.user?.name || 'Contributor'}
+                      </h3>
+                      <p className="text-[11px] text-slate-400 font-medium truncate">
+                        {top3.user?.branch || 'KNIT'} • Sem {top3.user?.semester || '5'}
+                      </p>
+
+                      <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-slate-100 text-center">
+                        <div className="bg-slate-50 p-1.5 rounded-xl border border-slate-100">
+                          <p className="text-[9px] text-slate-400 font-bold uppercase">NOTES</p>
+                          <p className="font-extrabold text-xs text-slate-900 mt-0.5">{top3.verifiedUploads}</p>
+                        </div>
+                        <div className="bg-slate-50 p-1.5 rounded-xl border border-slate-100">
+                          <p className="text-[9px] text-slate-400 font-bold uppercase">DOWNLOADS</p>
+                          <p className="font-extrabold text-xs text-slate-900 mt-0.5">{top3.totalDownloads}</p>
+                        </div>
+                        <div className="bg-slate-50 p-1.5 rounded-xl border border-slate-100">
+                          <p className="text-[9px] text-slate-400 font-bold uppercase">RATING</p>
+                          <p className="font-extrabold text-xs text-amber-600 flex items-center justify-center gap-0.5 mt-0.5">
+                            <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-500" />
+                            <span>{top3.averageRating > 0 ? top3.averageRating.toFixed(1) : '4.2'}</span>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                ) : (
+                  <div className="text-xs text-slate-400 py-8">Spot #3 Open</div>
+                )}
+              </div>
+
+            </div>
+
+          </div>
+
+          {/* 4. All Contributor Rankings Table */}
+          <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden">
+            
+            {/* Table Header Console */}
+            <div className="p-4 sm:p-5 bg-white border-b border-slate-200/80 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center shrink-0">
+                  <Users className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-slate-900 text-base">
+                    All Contributor Rankings
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    {contributors.length} verified student {contributors.length === 1 ? 'contributor' : 'contributors'} ranked
+                  </p>
+                </div>
+              </div>
+
+              <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 bg-blue-50/80 px-3 py-1 rounded-full border border-blue-200/80">
+                <span>📍 KNIT Sultanpur</span>
               </div>
             </div>
-          )}
 
-          {/* Full Leaderboard Table / Rankings List */}
-          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs space-y-0">
-            <div className="p-4 sm:p-5 bg-slate-50/90 border-b border-slate-200 flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-slate-900 text-sm sm:text-base">
-                  All Contributor Rankings
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  {contributors.length} verified student {contributors.length === 1 ? 'contributor' : 'contributors'} ranked
-                </p>
+            {/* Desktop Table Headers */}
+            <div className="hidden md:grid grid-cols-12 gap-2 bg-slate-50/80 px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-200/80 items-center">
+              <div className="col-span-1 text-center">#</div>
+              <div className="col-span-4">Contributor</div>
+              <div className="col-span-2 flex items-center gap-1">
+                <span>Branch</span>
+                <ArrowUpDown className="w-3 h-3 text-slate-300" />
               </div>
-
-              <span className="text-xs font-bold text-blue-800 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200">
-                KNIT Sultanpur
-              </span>
+              <div className="col-span-1 text-center flex items-center justify-center gap-1">
+                <span>Semester</span>
+                <ArrowUpDown className="w-3 h-3 text-slate-300" />
+              </div>
+              <div className="col-span-1 text-center flex items-center justify-center gap-1">
+                <span>Notes</span>
+                <ArrowUpDown className="w-3 h-3 text-slate-300" />
+              </div>
+              <div className="col-span-1 text-center flex items-center justify-center gap-1">
+                <span>Downloads</span>
+                <ArrowUpDown className="w-3 h-3 text-slate-300" />
+              </div>
+              <div className="col-span-1 text-center flex items-center justify-center gap-1">
+                <span>Rating</span>
+                <ArrowUpDown className="w-3 h-3 text-slate-300" />
+              </div>
+              <div className="col-span-1 text-right">Badge</div>
             </div>
 
+            {/* Table Rows */}
             <div className="divide-y divide-slate-100">
               {contributors.map((item) => {
                 const rank = item.rank;
-                const user = item.user;
+                const user = item.user || {};
+                const name = user.name || 'Contributor';
+                const initial = getUserInitial(name);
+
+                // Row Highlights based on Rank
+                const isRank1 = rank === 1;
+                const isRank2 = rank === 2;
+                const isRank3 = rank === 3;
+
+                const rowBgClass = isRank1
+                  ? 'bg-[#FFFDF0] hover:bg-[#FFF9E6] border-l-4 border-amber-400'
+                  : isRank2
+                  ? 'bg-slate-50/50 hover:bg-slate-100/60 border-l-4 border-slate-300'
+                  : isRank3
+                  ? 'bg-amber-50/20 hover:bg-amber-50/40 border-l-4 border-orange-300'
+                  : 'hover:bg-slate-50/70 border-l-4 border-transparent';
 
                 return (
                   <div
                     key={item._id}
-                    className="p-3.5 sm:p-4.5 hover:bg-slate-50/90 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4"
+                    className={`p-4 sm:px-5 transition-colors ${rowBgClass}`}
                   >
-                    {/* Rank + User Identity */}
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className="w-7 text-center shrink-0">
-                        {rank === 1 && <span className="text-base">🥇</span>}
-                        {rank === 2 && <span className="text-base">🥈</span>}
-                        {rank === 3 && <span className="text-base">🥉</span>}
-                        {rank > 3 && (
-                          <span className="font-bold text-xs text-slate-400">
-                            #{rank}
+                    {/* Desktop Single Line Grid Layout */}
+                    <div className="hidden md:grid grid-cols-12 gap-2 items-center text-xs">
+                      
+                      {/* Rank # */}
+                      <div className="col-span-1 text-center font-bold">
+                        {isRank1 ? (
+                          <span className="w-7 h-7 rounded-full bg-amber-400 text-amber-950 font-extrabold flex items-center justify-center mx-auto text-xs shadow-2xs">
+                            1
                           </span>
-                        )}
-                      </div>
-
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden ${getAvatarBg(rank)}`}>
-                        {user.avatar ? (
-                          <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                        ) : isRank2 ? (
+                          <span className="w-7 h-7 rounded-full bg-slate-200 text-slate-800 font-extrabold flex items-center justify-center mx-auto text-xs shadow-2xs">
+                            2
+                          </span>
+                        ) : isRank3 ? (
+                          <span className="w-7 h-7 rounded-full bg-orange-200 text-orange-900 font-extrabold flex items-center justify-center mx-auto text-xs shadow-2xs">
+                            3
+                          </span>
                         ) : (
-                          user.name?.slice(0, 2).toUpperCase() || 'ST'
+                          <span className="text-slate-400 font-bold text-xs">
+                            {rank}
+                          </span>
                         )}
                       </div>
 
-                      <div className="min-w-0 flex-1 space-y-0.5">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="text-sm font-bold text-slate-900 truncate">
-                            {user.name}
-                          </p>
-                          <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded-sm shrink-0">
-                            {item.badge}
-                          </span>
+                      {/* Contributor Profile (Initial Avatar + Name) */}
+                      <div className="col-span-4 flex items-center gap-3 min-w-0">
+                        {/* Circular Avatar displaying First-Letter Initial */}
+                        <div className={`w-9 h-9 rounded-full ${getAvatarColorClass(name, rank)} flex items-center justify-center font-bold text-sm shrink-0 shadow-2xs`}>
+                          {initial}
                         </div>
-                        <p className="text-xs text-slate-500 truncate">
-                          {user.branch || 'KNIT Student'} {user.semester ? `• Sem ${user.semester}` : ''}
-                        </p>
+
+                        <div className="min-w-0 truncate space-y-0.5">
+                          <p className="font-bold text-slate-900 text-sm truncate flex items-center gap-1">
+                            <span>{name}</span>
+                            {isRank1 && <span className="text-xs">🏅</span>}
+                          </p>
+                          <p className="text-[11px] text-slate-400 truncate font-medium">
+                            {user.branch || 'KNIT'} {user.semester ? `• Sem ${user.semester}` : ''}
+                          </p>
+                        </div>
                       </div>
+
+                      {/* Branch */}
+                      <div className="col-span-2 font-bold text-slate-800 text-xs">
+                        {getShortBranch(user.branch)}
+                      </div>
+
+                      {/* Semester */}
+                      <div className="col-span-1 text-center font-semibold text-slate-700 text-xs">
+                        {user.semester || '-'}
+                      </div>
+
+                      {/* Notes */}
+                      <div className="col-span-1 text-center font-bold text-slate-900 text-xs flex items-center justify-center gap-1">
+                        <BookOpen className="w-3.5 h-3.5 text-slate-400" />
+                        <span>{item.verifiedUploads}</span>
+                      </div>
+
+                      {/* Downloads */}
+                      <div className="col-span-1 text-center font-bold text-slate-900 text-xs flex items-center justify-center gap-1">
+                        <Download className="w-3.5 h-3.5 text-slate-400" />
+                        <span>{item.totalDownloads}</span>
+                      </div>
+
+                      {/* Rating */}
+                      <div className="col-span-1 text-center font-bold text-amber-700 text-xs flex items-center justify-center gap-1">
+                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
+                        <span>{item.averageRating > 0 ? item.averageRating.toFixed(1) : '3.0'}</span>
+                      </div>
+
+                      {/* Role Tag / Badge */}
+                      <div className="col-span-1 text-right">
+                        {isRank1 ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-bold">
+                            <span>👑</span> Top Contributor
+                          </span>
+                        ) : isRank2 ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-900 border border-blue-300 text-[10px] font-bold">
+                            <span>★</span> Rising Star
+                          </span>
+                        ) : isRank3 ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-orange-100 text-orange-900 border border-orange-300 text-[10px] font-bold">
+                            <span>★</span> Top Rated
+                          </span>
+                        ) : (
+                          <span className="text-slate-300 text-xs font-semibold">-</span>
+                        )}
+                      </div>
+
                     </div>
 
-                    {/* Stats: Balanced 3-column micro grid on mobile, horizontal row on desktop */}
-                    <div className="grid grid-cols-3 sm:flex items-center gap-2 sm:gap-8 pt-2 sm:pt-0 border-t border-slate-100 sm:border-0 text-center sm:text-right shrink-0 bg-slate-50/70 sm:bg-transparent p-2 sm:p-0 rounded-xl sm:rounded-none">
-                      <div>
-                        <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Notes</p>
-                        <p className="text-xs sm:text-sm font-bold text-slate-900 mt-0.5">
-                          {item.verifiedUploads}
-                        </p>
+                    {/* Mobile Card Layout (< md screens) */}
+                    <div className="md:hidden space-y-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className="font-extrabold text-xs text-slate-400 w-5">
+                            #{rank}
+                          </span>
+                          <div className={`w-8 h-8 rounded-full ${getAvatarColorClass(name, rank)} flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs`}>
+                            {initial}
+                          </div>
+                          <div className="min-w-0 truncate">
+                            <p className="font-bold text-slate-900 text-xs truncate">{name}</p>
+                            <p className="text-[10px] text-slate-400 truncate">{getShortBranch(user.branch)} • Sem {user.semester || '5'}</p>
+                          </div>
+                        </div>
+
+                        <div>
+                          {isRank1 ? (
+                            <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-bold">
+                              Top Contributor
+                            </span>
+                          ) : isRank2 ? (
+                            <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-900 border border-blue-300 text-[9px] font-bold">
+                              Rising Star
+                            </span>
+                          ) : isRank3 ? (
+                            <span className="px-2 py-0.5 rounded-full bg-orange-100 text-orange-900 border border-orange-300 text-[9px] font-bold">
+                              Top Rated
+                            </span>
+                          ) : null}
+                        </div>
                       </div>
 
-                      <div>
-                        <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Downloads</p>
-                        <p className="text-xs sm:text-sm font-bold text-blue-700 mt-0.5">
-                          {item.totalDownloads}
-                        </p>
-                      </div>
-
-                      <div className="sm:w-16">
-                        <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Rating</p>
-                        <p className="text-xs sm:text-sm font-bold text-amber-700 flex items-center justify-center sm:justify-end gap-1 mt-0.5">
-                          <Star className="w-3 h-3 fill-amber-400 text-amber-500" />
-                          <span>{item.averageRating > 0 ? item.averageRating.toFixed(1) : '5.0'}</span>
-                        </p>
+                      <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100/80 text-center text-xs">
+                        <div className="bg-slate-50/90 p-1.5 rounded-lg border border-slate-100">
+                          <p className="text-[9px] text-slate-400 font-semibold uppercase">Notes</p>
+                          <p className="font-bold text-slate-900 mt-0.5">{item.verifiedUploads}</p>
+                        </div>
+                        <div className="bg-slate-50/90 p-1.5 rounded-lg border border-slate-100">
+                          <p className="text-[9px] text-slate-400 font-semibold uppercase">Downloads</p>
+                          <p className="font-bold text-slate-900 mt-0.5">{item.totalDownloads}</p>
+                        </div>
+                        <div className="bg-slate-50/90 p-1.5 rounded-lg border border-slate-100">
+                          <p className="text-[9px] text-slate-400 font-semibold uppercase">Rating</p>
+                          <p className="font-bold text-amber-600 flex items-center justify-center gap-0.5 mt-0.5">
+                            <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-500" />
+                            <span>{item.averageRating > 0 ? item.averageRating.toFixed(1) : '3.0'}</span>
+                          </p>
+                        </div>
                       </div>
                     </div>
 
@@ -493,31 +675,6 @@ export default function LeaderboardPage() {
 
         </div>
       )}
-
-      {/* Motivational Call to Action */}
-      <div className="bg-gradient-to-r from-blue-700 to-indigo-800 text-white rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-sm">
-        <div className="space-y-1.5 text-center sm:text-left">
-          <div className="inline-flex items-center gap-1.5 bg-blue-600/60 border border-blue-400/40 px-2.5 py-0.5 rounded-full text-xs font-semibold">
-            <Award className="w-3.5 h-3.5" />
-            <span>Join the Community of Contributors</span>
-          </div>
-          <h3 className="text-lg sm:text-xl font-bold">Have handwritten notes or solved papers?</h3>
-          <p className="text-xs sm:text-sm text-blue-100 max-w-xl">
-            Upload your academic materials to earn contributor badges, help batchmates ace their exams, and rank on the Campus Leaderboard.
-          </p>
-        </div>
-
-        <Link to="/upload" className="shrink-0 w-full sm:w-auto">
-          <Button
-            size="md"
-            variant="outline"
-            icon={Upload}
-            className="w-full sm:w-auto bg-white text-blue-800 hover:bg-blue-50 border-white font-semibold cursor-pointer"
-          >
-            Upload Study Material
-          </Button>
-        </Link>
-      </div>
 
     </div>
   );
