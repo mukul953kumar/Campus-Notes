@@ -62,6 +62,30 @@ function getShortBranch(branch) {
   return BRANCH_SHORT_CODES[branch] || branch;
 }
 
+const DISMISSED_REJECTIONS_STORAGE_KEY = 'campusnotes_dismissed_rejected_ids';
+
+function getDismissedRejectedIds() {
+  try {
+    const raw = localStorage.getItem(DISMISSED_REJECTIONS_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveDismissedRejectedId(id) {
+  try {
+    if (!id) return;
+    const current = getDismissedRejectedIds();
+    if (!current.includes(id)) {
+      current.push(id);
+      localStorage.setItem(DISMISSED_REJECTIONS_STORAGE_KEY, JSON.stringify(current));
+    }
+  } catch (e) {
+    console.error('Failed to save dismissed rejected note:', e);
+  }
+}
+
 function HomePage() {
   const navigate = useNavigate();
   const { user, savedIds, toggleBookmark } = useAuth();
@@ -73,7 +97,6 @@ function HomePage() {
   const [isLoadingRecommended, setIsLoadingRecommended] = useState(false);
   const [isLoadingContributors, setIsLoadingContributors] = useState(true);
   const [rejectedUploads, setRejectedUploads] = useState([]);
-  const [dismissedRejectedNotice, setDismissedRejectedNotice] = useState(false);
 
   const branches = [
     { code: 'CSE', name: 'Computer Science & Engineering', count: '1st - 8th Sem' },
@@ -105,7 +128,7 @@ function HomePage() {
     loadRecent();
   }, []);
 
-  // Check if student has any rejected submissions needing revision
+  // Check if student has any rejected submissions needing revision (ignoring dismissed ones)
   useEffect(() => {
     if (!user) {
       setRejectedUploads([]);
@@ -115,7 +138,10 @@ function HomePage() {
       try {
         const res = await resourceService.getMyUploads('rejected');
         if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
-          setRejectedUploads(res.data);
+          const dismissedIds = getDismissedRejectedIds();
+          // Filter out items already dismissed by clicking the cross icon
+          const unDismissed = res.data.filter((item) => !dismissedIds.includes(item._id));
+          setRejectedUploads(unDismissed);
         } else {
           setRejectedUploads([]);
         }
@@ -125,6 +151,16 @@ function HomePage() {
     }
     loadRejectedUploads();
   }, [user]);
+
+  const handleDismissRejectedNotice = (itemToDismiss) => {
+    if (itemToDismiss?._id) {
+      saveDismissedRejectedId(itemToDismiss._id);
+      setRejectedUploads((prev) => prev.filter((item) => item._id !== itemToDismiss._id));
+    } else {
+      rejectedUploads.forEach((item) => saveDismissedRejectedId(item._id));
+      setRejectedUploads([]);
+    }
+  };
 
   // Load personalized semester recommendations dynamically based on student branch & sem (Top 4)
   useEffect(() => {
@@ -235,7 +271,7 @@ function HomePage() {
         {user ? (
           <div className="space-y-4">
             {/* Action Required: Note Revision Alert Banner */}
-            {rejectedUploads.length > 0 && !dismissedRejectedNotice && (
+            {rejectedUploads.length > 0 && (
               <div className="bg-rose-50/95 border border-rose-200/90 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                   <div className="flex items-start gap-3">
@@ -280,9 +316,9 @@ function HomePage() {
                     </Link>
                     <button
                       type="button"
-                      onClick={() => setDismissedRejectedNotice(true)}
-                      className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-rose-100/50 cursor-pointer"
-                      title="Dismiss notice for this session"
+                      onClick={() => handleDismissRejectedNotice(rejectedUploads[0])}
+                      className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-rose-100/70 cursor-pointer transition-colors"
+                      title="Dismiss this notice (will not show again on refresh)"
                     >
                       ✕
                     </button>
