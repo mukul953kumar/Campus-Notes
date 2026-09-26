@@ -158,6 +158,11 @@ const resourceSchema = new mongoose.Schema(
   }
 );
 
+resourceSchema.index({ verificationStatus: 1, isActive: 1, createdAt: -1 });
+resourceSchema.index({ verificationStatus: 1, isActive: 1, branch: 1, semester: 1, createdAt: -1 });
+resourceSchema.index({ verificationStatus: 1, isActive: 1, branch: 1, semester: 1, resourceType: 1, createdAt: -1 });
+resourceSchema.index({ verificationStatus: 1, isActive: 1, subjectId: 1, createdAt: -1 });
+resourceSchema.index({ verificationStatus: 1, isActive: 1, downloadsCount: -1, createdAt: -1 });
 resourceSchema.index({ subjectId: 1, verificationStatus: 1, resourceType: 1 });
 resourceSchema.index({ collegeId: 1, branch: 1, semester: 1, verificationStatus: 1 });
 resourceSchema.index({ uploaderId: 1, verificationStatus: 1 });

@@ -39,6 +39,14 @@ const normalizeResourceType = (type) => {
   return type.charAt(0).toUpperCase() + type.slice(1);
 };
 
+// High-performance In-Memory Query Cache for instant page loads & refreshes (TTL: 2 mins)
+const resourceQueryCache = new Map();
+const RESOURCE_CACHE_TTL_MS = 120 * 1000;
+
+function clearResourceQueryCache() {
+  resourceQueryCache.clear();
+}
+
 const getResources = async (req, res, next) => {
   try {
     const {
@@ -54,6 +62,18 @@ const getResources = async (req, res, next) => {
       page = 1,
       limit = 20
     } = req.query;
+
+    const cacheKey = `${search || ''}:${q || ''}:${branch || ''}:${semester || ''}:${subjectId || ''}:${unit || ''}:${resourceType || ''}:${examYear || ''}:${sortBy}:${page}:${limit}`;
+
+    const cachedEntry = resourceQueryCache.get(cacheKey);
+    if (cachedEntry && (Date.now() - cachedEntry.timestamp < RESOURCE_CACHE_TTL_MS)) {
+      return sendResponse(res, {
+        statusCode: 200,
+        message: 'Resources retrieved successfully',
+        data: cachedEntry.data,
+        meta: cachedEntry.meta
+      });
+    }
 
     const searchTerm = (search || q || '').trim();
     const safeSearchTerm = escapeRegex(searchTerm);
@@ -95,7 +115,7 @@ const getResources = async (req, res, next) => {
           { code: { $regex: safeSearchTerm, $options: 'i' } },
           { shortName: { $regex: safeSearchTerm, $options: 'i' } }
         ]
-      }).select('_id');
+      }).select('_id').lean();
 
       const matchedSubjectIds = matchedSubjects.map((s) => s._id);
 
@@ -126,7 +146,7 @@ const getResources = async (req, res, next) => {
         .sort(sort)
         .skip(skip)
         .limit(limitNum)
-        .populate('subjectId', 'name code shortName')
+        .populate('subjectId', 'name code shortName branch semester')
         .populate('uploaderId', 'name avatar role')
         .populate('collegeId', 'name code')
         .lean(),
@@ -135,20 +155,29 @@ const getResources = async (req, res, next) => {
 
     const formattedResources = resources.map((r) => ({
       ...r,
-      fileUrl: req.user ? getSignedDownloadUrl(r.fileKey, r.fileUrl) : null
+      fileUrl: r.fileUrl || (r.fileKey ? getSignedDownloadUrl(r.fileKey, r.fileUrl) : null)
     }));
+
+    const meta = {
+      page: pageNum,
+      limit: limitNum,
+      total,
+      totalPages: Math.ceil(total / limitNum) || 1,
+      hasMore: pageNum * limitNum < total
+    };
+
+    // Store response in fast memory cache
+    resourceQueryCache.set(cacheKey, {
+      timestamp: Date.now(),
+      data: formattedResources,
+      meta
+    });
 
     return sendResponse(res, {
       statusCode: 200,
       message: 'Resources retrieved successfully',
       data: formattedResources,
-      meta: {
-        page: pageNum,
-        limit: limitNum,
-        total,
-        totalPages: Math.ceil(total / limitNum) || 1,
-        hasMore: pageNum * limitNum < total
-      }
+      meta
     });
   } catch (error) {
     next(error);
@@ -290,6 +319,8 @@ const uploadResource = async (req, res, next) => {
     await User.findByIdAndUpdate(req.user._id, {
       $inc: { 'stats.uploadsCount': 1 }
     });
+
+    clearResourceQueryCache();
 
     const populatedResource = await Resource.findById(resource._id)
       .populate('subjectId', 'name code shortName')

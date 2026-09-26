@@ -173,6 +173,8 @@ export const academicService = {
   },
 };
 
+const clientResourceCache = new Map();
+
 export const resourceService = {
   async getResources(params = {}) {
     const query = new URLSearchParams();
@@ -182,9 +184,57 @@ export const resourceService = {
       }
     });
     const queryString = query.toString() ? `?${query.toString()}` : '';
-    return apiRequest(`/resources${queryString}`, {
+    const cacheKey = `res_cache_${queryString}`;
+
+    // 1. Memory Cache
+    if (clientResourceCache.has(cacheKey)) {
+      const cached = clientResourceCache.get(cacheKey);
+      if (Date.now() - cached.timestamp < 300000) { // 5 mins
+        // Silent background revalidation
+        apiRequest(`/resources${queryString}`, { method: 'GET' })
+          .then((freshData) => {
+            clientResourceCache.set(cacheKey, { timestamp: Date.now(), data: freshData });
+            try {
+              sessionStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: freshData }));
+            } catch (e) {}
+          })
+          .catch(() => {});
+        return cached.data;
+      }
+    }
+
+    // 2. Session Storage Cache (Instant load on browser refresh)
+    try {
+      const sessionCached = sessionStorage.getItem(cacheKey);
+      if (sessionCached) {
+        const parsed = JSON.parse(sessionCached);
+        if (Date.now() - parsed.timestamp < 300000) {
+          clientResourceCache.set(cacheKey, parsed);
+          // Silent background revalidation
+          apiRequest(`/resources${queryString}`, { method: 'GET' })
+            .then((freshData) => {
+              clientResourceCache.set(cacheKey, { timestamp: Date.now(), data: freshData });
+              try {
+                sessionStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: freshData }));
+              } catch (e) {}
+            })
+            .catch(() => {});
+          return parsed.data;
+        }
+      }
+    } catch (e) {}
+
+    // 3. Fallback direct API request
+    const data = await apiRequest(`/resources${queryString}`, {
       method: 'GET',
     });
+
+    clientResourceCache.set(cacheKey, { timestamp: Date.now(), data });
+    try {
+      sessionStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data }));
+    } catch (e) {}
+
+    return data;
   },
 
   async getResourceById(id) {
