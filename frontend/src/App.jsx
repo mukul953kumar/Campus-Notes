@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { PwaProvider } from './context/PwaContext';
+import { ThemeProvider } from './context/ThemeContext';
 import MainLayout from './components/layout/MainLayout';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AdminRoute from './components/auth/AdminRoute';
@@ -847,9 +848,10 @@ function PlaceholderPage({ title, description }) {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <PwaProvider>
-        <BrowserRouter>
+    <ThemeProvider>
+      <AuthProvider>
+        <PwaProvider>
+          <BrowserRouter>
           <Routes>
             <Route path="/" element={<MainLayout />}>
               <Route index element={<HomePage />} />
@@ -934,5 +936,6 @@ export default function App() {
         </BrowserRouter>
       </PwaProvider>
     </AuthProvider>
+    </ThemeProvider>
   );
 }

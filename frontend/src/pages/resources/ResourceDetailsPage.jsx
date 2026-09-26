@@ -10,6 +10,12 @@ import RatingStars from '../../components/resources/RatingStars';
 import ResourceReviewsSection from '../../components/resources/ResourceReviewsSection';
 import { useAuth } from '../../context/AuthContext';
 import {
+  saveNoteOffline,
+  isNoteSavedOffline,
+  removeOfflineNote,
+  getOfflineNote
+} from '../../utils/offlineStorage';
+import {
   ArrowLeft,
   Download,
   Bookmark,
@@ -30,7 +36,9 @@ import {
   Trash2,
   AlertTriangle,
   Check,
-  Eye
+  Eye,
+  WifiOff,
+  HardDrive
 } from 'lucide-react';
 
 function WhatsAppIcon({ className = 'w-4 h-4' }) {
@@ -55,8 +63,36 @@ export default function ResourceDetailsPage() {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isOfflineAvailable, setIsOfflineAvailable] = useState(false);
+  const [isSavingOffline, setIsSavingOffline] = useState(false);
 
   const isSaved = savedIds.includes(id);
+
+  useEffect(() => {
+    async function checkOfflineStatus() {
+      const saved = await isNoteSavedOffline(id);
+      setIsOfflineAvailable(saved);
+    }
+    checkOfflineStatus();
+  }, [id]);
+
+  const handleToggleOffline = async () => {
+    if (!resource) return;
+    setIsSavingOffline(true);
+    try {
+      if (isOfflineAvailable) {
+        await removeOfflineNote(id);
+        setIsOfflineAvailable(false);
+      } else {
+        await saveNoteOffline(resource);
+        setIsOfflineAvailable(true);
+      }
+    } catch (err) {
+      console.error('Offline storage error:', err);
+    } finally {
+      setIsSavingOffline(false);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -75,7 +111,23 @@ export default function ResourceDetailsPage() {
         }
       } catch (err) {
         if (isMounted) {
-          setErrorMessage(err.message || 'Failed to load resource details.');
+          // Fallback to offline IndexedDB storage if network fails
+          const offlineRecord = await getOfflineNote(id);
+          if (offlineRecord && offlineRecord.fileBlob) {
+            const blobUrl = URL.createObjectURL(offlineRecord.fileBlob);
+            setResource({
+              _id: offlineRecord._id,
+              title: offlineRecord.title,
+              branch: offlineRecord.branch,
+              semester: offlineRecord.semester,
+              resourceType: offlineRecord.resourceType,
+              fileUrl: blobUrl,
+              isOfflineLoaded: true
+            });
+            setIsOfflineAvailable(true);
+          } else {
+            setErrorMessage(err.message || 'Failed to load resource details.');
+          }
         }
       } finally {
         if (isMounted) {
@@ -377,6 +429,18 @@ export default function ResourceDetailsPage() {
               className={`w-full sm:w-auto ${isSaved ? 'text-blue-700 border-blue-200 bg-blue-50' : ''}`}
             >
               {isSaved ? 'Saved' : 'Save'}
+            </Button>
+
+            <Button
+              variant={isOfflineAvailable ? 'secondary' : 'outline'}
+              size="lg"
+              icon={HardDrive}
+              onClick={handleToggleOffline}
+              isLoading={isSavingOffline}
+              className={`w-full sm:w-auto ${isOfflineAvailable ? 'text-emerald-700 border-emerald-200 bg-emerald-50 font-bold' : ''}`}
+              title={isOfflineAvailable ? 'Remove from Offline Cache' : 'Save PDF for Offline Reading'}
+            >
+              {isOfflineAvailable ? 'Offline Ready ⚡' : 'Save Offline'}
             </Button>
 
             <button
