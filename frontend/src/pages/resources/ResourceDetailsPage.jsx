@@ -145,10 +145,10 @@ export default function ResourceDetailsPage() {
 
   const handleWhatsAppShare = () => {
     if (!resource) return;
-    const pageUrl = window.location.href;
+    const noteUrl = `${window.location.origin}/resources/${resource._id}`;
     const ratingText = resource.averageRating ? `${resource.averageRating.toFixed(1)} ★` : 'Verified';
-    const shareText = `📚 *${resource.title}*\n🎓 Branch: ${resource.branch} | Semester ${resource.semester}\n⭐ Rating: ${ratingText}\n📄 Verified Study Material on Campus Notes\n👉 View & Download: ${pageUrl}`;
-    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, '_blank', 'noopener,noreferrer');
+    const shareText = `📚 *${resource.title}*\n🎓 Branch: ${resource.branch} | Semester ${resource.semester}\n⭐ Rating: ${ratingText}\n📄 Verified Study Material on Campus Notes\n👉 View & Download: ${noteUrl}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank', 'noopener,noreferrer');
   };
 
   const formatFileSize = (bytes) => {

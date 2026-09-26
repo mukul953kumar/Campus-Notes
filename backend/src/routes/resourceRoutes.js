@@ -17,7 +17,7 @@ const router = express.Router();
 
 router.get('/', optionalAuth, getResources);
 router.get('/my-uploads', requireAuth, getMyUploads);
-router.get('/:id', requireAuth, getResourceById);
+router.get('/:id', optionalAuth, getResourceById);
 router.get('/:id/file', requireAuth, streamResourceFile);
 router.get('/:id/download', requireAuth, downloadResource);
 router.post('/upload', requireAuth, uploadLimiter, upload.single('file'), uploadResource);

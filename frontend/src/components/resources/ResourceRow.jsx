@@ -162,7 +162,7 @@ export default function ResourceRow({
     e.stopPropagation();
     const noteUrl = `${window.location.origin}/resources/${resource._id}`;
     const shareText = `📚 *${resource.title}*\n🎓 Branch: ${resource.branch || 'KNIT'} | Sem ${resource.semester || ''}\n📄 Verified Study Material on Campus Notes\n👉 View & Download: ${noteUrl}`;
-    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, '_blank', 'noopener,noreferrer');
+    window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank', 'noopener,noreferrer');
   };
 
   const handleSaveClick = (e) => {
