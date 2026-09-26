@@ -52,10 +52,12 @@ export default function LoginPage() {
           const buttonDiv = document.getElementById('google-signin-btn');
           if (buttonDiv) {
             buttonDiv.innerHTML = '';
+            const containerWidth = buttonDiv.clientWidth || (window.innerWidth - 80);
+            const targetWidth = Math.max(200, Math.min(320, Math.floor(containerWidth)));
             window.google.accounts.id.renderButton(buttonDiv, {
               theme: 'filled_blue',
               size: 'large',
-              width: 320,
+              width: targetWidth,
               text: 'continue_with',
               shape: 'pill',
               logo_alignment: 'left',
@@ -113,8 +115,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="max-w-md mx-auto my-8 sm:my-14 px-4">
-      <div className="bg-white border border-slate-200 rounded-3xl p-7 sm:p-9 shadow-sm">
+    <div className="w-full max-w-md mx-auto my-4 sm:my-14 px-3 sm:px-4">
+      <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-9 shadow-sm overflow-hidden">
 
         {/* Header */}
         <div className="text-center mb-6">
@@ -125,16 +127,16 @@ export default function LoginPage() {
             <Sparkles className="w-3 h-3 text-blue-600" />
             <span>KNIT Student Community</span>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
             Sign In with Google
           </h1>
-          <p className="text-xs text-slate-500 mt-1 font-medium">
+          <p className="text-xs text-slate-500 mt-1 font-medium leading-normal">
             Kamla Nehru Institute of Technology (KNIT), Sultanpur
           </p>
         </div>
 
         {/* Simple Sign In Info */}
-        <div className="p-3.5 bg-slate-50 border border-slate-200/90 rounded-2xl mb-6">
+        <div className="p-3 sm:p-3.5 bg-slate-50 border border-slate-200/90 rounded-2xl mb-6">
           <p className="text-xs text-slate-600 text-center leading-relaxed">
             Sign in with your College Student Google Account.
           </p>
@@ -142,7 +144,7 @@ export default function LoginPage() {
 
         {/* Error Alert */}
         {errorMessage && (
-          <div className="p-3.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl mb-6 flex items-start gap-2.5 leading-relaxed">
+          <div className="p-3 sm:p-3.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl mb-6 flex items-start gap-2.5 leading-relaxed">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
             <span>{errorMessage}</span>
           </div>
@@ -151,14 +153,14 @@ export default function LoginPage() {
         {/* Primary Direct Google Sign-In Container */}
         <div className="space-y-4 py-2">
 
-          <div className="flex flex-col items-center justify-center min-h-[50px]">
+          <div className="flex flex-col items-center justify-center min-h-[50px] w-full overflow-hidden">
             {isLoading ? (
               <div className="flex items-center gap-2 text-xs text-blue-700 font-medium py-3">
                 <div className="w-4 h-4 border-2 border-blue-700 border-t-transparent rounded-full animate-spin"></div>
                 <span>Signing in with Google...</span>
               </div>
             ) : (
-              <div id="google-signin-btn" className="w-full flex justify-center"></div>
+              <div id="google-signin-btn" className="w-full flex justify-center max-w-full overflow-hidden"></div>
             )}
           </div>
 
