@@ -1,9 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import knitLogo from '../../assets/logoknit.png';
 
 /**
- * BrandLogo — Official Campus Notes Academic Identity
- * Features the signature fusion of the Academic Graduation Cap, Open Knowledge Pages, and Golden Beacon.
+ * BrandLogo — Official Campus Notes & KNIT Sultanpur Academic Identity
  */
 export default function BrandLogo({
   size = 'md',
@@ -16,7 +16,7 @@ export default function BrandLogo({
 }) {
   const sizeMap = {
     sm: {
-      box: 'w-8 h-8 rounded-xl',
+      box: 'w-8 h-8 rounded-lg',
       icon: 'w-8 h-8',
       title: 'text-base',
       sub: 'text-[9px]'
@@ -28,13 +28,13 @@ export default function BrandLogo({
       sub: 'text-[10px]'
     },
     lg: {
-      box: 'w-12 h-12 rounded-2xl',
+      box: 'w-12 h-12 rounded-xl',
       icon: 'w-12 h-12',
       title: 'text-2xl',
       sub: 'text-xs'
     },
     xl: {
-      box: 'w-16 h-16 rounded-3xl',
+      box: 'w-16 h-16 rounded-2xl',
       icon: 'w-16 h-16',
       title: 'text-3xl',
       sub: 'text-sm'
@@ -45,15 +45,14 @@ export default function BrandLogo({
 
   const logoGraphic = (
     <div
-      className={`relative shrink-0 flex items-center justify-center overflow-hidden bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-800 shadow-md ring-1 ring-blue-500/20 group-hover:shadow-lg group-hover:scale-[1.03] transition-all duration-300 ${currentSize.box}`}
+      className={`relative shrink-0 flex items-center justify-center overflow-hidden bg-white shadow-2xs border border-slate-200/90 group-hover:scale-105 transition-transform duration-200 p-0.5 ${currentSize.box}`}
     >
       <img
-        src="/logo.png"
-        alt="Campus Notes Logo"
-        className="w-full h-full object-cover select-none"
+        src={knitLogo}
+        alt="Campus Notes — KNIT Sultanpur"
+        className="w-full h-full object-contain select-none"
         onError={(e) => {
-          // Fallback to favicon SVG if png fails to load
-          e.currentTarget.src = '/favicon.svg';
+          e.currentTarget.src = '/logo.png';
         }}
       />
     </div>
